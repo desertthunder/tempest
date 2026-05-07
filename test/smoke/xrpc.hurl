@@ -1,0 +1,26 @@
+GET {{base_url}}/xrpc/_health
+HTTP 200
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.status" == "ok"
+
+GET {{base_url}}/xrpc/com.atproto.server.describeServer
+HTTP 200
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.availableUserDomains" exists
+jsonpath "$.inviteCodeRequired" == false
+jsonpath "$.links.privacyPolicy" exists
+jsonpath "$.links.termsOfService" exists
+
+POST {{base_url}}/xrpc/com.atproto.server.describeServer
+HTTP 400
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.error" == "InvalidRequest"
+
+GET {{base_url}}/xrpc/com.atproto.unknown.method
+HTTP 404
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.error" == "UnknownMethod"

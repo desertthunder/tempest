@@ -14,6 +14,11 @@ defmodule TempestWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :xrpc do
+    plug :accepts, ["json"]
+    plug :put_xrpc_cors_headers
+  end
+
   scope "/", TempestWeb do
     pipe_through :browser
 
@@ -21,9 +26,10 @@ defmodule TempestWeb.Router do
   end
 
   scope "/xrpc", TempestWeb do
-    pipe_through :api
+    pipe_through :xrpc
 
     get "/_health", HealthController, :show
+    match :*, "/:method", XrpcController, :handle
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
@@ -41,5 +47,12 @@ defmodule TempestWeb.Router do
       live_dashboard "/dashboard", metrics: TempestWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  end
+
+  defp put_xrpc_cors_headers(conn, _opts) do
+    conn
+    |> Plug.Conn.put_resp_header("access-control-allow-origin", "*")
+    |> Plug.Conn.put_resp_header("access-control-allow-methods", "GET, POST, OPTIONS")
+    |> Plug.Conn.put_resp_header("access-control-allow-headers", "authorization, content-type")
   end
 end

@@ -1,0 +1,175 @@
+defmodule Tempest.Xrpc.Registry do
+  @moduledoc """
+  Registry for the XRPC methods exposed by Tempest.
+  """
+
+  alias Tempest.Xrpc.Method
+
+  @json "application/json"
+  @car "application/vnd.ipld.car"
+  @blob "application/octet-stream"
+
+  @methods [
+    %Method{
+      nsid: "com.atproto.server.describeServer",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :describe_server},
+      errors: []
+    },
+    %Method{
+      nsid: "com.atproto.server.createAccount",
+      kind: :procedure,
+      auth: :none,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["InvalidInviteCode", "HandleNotAvailable"]
+    },
+    %Method{
+      nsid: "com.atproto.server.createSession",
+      kind: :procedure,
+      auth: :none,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["AuthenticationRequired", "AccountTakedown"]
+    },
+    %Method{
+      nsid: "com.atproto.server.refreshSession",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
+      nsid: "com.atproto.server.deleteSession",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
+      nsid: "com.atproto.identity.resolveHandle",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["HandleNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.repo.createRecord",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["InvalidSwap"]
+    },
+    %Method{
+      nsid: "com.atproto.repo.putRecord",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["InvalidSwap"]
+    },
+    %Method{
+      nsid: "com.atproto.repo.deleteRecord",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["InvalidSwap"]
+    },
+    %Method{
+      nsid: "com.atproto.repo.getRecord",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["RecordNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.repo.listRecords",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: []
+    },
+    %Method{
+      nsid: "com.atproto.repo.uploadBlob",
+      kind: :procedure,
+      auth: :bearer,
+      input: @blob,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["BlobTooLarge"]
+    },
+    %Method{
+      nsid: "com.atproto.sync.getRepo",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @car,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["RepoNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.sync.getLatestCommit",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["RepoNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.sync.getRepoStatus",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: ["RepoNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.sync.subscribeRepos",
+      kind: :subscription,
+      auth: :none,
+      input: nil,
+      output: "application/jsonl",
+      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      errors: []
+    }
+  ]
+
+  @methods_by_nsid Map.new(@methods, &{&1.nsid, &1})
+
+  @doc """
+  Returns all registered XRPC methods.
+  """
+  def all, do: @methods
+
+  @doc """
+  Fetches a registered XRPC method by NSID.
+  """
+  def fetch(nsid) when is_binary(nsid) do
+    case Map.fetch(@methods_by_nsid, nsid) do
+      {:ok, method} -> {:ok, method}
+      :error -> {:error, :not_found}
+    end
+  end
+end
