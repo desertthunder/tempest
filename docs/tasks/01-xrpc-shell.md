@@ -17,7 +17,7 @@ Goal: expose the XRPC routing, method registry, and protocol-shaped JSON errors.
 - [ ] T01-07: Add controller tests for unknown method JSON error.
 - [ ] T01-08: Add controller tests for wrong HTTP verb.
 - [ ] T01-09: Add response content-type assertions.
-- [ ] T01-10: Add `test/smoke/01-xrpc-shell.hurl` entries for health and `describeServer`.
+- [ ] T01-10: Add `test/smoke/xrpc.hurl` entries for health and `describeServer`.
 
 ## Integration Tests
 

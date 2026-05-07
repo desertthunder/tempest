@@ -4,3 +4,7 @@ HTTP 200
 header "content-type" contains "application/json"
 jsonpath "$.version" exists
 jsonpath "$.status" == "ok"
+jsonpath "$.storage.dataDir" exists
+jsonpath "$.storage.accountDb" exists
+jsonpath "$.storage.sequencerDb" exists
+jsonpath "$.storage.writable" == true

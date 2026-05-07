@@ -23,6 +23,15 @@ defmodule Tempest.Config do
     )
   end
 
+  def account_db_path(%__MODULE__{data_dir: data_dir}), do: Path.join(data_dir, "account.sqlite")
+
+  def sequencer_db_path(%__MODULE__{data_dir: data_dir}),
+    do: Path.join(data_dir, "sequencer.sqlite")
+
+  def data_dirs(%__MODULE__{data_dir: data_dir}) do
+    Enum.map(~w(repos blobs tmp backups), &Path.join(data_dir, &1))
+  end
+
   @doc """
   Validates Tempest configuration and returns a normalized struct.
   """

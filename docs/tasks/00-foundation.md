@@ -35,6 +35,10 @@ Expected JSON fields:
 ```text
 version
 status
+storage.dataDir
+storage.accountDb
+storage.sequencerDb
+storage.writable
 ```
 
 ## Done

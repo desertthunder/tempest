@@ -11,6 +11,9 @@ Start the Phoenix server:
 mix phx.server
 ```
 
+Server boot creates `account.sqlite`, `sequencer.sqlite`, and local storage directories
+inside `TEMPEST_DATA_DIR` when they do not exist.
+
 By default, development uses `localhost`, `http://localhost:4000`, a data directory under
 `priv/tempest_dev`, and a 10 MB blob limit. Override those settings with:
 

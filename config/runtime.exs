@@ -40,23 +40,6 @@ if blob_max_bytes = System.get_env("TEMPEST_BLOB_MAX_BYTES") do
 end
 
 if config_env() == :prod do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
-
-  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
-
-  config :tempest, Tempest.Repo,
-    # ssl: true,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    # For machines with several cores, consider starting multiple pools of `pool_size`
-    # pool_count: 4,
-    socket_options: maybe_ipv6
-
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want
@@ -86,6 +69,10 @@ if config_env() == :prod do
     hostname: host,
     public_url: public_url,
     data_dir: data_dir
+
+  config :tempest, Tempest.Repo,
+    database: Path.join(data_dir, "account.sqlite"),
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5")
 
   config :tempest, TempestWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

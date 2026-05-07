@@ -9,8 +9,8 @@ Goal: create local accounts and authenticate XRPC calls.
 
 ## Tasks
 
-- [ ] T02-01: Replace Postgres dependency/config with SQLite-first config if still present.
-- [ ] T02-02: Add migrations or bootstrap code for `account.sqlite`.
+- [x] T02-01: Replace Postgres dependency/config with SQLite-first config if still present.
+- [x] T02-02: Add migrations or bootstrap code for `account.sqlite`.
 - [ ] T02-03: Add `accounts` table and schema/context.
 - [ ] T02-04: Add password hashing dependency and wrapper.
 - [ ] T02-05: Implement account creation with validation.

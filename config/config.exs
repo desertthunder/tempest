@@ -18,6 +18,13 @@ config :tempest, Tempest.Config,
   data_dir: Path.expand("../priv/tempest_dev", __DIR__),
   blob_max_bytes: 10_000_000
 
+config :tempest, Tempest.Repo,
+  database: Path.expand("../priv/tempest_dev/account.sqlite", __DIR__),
+  journal_mode: :wal,
+  busy_timeout: 5_000,
+  default_transaction_mode: :immediate,
+  pool_size: 5
+
 # Configure the endpoint
 config :tempest, TempestWeb.Endpoint,
   url: [host: "localhost"],
