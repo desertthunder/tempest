@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tempest PDS — Observatory</title>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/dist/full.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+    :root {
+      --bg:      #080d12;
+      --bg2:     #0c1219;
+      --bg3:     #101820;
+      --cyan:    #00e5ff;
+      --cyan2:   #00b4cc;
+      --cyan-g:  rgba(0, 229, 255, 0.12);
+      --cyan-g2: rgba(0, 229, 255, 0.05);
+      --white:   #e8f4f8;
+      --dim:     #3a6070;
+      --dim2:    #254050;
+      --border:  #0f2030;
+      --border2: #163040;
+      --node-r:  10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body {
+      background-image: radial-gradient(circle, var(--dim2) 1px, transparent 1px);
+      background-size: 28px 28px;
+      background-attachment: fixed;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(8,13,18,0.85) 100%);
+      pointer-events: none;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .mono { font-family: 'Space Mono', monospace; }
+    .cyan { color: var(--cyan); }
+    .dim  { color: var(--dim); }
+    .glow { text-shadow: 0 0 12px var(--cyan), 0 0 24px var(--cyan2); }
+
+    .obs-title {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin: 0;
+    }
+
+    .obs-sub {
+      font-size: 12px;
+      font-family: 'Space Mono', monospace;
+      color: var(--dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 0.35rem;
+    }
+
+    .graph-wrap {
+      position: relative;
+      height: 200px;
+      margin: 2.5rem 0 2rem;
+      overflow: visible;
+    }
+
+    .obs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .obs-card {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      padding: 1.1rem 1.25rem 1rem;
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .obs-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan2), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .obs-card:hover {
+      border-color: var(--cyan2);
+      box-shadow: 0 0 20px var(--cyan-g);
+    }
+
+    .obs-card:hover::before { opacity: 1; }
+
+    .card-icon {
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      color: var(--cyan);
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+
+    .card-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 0.3rem;
+    }
+
+    .card-value {
+      font-size: 13px;
+      color: var(--white);
+      font-weight: 500;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--dim);
+      font-family: 'Space Mono', monospace;
+      margin-top: 0.2rem;
+    }
+
+    @keyframes pulse-cyan {
+      0%,100% { box-shadow: 0 0 3px 1px rgba(0,229,255,0.6); }
+      50%      { box-shadow: 0 0 7px 3px rgba(0,229,255,0.2); }
+    }
+    .dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: pulse-cyan 2.5s ease-in-out infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+    .dot-amber { background: #ffb000; animation: none; box-shadow: 0 0 4px rgba(255,176,0,0.5); }
+
+    .obs-rule {
+      border: none;
+      border-top: 1px solid var(--border2);
+      margin: 1.75rem 0;
+    }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1rem;
+    }
+
+    .api-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+      margin-bottom: 0.35rem;
+      text-decoration: none;
+      color: var(--white);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .api-row:hover {
+      background: var(--cyan-g2);
+      border-color: var(--border2);
+      color: var(--cyan);
+    }
+    .api-ns { color: var(--dim); }
+
+    .ext-link {
+      color: var(--dim);
+      text-decoration: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0.3rem 0;
+      transition: color 0.15s;
+    }
+    .ext-link:hover { color: var(--cyan); }
+    .ext-link::before { content: '↗'; font-size: 9px; }
+
+    #graph-canvas {
+      width: 100%;
+      height: 200px;
+      display: block;
+    }
+
+    .center-node {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      text-align: center;
+    }
+
+    .node-ring {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: 1px solid var(--cyan2);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto;
+      position: relative;
+      box-shadow: 0 0 20px var(--cyan-g), 0 0 40px rgba(0,229,255,0.04);
+    }
+
+    .node-ring::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+    }
+
+    .node-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      margin-top: 0.4rem;
+      text-transform: uppercase;
+    }
+
+    @keyframes fadeUp { from {opacity:0;transform:translateY(8px)} to {opacity:1;transform:translateY(0)} }
+    .obs-card  { animation: fadeUp 0.4s ease both; }
+    .obs-card:nth-child(1){animation-delay:0.1s}
+    .obs-card:nth-child(2){animation-delay:0.18s}
+    .obs-card:nth-child(3){animation-delay:0.26s}
+    .obs-card:nth-child(4){animation-delay:0.34s}
+    .header-block { animation: fadeUp 0.4s ease both 0.0s; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="header-block flex items-start justify-between gap-4 mb-2">
+    <div>
+      <h1 class="obs-title">TEMPEST <span class="cyan glow">PDS</span></h1>
+      <p class="obs-sub">AT Protocol Personal Data Server</p>
+    </div>
+    <div class="mono text-right" style="font-size:11px; color:var(--dim); line-height:1.8; margin-top:0.25rem;">
+      <div><span class="dot"></span>node online</div>
+      <div id="ts" style="font-size:10px;"></div>
+    </div>
+  </div>
+
+  <div class="graph-wrap">
+    <svg id="graph-canvas" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
+      <line x1="400" y1="100" x2="130" y2="50"  stroke="#163040" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="400" y1="100" x2="670" y2="50"  stroke="#163040" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="400" y1="100" x2="130" y2="155" stroke="#163040" stroke-width="1" stroke-dasharray="4 4"/>
+      <line x1="400" y1="100" x2="670" y2="155" stroke="#163040" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <circle cx="265" cy="75"  r="2" fill="#00e5ff" opacity="0.4"/>
+      <circle cx="535" cy="75"  r="2" fill="#00e5ff" opacity="0.4"/>
+      <circle cx="265" cy="127" r="2" fill="#00e5ff" opacity="0.4"/>
+      <circle cx="535" cy="127" r="2" fill="#00e5ff" opacity="0.4"/>
+
+      <circle cx="400" cy="100" r="28" fill="#0c1219" stroke="#00e5ff" stroke-width="1"/>
+      <circle cx="400" cy="100" r="20" fill="none" stroke="#163040" stroke-width="1"/>
+      <text x="400" y="96"  text-anchor="middle" font-family="Space Mono" font-size="9" fill="#00e5ff">PDS</text>
+      <text x="400" y="108" text-anchor="middle" font-family="Space Mono" font-size="7" fill="#3a6070">node</text>
+
+      <circle cx="130" cy="50" r="18" fill="#0c1219" stroke="#163040" stroke-width="1"/>
+      <text x="130" y="46"  text-anchor="middle" font-family="Space Mono" font-size="8"  fill="#e8f4f8">XRPC</text>
+      <text x="130" y="57"  text-anchor="middle" font-family="Space Mono" font-size="6.5" fill="#3a6070">online</text>
+
+      <circle cx="670" cy="50" r="18" fill="#0c1219" stroke="#163040" stroke-width="1"/>
+      <text x="670" y="46"  text-anchor="middle" font-family="Space Mono" font-size="8"  fill="#e8f4f8">REPO</text>
+      <text x="670" y="57"  text-anchor="middle" font-family="Space Mono" font-size="6.5" fill="#3a6070">sync</text>
+
+      <circle cx="130" cy="155" r="18" fill="#0c1219" stroke="#163040" stroke-width="1"/>
+      <text x="130" y="151" text-anchor="middle" font-family="Space Mono" font-size="8"  fill="#e8f4f8">DID</text>
+      <text x="130" y="162" text-anchor="middle" font-family="Space Mono" font-size="6.5" fill="#3a6070">identity</text>
+
+      <circle cx="670" cy="155" r="18" fill="#0c1219" stroke="#163040" stroke-width="1"/>
+      <text x="670" y="151" text-anchor="middle" font-family="Space Mono" font-size="8"  fill="#e8f4f8">BLOB</text>
+      <text x="670" y="162" text-anchor="middle" font-family="Space Mono" font-size="6.5" fill="#3a6070">store</text>
+    </svg>
+  </div>
+
+  <div class="obs-grid">
+
+    <div class="obs-card">
+      <span class="card-icon">◈</span>
+      <div class="card-title">XRPC</div>
+      <div class="card-value"><span class="dot"></span>Online</div>
+      <div class="card-sub">All routes active</div>
+    </div>
+
+    <div class="obs-card">
+      <span class="card-icon">⟳</span>
+      <div class="card-title">Repo Sync</div>
+      <div class="card-value"><span class="dot"></span>Enabled</div>
+      <div class="card-sub">Continuous sync</div>
+    </div>
+
+    <div class="obs-card">
+      <span class="card-icon">◉</span>
+      <div class="card-title">Identity</div>
+      <div class="card-value"><span class="dot"></span>Resolved</div>
+      <div class="card-sub mono" style="font-size:10px;">did:plc · did:web</div>
+    </div>
+
+    <div class="obs-card">
+      <span class="card-icon" style="color:var(--dim);">⬡</span>
+      <div class="card-title">Blob Store</div>
+      <div class="card-value"><span class="dot dot-amber" style="display:inline-block;"></span>Local FS</div>
+      <div class="card-sub">/data/blobs</div>
+    </div>
+
+  </div>
+
+  <hr class="obs-rule" />
+
+  <div class="section-label">API Endpoints</div>
+
+  <a href="/xrpc/com.atproto.server.describeServer" class="api-row">
+    <span style="color:var(--cyan); font-size:9px;">GET</span>
+    <span><span class="api-ns">com.atproto.server.</span>describeServer</span>
+  </a>
+  <a href="/xrpc/com.atproto.identity.resolveHandle" class="api-row">
+    <span style="color:var(--cyan); font-size:9px;">GET</span>
+    <span><span class="api-ns">com.atproto.identity.</span>resolveHandle</span>
+  </a>
+  <a href="/xrpc/com.atproto.sync.getRepo" class="api-row">
+    <span style="color:var(--cyan); font-size:9px;">GET</span>
+    <span><span class="api-ns">com.atproto.sync.</span>getRepo</span>
+  </a>
+  <a href="/xrpc/com.atproto.repo.listRecords" class="api-row">
+    <span style="color:var(--cyan); font-size:9px;">GET</span>
+    <span><span class="api-ns">com.atproto.repo.</span>listRecords</span>
+  </a>
+
+  <hr class="obs-rule" />
+
+  <div class="section-label">Resources</div>
+  <div class="flex flex-wrap gap-x-5 gap-y-1">
+    <a href="https://atproto.com" class="ext-link">AT Protocol</a>
+    <a href="https://atproto.com/guides/self-hosting" class="ext-link">Self-hosting Guide</a>
+    <a href="https://github.com/bluesky-social/atproto" class="ext-link">Source Code</a>
+    <a href="https://bsky.app" class="ext-link">Bluesky</a>
+  </div>
+
+  <div class="mono flex justify-between mt-8 pt-4" style="border-top:1px solid var(--border2); font-size:10px; color:var(--dim);">
+    <span>tempest pds · <span id="host">localhost</span></span>
+    <span>v0.1.0</span>
+  </div>
+
+</div>
+
+<script>
+  document.getElementById('host').textContent = location.hostname || 'localhost';
+  const p = n => String(n).padStart(2,'0');
+  function tick() {
+    const now = new Date();
+    document.getElementById('ts').textContent =
+      `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
+  }
+  tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>
