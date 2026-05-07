@@ -36,10 +36,7 @@ Goal: build and prove the binary repository primitives before exposing writes br
 This milestone has no public write endpoint yet. Add a temporary test-only route or skip public exposure until Milestone 05, but the first user-visible verification must be:
 
 ```bash
-http POST :4000/xrpc/com.atproto.repo.createRecord \
-  "Authorization:Bearer $TOKEN" \
-  repo=alice.test collection=app.bsky.actor.profile rkey=self \
-  record:='{"$type":"app.bsky.actor.profile","displayName":"Alice"}'
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/repo.hurl
 ```
 
 Expected by Milestone 05:

@@ -22,7 +22,7 @@ Goal: make Tempest deployable and maintainable as a single-node self-hosted PDS.
 - [ ] T09-11: Add `mix pds.sequencer.status`.
 - [ ] T09-12: Add `mix pds.blob.gc`.
 - [ ] T09-13: Add backup create/restore docs.
-- [ ] T09-14: Add smoke script for deployed HTTPS target.
+- [ ] T09-14: Add Hurl smoke test for deployed HTTPS target.
 - [ ] T09-15: Add telemetry events for XRPC, repo writes, blobs, and firehose.
 
 ## Integration Tests
@@ -35,9 +35,10 @@ Goal: make Tempest deployable and maintainable as a single-node self-hosted PDS.
 ## HTTP Verification
 
 ```bash
-curl -fsS https://tempest.example.com/xrpc/_health
-http GET https://tempest.example.com/xrpc/_admin/status "Authorization:Bearer $ADMIN_TOKEN"
-curl --no-buffer "wss://tempest.example.com/xrpc/com.atproto.sync.subscribeRepos?cursor=0"
+hurl --test --jobs 1 \
+  --variable base_url=https://tempest.example.com \
+  --variable admin_token="$ADMIN_TOKEN" \
+  test/smoke/deployment.hurl
 ```
 
 ## Done

@@ -3,8 +3,6 @@ title: Interop and Integration Testing
 updated: 2026-05-07
 ---
 
-# Interop and Integration Testing
-
 Protocol work is not done until it passes black-box tests. Unit tests protect parsers and binary code, but every milestone needs an HTTP test that exercises the running Phoenix server.
 
 ## Test Layers
@@ -12,13 +10,13 @@ Protocol work is not done until it passes black-box tests. Unit tests protect pa
 1. Parser and golden tests for repo-core.
 2. Context tests for account, identity, record, blob, and sync flows.
 3. Phoenix integration tests using `ConnCase`.
-4. Running-server smoke tests with `curl` and `http`.
+4. Running-server smoke tests with Hurl.
 5. External fixture tests against official atproto fixtures.
 6. Client compatibility tests against known SDKs or `goat` where useful.
 
-## Smoke Test Script
+## Smoke Tests
 
-Create `script/smoke/tempest_basic.sh` once Milestone 02 lands. It should:
+Create `test/smoke/tempest_basic.hurl` once Milestone 02 lands. It should:
 
 1. Hit health.
 2. Call `describeServer`.
@@ -33,6 +31,9 @@ Create `script/smoke/tempest_basic.sh` once Milestone 02 lands. It should:
 
 ## Integration Test Rules
 
+- Keep smoke tests in `test/smoke/*.hurl`.
+- Run smoke tests with `hurl --test`.
+- Pass environment-specific values with Hurl variables, for example `--variable base_url=http://localhost:4000`.
 - Prefer selectors and structured response assertions over raw HTML.
 - Use `start_supervised!/1` for test processes.
 - Avoid `Process.sleep/1`; use monitors or `:sys.get_state/1`.
@@ -52,14 +53,14 @@ Create `script/smoke/tempest_basic.sh` once Milestone 02 lands. It should:
 ## HTTP Verification
 
 ```bash
-script/smoke/tempest_basic.sh http://localhost:4000
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/tempest_basic.hurl
 ```
 
 Expected:
 
-- The script exits non-zero on any failed HTTP check.
-- The script prints each endpoint and status.
-- The script leaves enough IDs in output to debug failures.
+- Hurl exits non-zero on any failed HTTP check.
+- Captures expose enough IDs to debug failures.
+- Assertions cover status, content type, and required JSON fields.
 
 ## Sources
 
@@ -67,3 +68,5 @@ Expected:
 - <https://github.com/bluesky-social/atproto/tree/main/lexicons>
 - <https://atproto.com/specs/repository>
 - <https://atproto.com/specs/sync>
+- <https://hurl.dev/docs/running-tests.html>
+- <https://hurl.dev/docs/hurl-file.html>

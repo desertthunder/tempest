@@ -20,7 +20,25 @@ Every task should leave one of these behind:
 
 - a passing unit test;
 - a passing Phoenix integration test;
-- a passing running-server HTTP check;
+- a passing running-server Hurl smoke test;
 - a small doc update that explains a verified behavior.
 
-Milestone-level HTTP verification is mandatory.
+Milestone-level Hurl verification is mandatory.
+
+## Hurl Rule
+
+Smoke tests are Hurl files under `test/smoke/*.hurl`.
+
+Run a single milestone:
+
+```bash
+hurl --test --variable base_url=http://localhost:4000 test/smoke/01-xrpc-shell.hurl
+```
+
+Run all smoke tests:
+
+```bash
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/
+```
+
+Use `--jobs 1` for smoke suites that create shared accounts or depend on event order.

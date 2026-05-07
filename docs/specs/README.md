@@ -23,10 +23,11 @@ Subsystem specifications live in this directory. Milestone task plans live in `.
 10. [Admin Operations](admin-operations.md)
 11. [Deployment and Observability](deployment-observability.md)
 12. [Interop and Integration Testing](interop-testing.md)
+13. [Hurl Smoke Tests](hurl-smoke-tests.md)
 
 ## Milestones
 
-Milestone tasks live in `docs/tasks/`. Each task file is intended to be small enough to implement and review without guessing at scope. Each milestone must end with a black-box HTTP check using `curl` or `http`.
+Milestone tasks live in `docs/tasks/`. Each task file is intended to be small enough to implement and review without guessing at scope. Each milestone must end with a black-box Hurl smoke test.
 
 Start with [Milestone 00](../tasks/00-foundation.md), then continue in numeric order.
 
@@ -51,5 +52,6 @@ Research was checked on 2026-05-07 against:
 - Keep protocol facts separate from project choices.
 - Every subsystem spec must include HTTP verification.
 - Every milestone must have integration tests before it is considered done.
+- Smoke tests must be Hurl files under `test/smoke/*.hurl` and must run with `hurl --test`.
 - Use `Req` for outbound HTTP in application code.
 - Run `mix precommit` before marking implementation work complete.

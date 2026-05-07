@@ -31,19 +31,8 @@ Goal: persist and stream repository, identity, and account events.
 
 ## HTTP Verification
 
-Terminal 1:
-
 ```bash
-curl --no-buffer "ws://localhost:4000/xrpc/com.atproto.sync.subscribeRepos?cursor=0"
-```
-
-Terminal 2:
-
-```bash
-http POST :4000/xrpc/com.atproto.repo.createRecord \
-  "Authorization:Bearer $TOKEN" \
-  repo=alice.test collection=app.bsky.feed.post \
-  record:='{"$type":"app.bsky.feed.post","text":"firehose test","createdAt":"2026-05-07T00:00:00Z"}'
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/firehose.hurl
 ```
 
 Expected:

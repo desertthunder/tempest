@@ -34,16 +34,7 @@ Goal: create local accounts and authenticate XRPC calls.
 ## HTTP Verification
 
 ```bash
-http POST :4000/xrpc/com.atproto.server.createAccount \
-  handle=alice.test email=alice@example.com password='correct horse battery staple'
-
-http POST :4000/xrpc/com.atproto.server.createSession \
-  identifier=alice.test password='correct horse battery staple'
-
-TOKEN="$(http --body POST :4000/xrpc/com.atproto.server.createSession \
-  identifier=alice.test password='correct horse battery staple' | jq -r .accessJwt)"
-
-http GET :4000/xrpc/com.atproto.server.getSession "Authorization:Bearer $TOKEN"
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/accounts.hurl
 ```
 
 ## Done

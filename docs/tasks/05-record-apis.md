@@ -36,16 +36,7 @@ Goal: persist records in per-account repositories and expose repository XRPC rea
 ## HTTP Verification
 
 ```bash
-http POST :4000/xrpc/com.atproto.repo.createRecord \
-  "Authorization:Bearer $TOKEN" \
-  repo=alice.test collection=app.bsky.actor.profile rkey=self \
-  record:='{"$type":"app.bsky.actor.profile","displayName":"Alice"}'
-
-http GET :4000/xrpc/com.atproto.repo.getRecord \
-  repo==alice.test collection==app.bsky.actor.profile rkey==self
-
-http GET :4000/xrpc/com.atproto.repo.listRecords \
-  repo==alice.test collection==app.bsky.actor.profile
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/records.hurl
 ```
 
 ## Done

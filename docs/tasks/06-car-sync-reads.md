@@ -30,12 +30,7 @@ Goal: expose repository state through sync read endpoints.
 ## HTTP Verification
 
 ```bash
-curl -fsS -D /tmp/tempest-car.headers -o /tmp/alice.car \
-  "http://localhost:4000/xrpc/com.atproto.sync.getRepo?did=did:plc:example"
-
-http GET :4000/xrpc/com.atproto.sync.getLatestCommit did==did:plc:example
-http GET :4000/xrpc/com.atproto.sync.getRepoStatus did==did:plc:example
-http GET :4000/xrpc/com.atproto.sync.listRepos
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/car-sync.hurl
 ```
 
 ## Done

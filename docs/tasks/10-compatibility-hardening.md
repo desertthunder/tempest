@@ -18,7 +18,7 @@ Goal: close protocol gaps and verify behavior against external clients, fixtures
 - [ ] T10-08: Add account lifecycle endpoints needed for deactivate/delete/takedown.
 - [ ] T10-09: Add rate limits for auth, record writes, blob uploads, and identity lookups.
 - [ ] T10-10: Add interop fixture test suite.
-- [ ] T10-11: Add SDK compatibility smoke tests.
+- [ ] T10-11: Add Hurl compatibility smoke tests.
 - [ ] T10-12: Add migration/import tests.
 - [ ] T10-13: Add abuse cases for oversized records, deep CBOR, and invalid CIDs.
 - [ ] T10-14: Add external relay/AppView verification notes.
@@ -33,13 +33,13 @@ Goal: close protocol gaps and verify behavior against external clients, fixtures
 ## HTTP Verification
 
 ```bash
-script/smoke/tempest_basic.sh http://localhost:4000
-script/smoke/tempest_compat.sh http://localhost:4000
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/tempest_basic.hurl
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/tempest_compat.hurl
 ```
 
 Expected:
 
-- Both smoke scripts exit successfully.
+- Both Hurl smoke tests exit successfully.
 - Output includes account DID, latest commit, exported CAR size, blob CID, and observed firehose seq.
 
 ## Done

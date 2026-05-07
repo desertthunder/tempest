@@ -15,8 +15,8 @@ Goal: make the project ready for PDS implementation without changing protocol be
 - [ ] T00-04: Include app version and boot status in health output.
 - [ ] T00-05: Add test coverage for health success.
 - [ ] T00-06: Add test coverage for invalid config refusing to boot.
-- [ ] T00-07: Document local server startup and smoke-test commands.
-- [ ] T00-08: Add a `script/smoke` directory placeholder with README.
+- [ ] T00-07: Document local server startup and Hurl smoke-test commands.
+- [ ] T00-08: Add a `test/smoke` directory placeholder with README.
 
 ## Integration Tests
 
@@ -27,8 +27,7 @@ Goal: make the project ready for PDS implementation without changing protocol be
 ## HTTP Verification
 
 ```bash
-curl -fsS http://localhost:4000/xrpc/_health
-http GET :4000/xrpc/_health
+hurl --test --variable base_url=http://localhost:4000 test/smoke/health.hurl
 ```
 
 Expected JSON fields:

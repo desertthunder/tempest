@@ -34,16 +34,7 @@ Goal: upload, reference, serve, and garbage collect blobs.
 ## HTTP Verification
 
 ```bash
-printf 'hello blob' > /tmp/tempest-blob.txt
-
-http --form POST :4000/xrpc/com.atproto.repo.uploadBlob \
-  "Authorization:Bearer $TOKEN" \
-  Content-Type:text/plain < /tmp/tempest-blob.txt
-
-http GET :4000/xrpc/com.atproto.sync.listBlobs did==did:plc:example
-
-curl -fsS \
-  "http://localhost:4000/xrpc/com.atproto.sync.getBlob?did=did:plc:example&cid=bafk..."
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/blobs.hurl
 ```
 
 ## Done

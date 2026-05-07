@@ -21,6 +21,6 @@ Milestone task files live in `docs/tasks/`.
 A milestone is done only when:
 
 - all listed tasks are complete;
-- the milestone HTTP verification passes against a running server;
+- the milestone Hurl smoke test passes against a running server;
 - integration tests cover the main path and one failure path;
 - `mix precommit` passes.

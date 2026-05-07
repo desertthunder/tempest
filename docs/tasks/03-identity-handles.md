@@ -32,10 +32,7 @@ Goal: give local accounts resolvable DID and handle metadata.
 ## HTTP Verification
 
 ```bash
-http GET :4000/.well-known/atproto-did Host:alice.test
-http GET :4000/xrpc/com.atproto.identity.resolveHandle handle==alice.test
-http POST :4000/xrpc/com.atproto.identity.updateHandle \
-  "Authorization:Bearer $TOKEN" handle=alice.test
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/identity.hurl
 ```
 
 ## Done
