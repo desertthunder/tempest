@@ -9,14 +9,14 @@ Goal: make the project ready for PDS implementation without changing protocol be
 
 ## Tasks
 
-- [ ] T00-01: Add `TEMPEST_DATA_DIR` config with dev/test defaults under `priv/tempest_dev` and test temp directories.
-- [ ] T00-02: Add a `Tempest.Config` module that validates hostname, public URL, data dir, and blob limits.
-- [ ] T00-03: Add a public `/xrpc/_health` route that returns JSON.
-- [ ] T00-04: Include app version and boot status in health output.
-- [ ] T00-05: Add test coverage for health success.
-- [ ] T00-06: Add test coverage for invalid config refusing to boot.
-- [ ] T00-07: Document local server startup and Hurl smoke-test commands.
-- [ ] T00-08: Add a `test/smoke` directory placeholder with README.
+- [x] T00-01: Add `TEMPEST_DATA_DIR` config with dev/test defaults under `priv/tempest_dev` and test temp directories.
+- [x] T00-02: Add a `Tempest.Config` module that validates hostname, public URL, data dir, and blob limits.
+- [x] T00-03: Add a public `/xrpc/_health` route that returns JSON.
+- [x] T00-04: Include app version and boot status in health output.
+- [x] T00-05: Add test coverage for health success.
+- [x] T00-06: Add test coverage for invalid config refusing to boot.
+- [x] T00-07: Document local server startup and Hurl smoke-test commands.
+- [x] T00-08: Add a `test/smoke` directory placeholder with README.
 
 ## Integration Tests
 

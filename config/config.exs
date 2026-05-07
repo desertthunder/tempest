@@ -9,7 +9,14 @@ import Config
 
 config :tempest,
   ecto_repos: [Tempest.Repo],
+  env: config_env(),
   generators: [timestamp_type: :utc_datetime]
+
+config :tempest, Tempest.Config,
+  hostname: "localhost",
+  public_url: "http://localhost:4000",
+  data_dir: Path.expand("../priv/tempest_dev", __DIR__),
+  blob_max_bytes: 10_000_000
 
 # Configure the endpoint
 config :tempest, TempestWeb.Endpoint,

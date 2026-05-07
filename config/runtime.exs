@@ -23,6 +23,22 @@ end
 config :tempest, TempestWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+if hostname = System.get_env("TEMPEST_HOSTNAME") do
+  config :tempest, Tempest.Config, hostname: hostname
+end
+
+if public_url = System.get_env("TEMPEST_PUBLIC_URL") do
+  config :tempest, Tempest.Config, public_url: public_url
+end
+
+if data_dir = System.get_env("TEMPEST_DATA_DIR") do
+  config :tempest, Tempest.Config, data_dir: data_dir
+end
+
+if blob_max_bytes = System.get_env("TEMPEST_BLOB_MAX_BYTES") do
+  config :tempest, Tempest.Config, blob_max_bytes: String.to_integer(blob_max_bytes)
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
@@ -53,9 +69,23 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host =
+    System.get_env("TEMPEST_HOSTNAME") ||
+      System.get_env("PHX_HOST") ||
+      raise """
+      environment variable TEMPEST_HOSTNAME is missing.
+      For example: tempest.example.com
+      """
+
+  public_url = System.get_env("TEMPEST_PUBLIC_URL") || "https://#{host}"
+  data_dir = System.get_env("TEMPEST_DATA_DIR") || "/var/lib/tempest"
 
   config :tempest, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+
+  config :tempest, Tempest.Config,
+    hostname: host,
+    public_url: public_url,
+    data_dir: data_dir
 
   config :tempest, TempestWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

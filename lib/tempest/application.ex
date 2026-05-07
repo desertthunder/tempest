@@ -7,6 +7,8 @@ defmodule Tempest.Application do
 
   @impl true
   def start(_type, _args) do
+    Tempest.Config.load!()
+
     children = [
       TempestWeb.Telemetry,
       Tempest.Repo,

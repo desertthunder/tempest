@@ -20,10 +20,11 @@ defmodule TempestWeb.Router do
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", TempestWeb do
-  #   pipe_through :api
-  # end
+  scope "/xrpc", TempestWeb do
+    pipe_through :api
+
+    get "/_health", HealthController, :show
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:tempest, :dev_routes) do

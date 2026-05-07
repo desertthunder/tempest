@@ -1,5 +1,14 @@
 import Config
 
+config :tempest, Tempest.Config,
+  data_dir:
+    Path.join([
+      System.tmp_dir!(),
+      "tempest_test",
+      System.get_env("MIX_TEST_PARTITION") || "default"
+    ]),
+  public_url: "http://localhost:4002"
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
