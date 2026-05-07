@@ -20,8 +20,7 @@ if System.get_env("PHX_SERVER") do
   config :tempest, TempestWeb.Endpoint, server: true
 end
 
-config :tempest, TempestWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+config :tempest, TempestWeb.Endpoint, http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
 if hostname = System.get_env("TEMPEST_HOSTNAME") do
   config :tempest, Tempest.Config, hostname: hostname

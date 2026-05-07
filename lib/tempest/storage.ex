@@ -52,8 +52,7 @@ defmodule Tempest.Storage do
       "dataDir" => public_path(config.data_dir, env),
       "accountDb" => public_path(account_db, env),
       "sequencerDb" => public_path(sequencer_db, env),
-      "writable" =>
-        writable?(config.data_dir) and File.exists?(account_db) and File.exists?(sequencer_db)
+      "writable" => writable?(config.data_dir) and File.exists?(account_db) and File.exists?(sequencer_db)
     }
   end
 
