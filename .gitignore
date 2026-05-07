@@ -35,3 +35,4 @@ tempest-*.tar
 npm-debug.log
 /assets/node_modules/
 
+.sandbox/
