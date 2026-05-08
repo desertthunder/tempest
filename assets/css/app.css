@@ -103,3 +103,153 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+.tempest-home {
+  --tempest-bg: #161c22;
+  --tempest-border: #2f414e;
+  --tempest-border-strong: #4c6472;
+  --tempest-green: #3ddc84;
+  --tempest-cyan: #29c7d8;
+
+  background:
+    linear-gradient(90deg, rgba(61, 220, 132, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(41, 199, 216, 0.035) 1px, transparent 1px),
+    var(--tempest-bg);
+  background-size: 42px 42px, 42px 42px, auto;
+}
+
+.tempest-home::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.018) 0,
+      rgba(255, 255, 255, 0.018) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  mix-blend-mode: screen;
+}
+
+.tempest-home > * {
+  position: relative;
+}
+
+.tempest-rule {
+  height: 1px;
+  margin: 1.5rem 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--tempest-border),
+    var(--tempest-border-strong),
+    var(--tempest-border),
+    transparent
+  );
+}
+
+.tempest-status-dot {
+  display: inline-block;
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(210, 222, 229, 0.04);
+}
+
+.tempest-status-dot--green {
+  background: var(--tempest-green);
+  box-shadow: 0 0 18px rgba(61, 220, 132, 0.45);
+  animation: tempest-pulse 3s ease-in-out infinite;
+}
+
+.tempest-status-dot--cyan {
+  background: var(--tempest-cyan);
+  box-shadow: 0 0 18px rgba(41, 199, 216, 0.38);
+  animation: tempest-pulse 3s ease-in-out 0.5s infinite;
+}
+
+.tempest-status-dot--dim {
+  background: #435866;
+}
+
+.tempest-cursor::after {
+  content: "_";
+  margin-left: 1px;
+  color: var(--tempest-green);
+  animation: tempest-cursor 1.1s steps(2, start) infinite;
+}
+
+.tempest-enter {
+  animation: tempest-enter 320ms ease both;
+}
+
+.tempest-delay-1 {
+  animation-delay: 60ms;
+}
+
+.tempest-delay-2 {
+  animation-delay: 120ms;
+}
+
+.tempest-delay-3 {
+  animation-delay: 180ms;
+}
+
+.tempest-delay-4 {
+  animation-delay: 240ms;
+}
+
+.tempest-delay-5 {
+  animation-delay: 300ms;
+}
+
+.tempest-delay-6 {
+  animation-delay: 360ms;
+}
+
+@keyframes tempest-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tempest-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.42;
+  }
+}
+
+@keyframes tempest-cursor {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tempest-enter,
+  .tempest-status-dot--green,
+  .tempest-status-dot--cyan,
+  .tempest-cursor::after {
+    animation: none;
+  }
+}

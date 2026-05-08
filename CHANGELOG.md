@@ -4,6 +4,8 @@
 
 ### 2026-05-07
 
+- Home page with weird "unix appliance" style
+
 - DID and handle validators, signing key generation, DID document builder, `/.well-known/atproto-did` route
 - DNS TXT and HTTPS well-known handle resolvers, SSRF protection, `resolveHandle`, and `updateHandle` with bidirectional verification.
 - SQLite account storage with password hashing, access and refresh token signing, session XRPC endpoints (`createSession`, `refreshSession`, `deleteSession`, `getSession`), and a bearer auth plug.
