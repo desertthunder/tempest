@@ -1,31 +1,28 @@
 # Tempest
 
-A self-hostable AT Protocol Personal Data Server (PDS) built in Elixir for single-users
-or small communities.
+Tempest is a self-hostable AT Protocol Personal Data Server (PDS) built with
+Elixir and Phoenix.
 
 ## PDS Completion TODO
 
-- [ ] Sync: CAR export, latest commit/status reads, and `subscribeRepos`.
+- [ ] Firehose: durable sequencing, CAR slices, cursor backfill, and `subscribeRepos`.
 - [ ] Blobs: upload, validate, serve, list, reference-check, and garbage collect.
-- [ ] Lexicons: generate pinned AT Protocol schemas and validate supported records/endpoints.
-- [ ] Auth/operations: token hardening, app passwords, admin tools, repo import/export/verify,
-      and backups.
-- [ ] Deployment: release packaging, Docker/Compose, HTTPS proxy docs, telemetry, and SMTP.
+- [ ] Lexicons: generated pinned schemas and broader endpoint/record validation.
 - [ ] Compatibility: official fixtures, SDK smoke tests, rate limits, and relay/AppView checks.
+- [ ] Auth and operations: OAuth, app passwords, admin tools, repo import/export/verify, and backups.
+- [ ] Deployment: release packaging, Docker/Compose, HTTPS proxy docs, telemetry, and SMTP.
 
-## Local Server
-
-Start the Phoenix server:
+## Run Locally
 
 ```bash
+mix setup
 mix phx.server
 ```
 
-Server boot creates `account.sqlite`, `sequencer.sqlite`, and local storage directories
-inside `TEMPEST_DATA_DIR` when they do not exist.
+The development server runs at `http://localhost:4000`.
 
-By default, development uses `localhost`, `http://localhost:4000`, a data directory under
-`priv/tempest_dev`, and a 10 MB blob limit. Override those settings with:
+Default development config uses `localhost`, `http://localhost:4000`, `priv/tempest_dev`, and a 10 MB blob limit.
+Override with:
 
 ```bash
 TEMPEST_HOSTNAME=localhost
@@ -34,5 +31,32 @@ TEMPEST_DATA_DIR=/absolute/path/to/tempest/priv/tempest_dev
 TEMPEST_BLOB_MAX_BYTES=10000000
 ```
 
-Run smoke tests with [hurl](https://hurl.dev/). See the [smoke test](./test/smoke/README.md)
-module for more details.
+Server boot creates `account.sqlite`, `sequencer.sqlite`, and local storage directories inside `TEMPEST_DATA_DIR`.
+
+## Endpoints
+
+Available as of [2026-05-08](./CHANGELOG.md#2026-05-08)
+
+- `GET /xrpc/_health`
+- `GET /xrpc/com.atproto.server.describeServer`
+- `POST /xrpc/com.atproto.server.createAccount`
+- `POST /xrpc/com.atproto.server.createSession`
+- `GET /xrpc/com.atproto.server.getSession`
+- `POST /xrpc/com.atproto.server.refreshSession`
+- `POST /xrpc/com.atproto.server.deleteSession`
+- `GET /xrpc/com.atproto.identity.resolveHandle`
+- `POST /xrpc/com.atproto.identity.updateHandle`
+- `GET /.well-known/atproto-did`
+- `POST /xrpc/com.atproto.repo.createRecord`
+- `POST /xrpc/com.atproto.repo.putRecord`
+- `POST /xrpc/com.atproto.repo.deleteRecord`
+- `GET /xrpc/com.atproto.repo.getRecord`
+- `GET /xrpc/com.atproto.repo.listRecords`
+- `GET /xrpc/com.atproto.repo.describeRepo`
+- `GET /xrpc/com.atproto.sync.getRepo`
+- `GET /xrpc/com.atproto.sync.getLatestCommit`
+- `GET /xrpc/com.atproto.sync.getRecord`
+- `GET /xrpc/com.atproto.sync.getBlocks`
+- `GET /xrpc/com.atproto.sync.getRepoStatus`
+- `GET /xrpc/com.atproto.sync.listRepos`
+- `GET /xrpc/com.atproto.sync.listBlobs`

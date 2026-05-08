@@ -2,14 +2,30 @@
 
 ## v0.1.0
 
+### 2026-05-08
+
+- Added pure-Elixir repository primitives for AT URIs, NSIDs, record keys, DIDs, TIDs,
+  CIDs, DRISL CBOR, CAR v1, MST operations, and signed commits.
+- Added per-account repository storage with blocks, records, commits, and repo metadata.
+- Initialized an empty repository when creating an account.
+- Added record writes and reads through `com.atproto.repo.createRecord`,
+  `putRecord`, `deleteRecord`, `getRecord`, `listRecords`, and `describeRepo`.
+- Added record validation boundaries, duplicate-rkey handling, swap checks, pagination,
+  and restart persistence coverage.
+- Added sync read support for `getRepo`, `getLatestCommit`, `getRecord`, `getBlocks`,
+  `getRepoStatus`, `listRepos`, and `listBlobs`.
+- Set CAR responses to `Content-Type: application/vnd.ipld.car`.
+
 ### 2026-05-07
 
-- Home page with weird "unix appliance" style
-
-- DID and handle validators, signing key generation, DID document builder, `/.well-known/atproto-did` route
-- DNS TXT and HTTPS well-known handle resolvers, SSRF protection, `resolveHandle`, and `updateHandle` with bidirectional verification.
-- SQLite account storage with password hashing, access and refresh token signing, session XRPC endpoints (`createSession`, `refreshSession`, `deleteSession`, `getSession`), and a bearer auth plug.
-
-- XRPC router pipeline, method registry, protocol-shaped JSON error renderer, verb mismatch handling, and `com.atproto.server.describeServer`.
-
-- `Tempest.Config` module with hostname/data-dir validation, `/xrpc/_health` JSON endpoint, and a `test/smoke` scaffold with Hurl verification commands.
+- Added the home page with a compact "unix appliance" style.
+- Added `Tempest.Config` with hostname and data-directory validation.
+- Added `/xrpc/_health` and `com.atproto.server.describeServer`.
+- Added the XRPC router pipeline, method registry, protocol-shaped JSON errors, and verb
+  mismatch handling.
+- Added SQLite account storage, password hashing, access/refresh tokens, session
+  endpoints, and bearer auth.
+- Added DID and handle validators, signing keys, DID document generation, hosted
+  DID discovery, handle resolution, handle update, and SSRF protection for remote handle
+  checks.
+- Added Hurl smoke test scaffolding.
