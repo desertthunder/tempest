@@ -39,6 +39,12 @@ defmodule Tempest.RepoCore.Tid.ClockTest do
     assert {:error, _reason} = start_supervised({Clock, clock_id: 1024})
   end
 
+  test "generates random clock IDs in the TID clock range" do
+    for _ <- 1..100 do
+      assert Clock.random_clock_id() in 0..Tid.max_clock_id()
+    end
+  end
+
   test "fails instead of overflowing the per-DID monotonic guard" do
     clock = start_supervised!({Clock, clock_id: 0})
 

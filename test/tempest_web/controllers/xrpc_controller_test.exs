@@ -53,7 +53,7 @@ defmodule TempestWeb.XrpcControllerTest do
   end
 
   test "registered but unimplemented method returns JSON 501", %{conn: conn} do
-    conn = get(conn, ~p"/xrpc/com.atproto.repo.getRecord")
+    conn = get(conn, ~p"/xrpc/com.atproto.sync.getRepo")
 
     response = json_response(conn, 501)
 
@@ -61,6 +61,6 @@ defmodule TempestWeb.XrpcControllerTest do
     assert response["error"] == "NotImplemented"
 
     assert response["message"] ==
-             "com.atproto.repo.getRecord is registered but not implemented"
+             "com.atproto.sync.getRepo is registered but not implemented"
   end
 end

@@ -38,6 +38,46 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert metadata(repo_db)["current_commit_cid"] == commit_cid
     assert metadata(repo_db)["current_rev"] == rev
     assert sequencer_event_count(account["did"], "repo.record.create") == 1
+
+    get_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => "records-alice.test",
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self"
+      })
+
+    get_response = json_response(get_conn, 200)
+    assert get_response["uri"] == response["uri"]
+    assert get_response["cid"] == response["cid"]
+    assert get_response["value"]["displayName"] == "Alice"
+
+    list_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.listRecords", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile"
+      })
+
+    list_response = json_response(list_conn, 200)
+    assert [listed] = list_response["records"]
+    assert listed["uri"] == response["uri"]
+    assert listed["cid"] == response["cid"]
+    assert listed["value"]["displayName"] == "Alice"
+
+    describe_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.describeRepo", %{"repo" => account["did"]})
+
+    describe_response = json_response(describe_conn, 200)
+    assert describe_response["did"] == account["did"]
+    assert describe_response["handle"] == "records-alice.test"
+    assert describe_response["didDoc"]["id"] == account["did"]
+    assert describe_response["collections"] == ["app.bsky.actor.profile"]
+    assert describe_response["handleIsCorrect"] == true
   end
 
   test "createRecord rejects duplicate rkey with conflict", %{conn: conn} do
@@ -104,6 +144,182 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert %{"error" => "InvalidRequest"} = json_response(denied_conn, 400)
   end
 
+  test "putRecord enforces swapRecord and swapCommit before replacing a record", %{conn: conn} do
+    account = create_account!(conn, "records-erin.test", "records-erin@example.com")
+    created = create_profile!(conn, account, "Erin")
+
+    wrong_swap_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.putRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self",
+        "swapRecord" => created["commit"]["cid"],
+        "record" => %{
+          "$type" => "app.bsky.actor.profile",
+          "displayName" => "Erin Updated"
+        }
+      })
+
+    assert %{"error" => "InvalidSwap"} = json_response(wrong_swap_conn, 409)
+
+    put_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.putRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self",
+        "swapRecord" => created["cid"],
+        "swapCommit" => created["commit"]["cid"],
+        "record" => %{
+          "$type" => "app.bsky.actor.profile",
+          "displayName" => "Erin Updated"
+        }
+      })
+
+    updated = json_response(put_conn, 200)
+    assert updated["uri"] == created["uri"]
+    assert updated["cid"] != created["cid"]
+    assert updated["commit"]["cid"] != created["commit"]["cid"]
+    assert updated["validationStatus"] == "valid"
+
+    get_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self"
+      })
+
+    assert json_response(get_conn, 200)["value"]["displayName"] == "Erin Updated"
+    assert sequencer_event_count(account["did"], "repo.record.put") == 1
+  end
+
+  test "deleteRecord removes current record from getRecord and listRecords", %{conn: conn} do
+    account = create_account!(conn, "records-finn.test", "records-finn@example.com")
+    created = create_profile!(conn, account, "Finn")
+
+    delete_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.deleteRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self",
+        "swapRecord" => created["cid"],
+        "swapCommit" => created["commit"]["cid"]
+      })
+
+    deleted = json_response(delete_conn, 200)
+    assert deleted["commit"]["cid"] != created["commit"]["cid"]
+
+    get_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self"
+      })
+
+    assert %{"error" => "RecordNotFound"} = json_response(get_conn, 400)
+
+    list_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.listRecords", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile"
+      })
+
+    assert json_response(list_conn, 200)["records"] == []
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 0
+    assert sequencer_event_count(account["did"], "repo.record.delete") == 1
+  end
+
+  test "listRecords paginates within a collection", %{conn: conn} do
+    account = create_account!(conn, "records-gia.test", "records-gia@example.com")
+
+    create_note!(conn, account, "a", "first")
+    create_note!(conn, account, "b", "second")
+    create_note!(conn, account, "c", "third")
+
+    first_page_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.listRecords", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.note",
+        "limit" => "2"
+      })
+
+    first_page = json_response(first_page_conn, 200)
+
+    assert Enum.map(first_page["records"], & &1["uri"]) == [
+             "at://#{account["did"]}/app.tempest.note/a",
+             "at://#{account["did"]}/app.tempest.note/b"
+           ]
+
+    assert first_page["cursor"] == "b"
+
+    second_page_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.listRecords", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.note",
+        "limit" => "2",
+        "cursor" => first_page["cursor"]
+      })
+
+    second_page = json_response(second_page_conn, 200)
+    assert Enum.map(second_page["records"], & &1["uri"]) == ["at://#{account["did"]}/app.tempest.note/c"]
+    refute Map.has_key?(second_page, "cursor")
+
+    reverse_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.listRecords", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.note",
+        "limit" => "2",
+        "reverse" => "true"
+      })
+
+    reverse_page = json_response(reverse_conn, 200)
+
+    assert Enum.map(reverse_page["records"], & &1["uri"]) == [
+             "at://#{account["did"]}/app.tempest.note/c",
+             "at://#{account["did"]}/app.tempest.note/b"
+           ]
+  end
+
+  test "records survive storage bootstrap and repository reopen", %{conn: conn} do
+    account = create_account!(conn, "records-hana.test", "records-hana@example.com")
+    created = create_profile!(conn, account, "Hana")
+
+    :ok =
+      Tempest.Config.load!()
+      |> Tempest.Storage.bootstrap!()
+
+    get_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self"
+      })
+
+    response = json_response(get_conn, 200)
+    assert response["uri"] == created["uri"]
+    assert response["cid"] == created["cid"]
+    assert response["value"]["displayName"] == "Hana"
+  end
+
   defp create_account!(conn, handle, email) do
     conn
     |> put_req_header("content-type", "application/json")
@@ -111,6 +327,36 @@ defmodule TempestWeb.Xrpc.RecordsTest do
       "handle" => handle,
       "email" => email,
       "password" => @password
+    })
+    |> json_response(200)
+  end
+
+  defp auth_json(conn, account) do
+    conn
+    |> recycle()
+    |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+    |> put_req_header("content-type", "application/json")
+  end
+
+  defp create_profile!(conn, account, display_name) do
+    conn
+    |> auth_json(account)
+    |> post(~p"/xrpc/com.atproto.repo.createRecord", profile_params(account["did"], display_name))
+    |> json_response(200)
+  end
+
+  defp create_note!(conn, account, rkey, text) do
+    conn
+    |> auth_json(account)
+    |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+      "repo" => account["did"],
+      "collection" => "app.tempest.note",
+      "rkey" => rkey,
+      "validate" => false,
+      "record" => %{
+        "$type" => "app.tempest.note",
+        "text" => text
+      }
     })
     |> json_response(200)
   end

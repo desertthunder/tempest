@@ -17,13 +17,13 @@ Goal: persist records in per-account repositories and expose repository XRPC rea
 - [x] T05-07: Implement record Lexicon validation boundary.
 - [x] T05-08: Implement `createRecord`.
 - [x] T05-09: Implement duplicate-rkey conflict handling.
-- [ ] T05-10: Implement `putRecord`.
-- [ ] T05-11: Implement `swapRecord` and `swapCommit`.
-- [ ] T05-12: Implement `deleteRecord`.
-- [ ] T05-13: Implement `getRecord`.
-- [ ] T05-14: Implement `listRecords` with pagination.
-- [ ] T05-15: Implement `describeRepo`.
-- [ ] T05-16: Add restart persistence integration test.
+- [x] T05-10: Implement `putRecord`.
+- [x] T05-11: Implement `swapRecord` and `swapCommit`.
+- [x] T05-12: Implement `deleteRecord`.
+- [x] T05-13: Implement `getRecord`.
+- [x] T05-14: Implement `listRecords` with pagination.
+- [x] T05-15: Implement `describeRepo`.
+- [x] T05-16: Add restart persistence integration test.
 
 ## Integration Tests
 

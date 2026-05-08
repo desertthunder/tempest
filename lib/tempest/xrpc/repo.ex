@@ -12,17 +12,65 @@ defmodule Tempest.Xrpc.Repo do
     end
   end
 
+  def put_record(conn, params, _method) do
+    case Records.put_record(conn.assigns.auth_context, params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
+  def delete_record(conn, params, _method) do
+    case Records.delete_record(conn.assigns.auth_context, params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
+  def get_record(_conn, params, _method) do
+    case Records.get_record(params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
+  def list_records(_conn, params, _method) do
+    case Records.list_records(params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
+  def describe_repo(_conn, params, _method) do
+    case Records.describe_repo(params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
   defp repo_error(:duplicate_record), do: {:error, 409, "InvalidRequest", "record already exists"}
-  defp repo_error(:invalid_swap), do: {:error, 409, "InvalidSwap", "swapCommit does not match current commit"}
+
+  defp repo_error(:invalid_swap),
+    do: {:error, 409, "InvalidSwap", "swap condition does not match current repository state"}
+
   defp repo_error(:repo_mismatch), do: {:error, 400, "InvalidRequest", "repo must match the authenticated account"}
+  defp repo_error(:repo_not_found), do: {:error, 400, "RepoNotFound", "repository could not be resolved"}
+  defp repo_error(:record_not_found), do: {:error, 400, "RecordNotFound", "record could not be found"}
+  defp repo_error(:invalid_repo), do: {:error, 400, "InvalidRequest", "repo is invalid"}
   defp repo_error(:invalid_collection), do: {:error, 400, "InvalidRequest", "collection is invalid"}
   defp repo_error(:invalid_rkey), do: {:error, 400, "InvalidRequest", "rkey is invalid"}
+  defp repo_error(:invalid_cid), do: {:error, 400, "InvalidRequest", "cid is invalid"}
+  defp repo_error(:invalid_limit), do: {:error, 400, "InvalidRequest", "limit must be between 1 and 100"}
+  defp repo_error(:invalid_reverse), do: {:error, 400, "InvalidRequest", "reverse must be a boolean"}
+  defp repo_error(:invalid_swap_record), do: {:error, 400, "InvalidRequest", "swapRecord is invalid"}
   defp repo_error(:invalid_swap_commit), do: {:error, 400, "InvalidRequest", "swapCommit is invalid"}
   defp repo_error(:invalid_validate), do: {:error, 400, "InvalidRequest", "validate must be a boolean"}
+  defp repo_error(:invalid_request_body), do: {:error, 400, "InvalidRequest", "request body is invalid"}
   defp repo_error(:missing_record_type), do: {:error, 400, "InvalidRequest", "record must include a $type field"}
   defp repo_error(:record_type_mismatch), do: {:error, 400, "InvalidRequest", "record $type must match collection"}
   defp repo_error(:unknown_lexicon), do: {:error, 400, "InvalidRequest", "record lexicon is unknown"}
   defp repo_error(:missing_signing_key), do: {:error, 500, "InternalServerError", "account has no active signing key"}
+  defp repo_error({:field_too_small, field}), do: {:error, 400, "InvalidRequest", "#{field} is too small"}
+  defp repo_error({:field_too_large, field}), do: {:error, 400, "InvalidRequest", "#{field} is too large"}
 
   defp repo_error({:invalid_record_key, key_type}),
     do: {:error, 400, "InvalidRequest", "record key does not match Lexicon key type #{key_type}"}

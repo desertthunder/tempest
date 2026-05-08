@@ -26,6 +26,12 @@ defmodule Tempest.RepoCore.Tid.Clock do
     GenServer.call(clock, {:next, did, opts})
   end
 
+  @spec random_clock_id() :: non_neg_integer()
+  def random_clock_id do
+    <<value::16>> = :crypto.strong_rand_bytes(2)
+    rem(value, Tid.max_clock_id() + 1)
+  end
+
   @impl GenServer
   def init(%{clock_id: clock_id}) do
     if clock_id in 0..Tid.max_clock_id() do
@@ -75,10 +81,5 @@ defmodule Tempest.RepoCore.Tid.Clock do
     else
       {:error, :timestamp_out_of_range}
     end
-  end
-
-  defp random_clock_id do
-    <<value::16>> = :crypto.strong_rand_bytes(2)
-    rem(value, Tid.max_clock_id() + 1)
   end
 end

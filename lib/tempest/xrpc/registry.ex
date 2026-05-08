@@ -97,7 +97,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :bearer,
       input: @json,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Repo, :put_record},
       errors: ["InvalidSwap"]
     },
     %Method{
@@ -106,7 +106,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :bearer,
       input: @json,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Repo, :delete_record},
       errors: ["InvalidSwap"]
     },
     %Method{
@@ -115,7 +115,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: nil,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Repo, :get_record},
       errors: ["RecordNotFound"]
     },
     %Method{
@@ -124,7 +124,16 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: nil,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Repo, :list_records},
+      errors: []
+    },
+    %Method{
+      nsid: "com.atproto.repo.describeRepo",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Repo, :describe_repo},
       errors: []
     },
     %Method{
