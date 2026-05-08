@@ -2,7 +2,9 @@ defmodule Tempest.RepoStorageTest do
   use Tempest.DataCase, async: false
 
   alias Tempest.{Accounts, Config, RepoStorage}
-  alias Tempest.RepoCore.{Commit, Tid}
+  alias Tempest.Accounts.Account
+  alias Tempest.Identity.KeyStore
+  alias Tempest.RepoCore.{Car, Cid, Commit, Tid}
 
   @password "correct horse battery staple"
 
@@ -62,6 +64,45 @@ defmodule Tempest.RepoStorageTest do
     assert commit.rev == metadata["current_rev"]
   end
 
+  test "exports stored repository blocks as a CAR rooted at the current commit" do
+    assert {:ok, created} =
+             Accounts.create_account(%{
+               "handle" => "repo-car.test",
+               "email" => "repo-car@example.com",
+               "password" => @password
+             })
+
+    path =
+      Config.load!()
+      |> Config.repo_db_path(created["did"])
+
+    on_exit(fn -> File.rm(path) end)
+
+    account = Repo.get_by!(Account, did: created["did"])
+    signing_key = KeyStore.active_key_for_account(account)
+
+    assert {:ok, _record} =
+             RepoStorage.create_record(account, signing_key, %{
+               collection: "app.bsky.actor.profile",
+               rkey: "self",
+               swap_commit: nil,
+               record: %{
+                 "$type" => "app.bsky.actor.profile",
+                 "displayName" => "Alice"
+               }
+             })
+
+    metadata = metadata(path)
+    stored_cids = block_cids(path)
+
+    assert {:ok, %{root: root, bytes: bytes}} = RepoStorage.export_car(created["did"])
+    assert root == metadata["current_commit_cid"]
+
+    assert {:ok, car} = Car.decode(bytes)
+    assert car.roots == [Cid.parse!(metadata["current_commit_cid"])]
+    assert Enum.map(car.blocks, &Cid.to_string(&1.cid)) == stored_cids
+  end
+
   defp table_names(path) do
     path
     |> fetch_all("""
@@ -83,6 +124,12 @@ defmodule Tempest.RepoStorageTest do
   defp scalar(path, sql) do
     [[value]] = fetch_all(path, sql)
     value
+  end
+
+  defp block_cids(path) do
+    path
+    |> fetch_all("SELECT cid FROM blocks ORDER BY inserted_at ASC, cid ASC")
+    |> List.flatten()
   end
 
   defp fetch_all(path, sql) do

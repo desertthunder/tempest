@@ -9,8 +9,8 @@ Goal: expose repository state through sync read endpoints.
 
 ## Tasks
 
-- [ ] T06-01: Implement full repo CAR export from stored blocks.
-- [ ] T06-02: Set `Content-Type: application/vnd.ipld.car` for `getRepo`.
+- [x] T06-01: Implement full repo CAR export from stored blocks.
+- [x] T06-02: Set `Content-Type: application/vnd.ipld.car` for `getRepo`.
 - [ ] T06-03: Implement `getRepo`.
 - [ ] T06-04: Implement `getLatestCommit`.
 - [ ] T06-05: Implement `getRecord` in `com.atproto.sync`.

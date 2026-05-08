@@ -83,10 +83,18 @@ defmodule TempestWeb.XrpcController do
 
     case apply(module, function, [conn, params, method]) do
       {:ok, body} ->
-        json(conn, body)
+        respond(conn, method, body)
 
       {:error, status, error, message} ->
         XrpcErrorJSON.render(conn, status, error, message)
     end
+  end
+
+  defp respond(conn, %{output: @json}, body), do: json(conn, body)
+
+  defp respond(conn, %{output: content_type}, body) when is_binary(content_type) and is_binary(body) do
+    conn
+    |> put_resp_content_type(content_type)
+    |> send_resp(200, body)
   end
 end

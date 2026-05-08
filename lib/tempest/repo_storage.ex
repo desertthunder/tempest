@@ -8,7 +8,7 @@ defmodule Tempest.RepoStorage do
   alias Tempest.Config
   alias Tempest.Identity.KeyStore
   alias Tempest.Identity.SigningKey
-  alias Tempest.RepoCore.{Cid, Commit, Did, Drisl, Mst, Tid}
+  alias Tempest.RepoCore.{Car, Cid, Commit, Did, Drisl, Mst, Tid}
   alias Tempest.RepoCore.Tid.Clock
   alias Tempest.Storage.Timestamp
 
@@ -251,6 +251,23 @@ defmodule Tempest.RepoStorage do
     end
   end
 
+  @doc """
+  Exports the repository as a CAR v1 archive rooted at the current commit.
+  """
+  def export_car(did, %Config{} = config \\ Config.load!()) when is_binary(did) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, metadata} <- repo_metadata(conn),
+             {:ok, root_cid} <- parse_cid(Map.get(metadata, "current_commit_cid")),
+             {:ok, blocks} <- car_blocks(conn),
+             {:ok, bytes} <- Car.encode([root_cid], blocks) do
+          {:ok, %{root: Cid.to_string(root_cid), bytes: bytes}}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
   def repo_db_path!(%Config{} = config, did) when is_binary(did) do
     with {:ok, did} <- Did.parse(did) do
       Config.repo_db_path(config, did)
@@ -357,6 +374,21 @@ defmodule Tempest.RepoStorage do
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  defp car_blocks(conn) do
+    with {:ok, rows} <- fetch_all(conn, "SELECT cid, bytes FROM blocks ORDER BY inserted_at ASC, cid ASC", []) do
+      Enum.reduce_while(rows, {:ok, []}, fn [cid, bytes], {:ok, blocks} ->
+        case Cid.parse(cid) do
+          {:ok, cid} -> {:cont, {:ok, [{cid, bytes} | blocks]}}
+          {:error, reason} -> {:halt, {:error, {:invalid_block_cid, reason}}}
+        end
+      end)
+      |> case do
+        {:ok, blocks} -> {:ok, Enum.reverse(blocks)}
+        {:error, reason} -> {:error, reason}
+      end
+    end
   end
 
   defp current_repo(conn) do
