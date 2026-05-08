@@ -28,6 +28,10 @@ defmodule Tempest.Config do
   def sequencer_db_path(%__MODULE__{data_dir: data_dir}),
     do: Path.join(data_dir, "sequencer.sqlite")
 
+  def repo_db_path(%__MODULE__{data_dir: data_dir}, did) when is_binary(did) do
+    Path.join([data_dir, "repos", repo_db_filename(did)])
+  end
+
   def data_dirs(%__MODULE__{data_dir: data_dir}) do
     Enum.map(~w(repos blobs tmp backups), &Path.join(data_dir, &1))
   end
@@ -162,5 +166,11 @@ defmodule Tempest.Config do
 
   defp dns_label?(label) do
     String.match?(label, ~r/\A[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\z/)
+  end
+
+  defp repo_db_filename(did) do
+    did
+    |> String.replace(~r/[^A-Za-z0-9._-]/, "_")
+    |> Kernel.<>(".sqlite")
   end
 end

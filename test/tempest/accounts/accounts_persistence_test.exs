@@ -22,11 +22,20 @@ defmodule Tempest.Accounts.PersistenceTest do
 
     account_db = Config.account_db_path(config)
     previous_dynamic_repo = Repo.get_dynamic_repo()
+    previous_config = Application.get_env(:tempest, Tempest.Config)
 
     on_exit(fn ->
       Repo.put_dynamic_repo(previous_dynamic_repo)
+      Application.put_env(:tempest, Tempest.Config, previous_config)
       File.rm_rf(data_dir)
     end)
+
+    Application.put_env(:tempest, Tempest.Config,
+      hostname: "localhost",
+      public_url: "http://localhost:4000",
+      data_dir: data_dir,
+      blob_max_bytes: 10_000_000
+    )
 
     assert :ok = Storage.bootstrap!(config)
 
@@ -42,6 +51,8 @@ defmodule Tempest.Accounts.PersistenceTest do
              })
 
     assert created["handle"] == "persist.test"
+    repo_db = Config.repo_db_path(config, created["did"])
+    assert File.exists?(repo_db)
     :ok = Supervisor.stop(first_repo)
 
     second_repo = start_repo!(account_db)

@@ -7,7 +7,7 @@ defmodule Tempest.Accounts do
 
   alias Tempest.Accounts.{Account, AuthContext, Password, Session, Tokens}
   alias Tempest.Identity
-  alias Tempest.Repo
+  alias Tempest.{Repo, RepoStorage}
 
   @public_fields [:did, :handle, :email, :active, :status]
 
@@ -29,12 +29,14 @@ defmodule Tempest.Accounts do
 
       Repo.transaction(fn ->
         with {:ok, account} <- Repo.insert(Account.create_changeset(%Account{}, account_attrs)),
-             {:ok, _signing_key} <- Identity.create_initial_signing_key(account),
+             {:ok, signing_key} <- Identity.create_initial_signing_key(account),
+             {:ok, _repo_path} <- RepoStorage.initialize_empty_repo(account, signing_key),
              {:ok, session} <-
                Repo.insert(new_session_changeset(account, refresh_token, Ecto.UUID.generate())) do
           {account, session}
         else
-          {:error, changeset} -> Repo.rollback({:validation, changeset})
+          {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback({:validation, changeset})
+          {:error, reason} -> Repo.rollback({:repo_initialization, reason})
         end
       end)
       |> case do
@@ -46,6 +48,9 @@ defmodule Tempest.Accounts do
 
         {:error, {:validation, changeset}} ->
           {:error, :validation, changeset}
+
+        {:error, {:repo_initialization, reason}} ->
+          {:error, :repo_initialization, reason}
       end
     else
       {:error, reason} -> {:error, :validation, reason}

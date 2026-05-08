@@ -29,6 +29,9 @@ defmodule Tempest.Xrpc.Server do
 
       {:error, :validation, message} ->
         {:error, 400, "InvalidRequest", message}
+
+      {:error, :repo_initialization, reason} ->
+        {:error, 500, "InternalServerError", "failed to initialize account repository: #{inspect(reason)}"}
     end
   end
 
