@@ -34,7 +34,13 @@ Goal: create local accounts and authenticate XRPC calls.
 ## HTTP Verification
 
 ```bash
-hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/accounts.hurl
+suffix="$(date +%s)"
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  --variable account_handle="smoke-${suffix}.test" \
+  --variable account_email="smoke-${suffix}@example.com" \
+  --variable account_password="correct horse battery staple" \
+  test/smoke/accounts.hurl
 ```
 
 ## Done

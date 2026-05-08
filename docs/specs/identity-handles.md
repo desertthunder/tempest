@@ -3,8 +3,6 @@ title: Identity and Handles
 updated: 2026-05-07
 ---
 
-# Identity and Handles
-
 Identity is rooted in DIDs. Handles are mutable DNS names that must resolve back to the DID, while the DID document must claim the handle.
 
 ## DID Support

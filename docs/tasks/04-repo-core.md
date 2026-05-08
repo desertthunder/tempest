@@ -23,7 +23,7 @@ Goal: build and prove the binary repository primitives before exposing writes br
 - [ ] T04-13: Add commit object builder with required `prev`.
 - [ ] T04-14: Add commit signing and verification.
 - [ ] T04-15: Add repo-core fixture import from official test cases.
-- [ ] T04-16: ~~Decide and document whether repo-core stays pure Elixir or uses Rustler.~~ We're doing Rustler
+- [ ] T04-16: ~~Decide and document whether repo-core stays pure Elixir or uses Rustler.~~ Pure elixir.
 
 ## Integration Tests
 
