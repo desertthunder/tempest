@@ -26,10 +26,12 @@ block graph traversal
 
 - Repo paths are `<collection>/<record-key>`.
 - Collections are valid normalized NSIDs.
+- TIDs are 13-character base32-sortable strings built from a 53-bit UNIX microsecond timestamp and 10-bit clock id.
 - Repository format is v3.
 - Commits include `did`, `version`, `data`, `rev`, `prev`, and `sig`.
 - In v3, `prev` must exist and is usually `null`.
 - The commit `rev` is a TID logical clock and must increase per repo.
+- CIDs are CIDv1 using DRISL-CBOR (`dag-cbor`, `0x71`) or raw (`0x55`) codecs, sha-256 multihashes, and lowercase `b` base32 strings outside CBOR.
 - MST shape must be deterministic from current key/value contents.
 - MST key depth uses SHA-256 and counts leading zero bits in two-bit chunks.
 - Repository export uses CAR v1 with MIME type `application/vnd.ipld.car`.
@@ -62,6 +64,7 @@ end
 
 Required before record write endpoints are considered complete:
 
+- TID official syntax examples and monotonic generation.
 - CID known bytes to known string.
 - DRISL CBOR known object to known bytes.
 - MST depth examples from the official spec.

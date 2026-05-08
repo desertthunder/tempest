@@ -11,8 +11,8 @@ Goal: build and prove the binary repository primitives before exposing writes br
 - [x] T04-01: Add AT URI parser and tests.
 - [x] T04-02: Add NSID parser and tests.
 - [x] T04-03: Add record-key parser and tests.
-- [ ] T04-04: Add TID generator with monotonic per-DID guard.
-- [ ] T04-05: Add CID wrapper and known-vector tests.
+- [x] T04-04: Add TID generator with monotonic per-DID guard.
+- [x] T04-05: Add CID wrapper and known-vector tests.
 - [ ] T04-06: Add DRISL CBOR encode/decode boundary.
 - [ ] T04-07: Add CBOR decode limits.
 - [ ] T04-08: Add CAR v1 reader.
