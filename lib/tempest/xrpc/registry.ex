@@ -151,7 +151,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: nil,
       output: @car,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Sync, :get_repo},
       errors: ["RepoNotFound"]
     },
     %Method{
@@ -160,8 +160,17 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: nil,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Sync, :get_latest_commit},
       errors: ["RepoNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.sync.getRecord",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @car,
+      handler: {Tempest.Xrpc.Sync, :get_record},
+      errors: ["RecordNotFound", "RepoNotFound"]
     },
     %Method{
       nsid: "com.atproto.sync.getRepoStatus",
@@ -169,7 +178,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: nil,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Sync, :get_repo_status},
       errors: ["RepoNotFound"]
     },
     %Method{

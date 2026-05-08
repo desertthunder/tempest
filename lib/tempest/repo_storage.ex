@@ -268,6 +268,22 @@ defmodule Tempest.RepoStorage do
     end
   end
 
+  @doc """
+  Returns the current commit CID and revision for the repository.
+  """
+  def latest_commit(did, %Config{} = config \\ Config.load!()) when is_binary(did) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, metadata} <- repo_metadata(conn),
+             {:ok, cid} <- fetch_metadata(metadata, "current_commit_cid"),
+             {:ok, rev} <- fetch_metadata(metadata, "current_rev") do
+          {:ok, %{cid: cid, rev: rev}}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
   def repo_db_path!(%Config{} = config, did) when is_binary(did) do
     with {:ok, did} <- Did.parse(did) do
       Config.repo_db_path(config, did)
@@ -409,6 +425,13 @@ defmodule Tempest.RepoStorage do
   defp repo_metadata(conn) do
     with {:ok, rows} <- fetch_all(conn, "SELECT key, value FROM repo_metadata", []) do
       {:ok, Map.new(rows, fn [key, value] -> {key, value} end)}
+    end
+  end
+
+  defp fetch_metadata(metadata, key) do
+    case Map.fetch(metadata, key) do
+      {:ok, value} -> {:ok, value}
+      :error -> {:error, {:missing_repo_metadata, key}}
     end
   end
 
