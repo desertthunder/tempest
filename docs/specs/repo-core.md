@@ -1,6 +1,6 @@
 ---
 title: Repository Core
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 Repo-core is the highest-risk subsystem. Treat it as a small storage engine with strict binary compatibility requirements.
@@ -32,6 +32,8 @@ block graph traversal
 - In v3, `prev` must exist and is usually `null`.
 - The commit `rev` is a TID logical clock and must increase per repo.
 - CIDs are CIDv1 using DRISL-CBOR (`dag-cbor`, `0x71`) or raw (`0x55`) codecs, sha-256 multihashes, and lowercase `b` base32 strings outside CBOR.
+- DRISL-CBOR is deterministic shortest-form CBOR with string-only map keys, bytewise encoded-key map ordering, no indefinite-length items, no floats for atproto data, and only tag 42 for CID links.
+- CBOR decoders must enforce input-size, nesting-depth, item-count, collection-length, string-size, and byte-string-size limits.
 - MST shape must be deterministic from current key/value contents.
 - MST key depth uses SHA-256 and counts leading zero bits in two-bit chunks.
 - Repository export uses CAR v1 with MIME type `application/vnd.ipld.car`.
@@ -67,6 +69,7 @@ Required before record write endpoints are considered complete:
 - TID official syntax examples and monotonic generation.
 - CID known bytes to known string.
 - DRISL CBOR known object to known bytes.
+- CBOR decoder limit and non-canonical encoding rejection cases.
 - MST depth examples from the official spec.
 - MST insert/get/delete/range.
 - Commit signing and verification.
@@ -102,6 +105,9 @@ Expected once repo-core and record writes are implemented:
 ## Sources
 
 - <https://atproto.com/specs/repository>
+- <https://atproto.com/specs/data-model>
+- <https://dasl.ing/drisl.html>
+- <https://www.rfc-editor.org/rfc/rfc8949>
 - <https://atproto.com/guides/data-repos>
 - <https://github.com/bluesky-social/atproto/tree/main/packages/repo>
 - <https://github.com/bluesky-social/atproto/tree/main/packages/atproto-interop-tests>
