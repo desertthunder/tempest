@@ -15,8 +15,8 @@ Goal: build and prove the binary repository primitives before exposing writes br
 - [x] T04-05: Add CID wrapper and known-vector tests.
 - [x] T04-06: Add DRISL CBOR encode/decode boundary.
 - [x] T04-07: Add CBOR decode limits.
-- [ ] T04-08: Add CAR v1 reader.
-- [ ] T04-09: Add CAR v1 writer.
+- [x] T04-08: Add CAR v1 reader.
+- [x] T04-09: Add CAR v1 writer.
 - [ ] T04-10: Add MST depth calculation tests from official examples.
 - [ ] T04-11: Add MST insert/get/delete.
 - [ ] T04-12: Add MST range scan.

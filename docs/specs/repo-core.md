@@ -34,6 +34,8 @@ block graph traversal
 - CIDs are CIDv1 using DRISL-CBOR (`dag-cbor`, `0x71`) or raw (`0x55`) codecs, sha-256 multihashes, and lowercase `b` base32 strings outside CBOR.
 - DRISL-CBOR is deterministic shortest-form CBOR with string-only map keys, bytewise encoded-key map ordering, no indefinite-length items, no floats for atproto data, and only tag 42 for CID links.
 - CBOR decoders must enforce input-size, nesting-depth, item-count, collection-length, string-size, and byte-string-size limits.
+- CAR v1 files use a DRISL metadata header with `version: 1` and `roots`, followed by varint-length-prefixed `{CID, block bytes}` sections.
+- CAR readers and writers must verify that section CIDs match the SHA-256 digest of their block bytes, tolerate arbitrary block order and duplicate blocks, and enforce size/count limits.
 - MST shape must be deterministic from current key/value contents.
 - MST key depth uses SHA-256 and counts leading zero bits in two-bit chunks.
 - Repository export uses CAR v1 with MIME type `application/vnd.ipld.car`.
@@ -70,6 +72,7 @@ Required before record write endpoints are considered complete:
 - CID known bytes to known string.
 - DRISL CBOR known object to known bytes.
 - CBOR decoder limit and non-canonical encoding rejection cases.
+- CAR v1 known bytes round trip and malformed archive rejection.
 - MST depth examples from the official spec.
 - MST insert/get/delete/range.
 - Commit signing and verification.
@@ -107,6 +110,8 @@ Expected once repo-core and record writes are implemented:
 - <https://atproto.com/specs/repository>
 - <https://atproto.com/specs/data-model>
 - <https://dasl.ing/drisl.html>
+- <https://dasl.ing/car.html>
+- <https://ipld.io/specs/transport/car/carv1/>
 - <https://www.rfc-editor.org/rfc/rfc8949>
 - <https://atproto.com/guides/data-repos>
 - <https://github.com/bluesky-social/atproto/tree/main/packages/repo>
