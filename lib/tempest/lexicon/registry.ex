@@ -34,11 +34,43 @@ defmodule Tempest.Lexicon.Registry do
   def normalize_ref(ref, _current_id) when is_binary(ref), do: ref
 
   defp documents do
-    :tempest
-    |> Application.get_env(@env_key, [])
+    config = Application.get_env(:tempest, @env_key, [])
+
+    config
     |> Keyword.get(:documents, %{})
     |> normalize_documents()
+    |> Map.merge(load_path_documents(Keyword.get(config, :paths, [])))
   end
+
+  defp load_path_documents(paths) when is_list(paths) do
+    paths
+    |> Enum.flat_map(&lexicon_files/1)
+    |> Enum.reduce(%{}, fn path, documents ->
+      case File.read(path) do
+        {:ok, json} ->
+          case Jason.decode(json) do
+            {:ok, %{"id" => id} = document} -> Map.put(documents, id, document)
+            {:ok, _value} -> documents
+            {:error, _reason} -> documents
+          end
+
+        {:error, _reason} ->
+          documents
+      end
+    end)
+  end
+
+  defp load_path_documents(_paths), do: %{}
+
+  defp lexicon_files(path) when is_binary(path) do
+    cond do
+      File.dir?(path) -> Path.wildcard(Path.join(path, "**/*.json"))
+      File.regular?(path) -> [path]
+      true -> []
+    end
+  end
+
+  defp lexicon_files(_path), do: []
 
   defp normalize_documents(documents) when is_map(documents) do
     Map.new(documents, fn

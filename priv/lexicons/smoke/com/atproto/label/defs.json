@@ -1,0 +1,16 @@
+{
+  "lexicon": 1,
+  "id": "com.atproto.label.defs",
+  "defs": {
+    "selfLabels": {
+      "type": "object",
+      "required": ["values"],
+      "properties": { "values": { "type": "array", "items": { "type": "ref", "ref": "#selfLabel" }, "maxLength": 10 } }
+    },
+    "selfLabel": {
+      "type": "object",
+      "required": ["val"],
+      "properties": { "val": { "type": "string", "maxLength": 128 } }
+    }
+  }
+}

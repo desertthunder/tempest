@@ -25,6 +25,8 @@ config :tempest, Tempest.Repo,
   default_transaction_mode: :immediate,
   pool_size: 5
 
+config :tempest, Tempest.Lexicon.Registry, paths: [Path.expand("../priv/lexicons/smoke", __DIR__)]
+
 # Configure the endpoint
 config :tempest, TempestWeb.Endpoint,
   url: [host: "localhost"],

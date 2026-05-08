@@ -37,7 +37,7 @@ jsonpath "$.uri" == "at://{{created_did}}/app.bsky.actor.profile/self"
 jsonpath "$.cid" exists
 jsonpath "$.commit.cid" exists
 jsonpath "$.commit.rev" exists
-jsonpath "$.validationStatus" exists
+jsonpath "$.validationStatus" == "valid"
 
 GET {{base_url}}/xrpc/com.atproto.repo.getRecord?repo={{created_did}}&collection=app.bsky.actor.profile&rkey=self
 HTTP 200

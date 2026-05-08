@@ -14,78 +14,38 @@ defmodule Tempest.LexiconFixtures do
   end
 
   def documents do
-    [profile(), strong_ref(), label_defs()]
+    smoke_fixture_paths()
+    |> Enum.map(fn path ->
+      path
+      |> File.read!()
+      |> Jason.decode!()
+    end)
   end
 
   def profile do
-    %{
-      "lexicon" => 1,
-      "id" => "app.bsky.actor.profile",
-      "defs" => %{
-        "main" => %{
-          "type" => "record",
-          "key" => "literal:self",
-          "record" => %{
-            "type" => "object",
-            "properties" => %{
-              "displayName" => %{"type" => "string", "maxGraphemes" => 64, "maxLength" => 640},
-              "description" => %{"type" => "string", "maxGraphemes" => 256, "maxLength" => 2560},
-              "pronouns" => %{"type" => "string", "maxGraphemes" => 20, "maxLength" => 200},
-              "website" => %{"type" => "string", "format" => "uri"},
-              "avatar" => %{"type" => "blob", "accept" => ["image/png", "image/jpeg"], "maxSize" => 1_000_000},
-              "banner" => %{"type" => "blob", "accept" => ["image/png", "image/jpeg"], "maxSize" => 1_000_000},
-              "labels" => %{"type" => "union", "refs" => ["com.atproto.label.defs#selfLabels"]},
-              "joinedViaStarterPack" => %{"type" => "ref", "ref" => "com.atproto.repo.strongRef"},
-              "pinnedPost" => %{"type" => "ref", "ref" => "com.atproto.repo.strongRef"},
-              "createdAt" => %{"type" => "string", "format" => "datetime"}
-            }
-          }
-        }
-      }
-    }
+    read_fixture!("app/bsky/actor/profile.json")
   end
 
   def strong_ref do
-    %{
-      "lexicon" => 1,
-      "id" => "com.atproto.repo.strongRef",
-      "defs" => %{
-        "main" => %{
-          "type" => "object",
-          "required" => ["uri", "cid"],
-          "properties" => %{
-            "uri" => %{"type" => "string", "format" => "at-uri"},
-            "cid" => %{"type" => "string", "format" => "cid"}
-          }
-        }
-      }
-    }
+    read_fixture!("com/atproto/repo/strongRef.json")
   end
 
   def label_defs do
-    %{
-      "lexicon" => 1,
-      "id" => "com.atproto.label.defs",
-      "defs" => %{
-        "selfLabels" => %{
-          "type" => "object",
-          "required" => ["values"],
-          "properties" => %{
-            "values" => %{
-              "type" => "array",
-              "items" => %{"type" => "ref", "ref" => "#selfLabel"},
-              "maxLength" => 10
-            }
-          }
-        },
-        "selfLabel" => %{
-          "type" => "object",
-          "required" => ["val"],
-          "properties" => %{
-            "val" => %{"type" => "string", "maxLength" => 128}
-          }
-        }
-      }
-    }
+    read_fixture!("com/atproto/label/defs.json")
+  end
+
+  defp smoke_fixture_paths do
+    Path.wildcard(Path.join(fixture_root(), "**/*.json"))
+  end
+
+  defp read_fixture!(relative_path) do
+    fixture_root()
+    |> Path.join(relative_path)
+    |> File.read!()
+    |> Jason.decode!()
+  end
+
+  defp fixture_root do
+    Path.expand("../../priv/lexicons/smoke", __DIR__)
   end
 end
