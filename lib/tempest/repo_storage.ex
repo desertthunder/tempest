@@ -8,7 +8,8 @@ defmodule Tempest.RepoStorage do
   alias Tempest.Config
   alias Tempest.Identity.KeyStore
   alias Tempest.Identity.SigningKey
-  alias Tempest.RepoCore.{Cid, Commit, Did, Mst, Tid}
+  alias Tempest.RepoCore.{Cid, Commit, Did, Drisl, Mst, Tid}
+  alias Tempest.Storage.Timestamp
 
   @sqlite_bootstrap """
   PRAGMA journal_mode = WAL;
@@ -96,6 +97,37 @@ defmodule Tempest.RepoStorage do
     end
   end
 
+  @doc """
+  Creates a record and advances the repository head commit.
+  """
+  def create_record(%Account{} = account, %SigningKey{} = signing_key, attrs, %Config{} = config \\ Config.load!())
+      when is_map(attrs) do
+    with {:ok, private_key} <- KeyStore.decrypt_private_key(signing_key),
+         {:ok, record_bytes} <- Drisl.encode(attrs.record),
+         record_cid = Cid.for_drisl(record_bytes),
+         {:ok, conn, _path} <- open_repo(config, account.did) do
+      transact(conn, fn ->
+        with {:ok, current} <- current_repo(conn),
+             :ok <- ensure_swap_commit(current, attrs.swap_commit),
+             :ok <- ensure_record_absent(conn, attrs.collection, attrs.rkey),
+             {:ok, repo} <- build_record_repo(account.did, private_key, current, attrs, record_cid, record_bytes),
+             :ok <- insert_blocks(conn, repo.blocks, repo.inserted_at),
+             :ok <- insert_record(conn, repo),
+             :ok <- insert_commit(conn, repo),
+             :ok <- update_metadata(conn, repo) do
+          {:ok,
+           %{
+             uri: repo.uri,
+             record_cid: repo.record_cid,
+             commit_cid: repo.commit_cid,
+             rev: repo.rev
+           }}
+        end
+      end)
+      |> close_and_return(conn)
+    end
+  end
+
   def repo_db_path!(%Config{} = config, did) when is_binary(did) do
     with {:ok, did} <- Did.parse(did) do
       Config.repo_db_path(config, did)
@@ -121,7 +153,7 @@ defmodule Tempest.RepoStorage do
          {:ok, commit} <- Commit.sign(unsigned_commit, private_key),
          {:ok, commit_bytes} <- Commit.encode(commit),
          {:ok, commit_cid} <- Commit.cid(commit) do
-      inserted_at = timestamp()
+      inserted_at = Timestamp.iso8601_utc()
 
       {:ok,
        %{
@@ -142,6 +174,11 @@ defmodule Tempest.RepoStorage do
         :ok ->
           Sqlite3.execute(conn, "COMMIT;")
 
+        {:ok, value} ->
+          with :ok <- Sqlite3.execute(conn, "COMMIT;") do
+            {:ok, value}
+          end
+
         {:error, reason} ->
           _ = Sqlite3.execute(conn, "ROLLBACK;")
           {:error, reason}
@@ -154,7 +191,21 @@ defmodule Tempest.RepoStorage do
 
     case {result, close_result} do
       {:ok, :ok} -> {:ok, path}
+      {{:ok, value}, :ok} -> {:ok, value}
       {{:error, reason}, :ok} -> {:error, reason}
+      {:ok, {:error, reason}} -> {:error, reason}
+      {{:error, reason}, {:error, _close_reason}} -> {:error, reason}
+    end
+  end
+
+  defp close_and_return(result, conn) do
+    close_result = Sqlite3.close(conn)
+
+    case {result, close_result} do
+      {{:ok, value}, :ok} -> {:ok, value}
+      {:ok, :ok} -> :ok
+      {{:error, reason}, :ok} -> {:error, reason}
+      {{:ok, _value}, {:error, reason}} -> {:error, reason}
       {:ok, {:error, reason}} -> {:error, reason}
       {{:error, reason}, {:error, _close_reason}} -> {:error, reason}
     end
@@ -173,7 +224,7 @@ defmodule Tempest.RepoStorage do
       cid_value = Cid.to_string(cid)
       codec = Atom.to_string(cid.codec)
 
-      case execute(conn, "INSERT INTO blocks (cid, codec, bytes, inserted_at) VALUES (?1, ?2, ?3, ?4)", [
+      case execute(conn, "INSERT OR IGNORE INTO blocks (cid, codec, bytes, inserted_at) VALUES (?1, ?2, ?3, ?4)", [
              cid_value,
              codec,
              bytes,
@@ -183,6 +234,124 @@ defmodule Tempest.RepoStorage do
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  defp current_repo(conn) do
+    with {:ok, metadata} <- repo_metadata(conn),
+         {:ok, entries} <- current_record_entries(conn),
+         {:ok, prev_cid} <- parse_cid(Map.get(metadata, "current_commit_cid")) do
+      {:ok,
+       %{
+         rev: Map.fetch!(metadata, "current_rev"),
+         commit_cid: Map.fetch!(metadata, "current_commit_cid"),
+         root_cid: Map.fetch!(metadata, "current_root_cid"),
+         prev_cid: prev_cid,
+         entries: entries
+       }}
+    end
+  end
+
+  defp repo_metadata(conn) do
+    with {:ok, rows} <- fetch_all(conn, "SELECT key, value FROM repo_metadata", []) do
+      {:ok, Map.new(rows, fn [key, value] -> {key, value} end)}
+    end
+  end
+
+  defp current_record_entries(conn) do
+    with {:ok, rows} <- fetch_all(conn, "SELECT path, cid FROM records ORDER BY path", []) do
+      Enum.reduce_while(rows, {:ok, []}, fn [path, cid], {:ok, entries} ->
+        case Cid.parse(cid) do
+          {:ok, cid} -> {:cont, {:ok, [{path, cid} | entries]}}
+          {:error, reason} -> {:halt, {:error, {:invalid_record_cid, reason}}}
+        end
+      end)
+    end
+  end
+
+  defp ensure_swap_commit(_current, nil), do: :ok
+  defp ensure_swap_commit(%{commit_cid: current_commit_cid}, current_commit_cid), do: :ok
+  defp ensure_swap_commit(_current, _swap_commit), do: {:error, :invalid_swap}
+
+  defp ensure_record_absent(conn, collection, rkey) do
+    with {:ok, [[count]]} <-
+           fetch_all(conn, "SELECT COUNT(*) FROM records WHERE collection = ?1 AND rkey = ?2", [collection, rkey]) do
+      if count == 0 do
+        :ok
+      else
+        {:error, :duplicate_record}
+      end
+    end
+  end
+
+  defp build_record_repo(did, private_key, current, attrs, record_cid, record_bytes) do
+    path = attrs.collection <> "/" <> attrs.rkey
+    entries = Enum.reverse(current.entries) ++ [{path, record_cid}]
+
+    with {:ok, mst} <- Mst.from_entries(entries),
+         {:ok, %{root: root, blocks: mst_blocks}} <- Mst.serialize(mst),
+         {:ok, commit} <- signed_commit(did, private_key, root, current.prev_cid, current.rev),
+         {:ok, commit_bytes} <- Commit.encode(commit),
+         {:ok, commit_cid} <- Commit.cid(commit) do
+      inserted_at = Timestamp.iso8601_utc()
+      commit_cid_string = Cid.to_string(commit_cid)
+      record_cid_string = Cid.to_string(record_cid)
+      root_cid_string = Cid.to_string(root)
+
+      {:ok,
+       %{
+         collection: attrs.collection,
+         rkey: attrs.rkey,
+         path: path,
+         uri: "at://" <> did <> "/" <> path,
+         record: attrs.record,
+         record_cid: record_cid_string,
+         rev: commit.rev,
+         prev_cid: current.commit_cid,
+         root_cid: root_cid_string,
+         commit_cid: commit_cid_string,
+         commit_bytes: commit_bytes,
+         inserted_at: inserted_at,
+         blocks: [{record_cid, record_bytes}] ++ mst_blocks ++ [{commit_cid, commit_bytes}]
+       }}
+    end
+  end
+
+  defp signed_commit(did, private_key, root, prev_cid, current_rev) do
+    with {:ok, unsigned_commit} <- Commit.new(did: did, data: root, rev: next_rev(current_rev), prev: prev_cid) do
+      Commit.sign(unsigned_commit, private_key)
+    end
+  end
+
+  defp next_rev(current_rev) do
+    current = Tid.parse!(current_rev)
+    proposed = Tid.new!(Tid.now_unix_microseconds(), random_clock_id())
+
+    if proposed.integer > current.integer do
+      proposed.value
+    else
+      current.integer
+      |> Kernel.+(1)
+      |> Tid.from_integer!()
+      |> Map.fetch!(:value)
+    end
+  end
+
+  defp insert_record(conn, repo) do
+    execute(
+      conn,
+      """
+      INSERT INTO records (collection, rkey, path, cid, record_json, created_at, updated_at)
+      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+      """,
+      [
+        repo.collection,
+        repo.rkey,
+        repo.path,
+        repo.record_cid,
+        Jason.encode!(repo.record),
+        repo.inserted_at
+      ]
+    )
   end
 
   defp insert_commit(conn, repo) do
@@ -195,7 +364,7 @@ defmodule Tempest.RepoStorage do
       [
         repo.commit_cid,
         repo.rev,
-        nil,
+        Map.get(repo, :prev_cid),
         repo.root_cid,
         repo.commit_bytes,
         repo.inserted_at
@@ -218,6 +387,25 @@ defmodule Tempest.RepoStorage do
              key,
              value,
              repo.inserted_at
+           ]) do
+        :ok -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp update_metadata(conn, repo) do
+    metadata = %{
+      "current_rev" => repo.rev,
+      "current_commit_cid" => repo.commit_cid,
+      "current_root_cid" => repo.root_cid
+    }
+
+    Enum.reduce_while(metadata, :ok, fn {key, value}, :ok ->
+      case execute(conn, "UPDATE repo_metadata SET value = ?1, updated_at = ?2 WHERE key = ?3", [
+             value,
+             repo.inserted_at,
+             key
            ]) do
         :ok -> {:cont, :ok}
         {:error, reason} -> {:halt, {:error, reason}}
@@ -249,14 +437,28 @@ defmodule Tempest.RepoStorage do
     end
   end
 
+  defp fetch_all(conn, sql, params) do
+    with {:ok, statement} <- Sqlite3.prepare(conn, sql),
+         :ok <- Sqlite3.bind(statement, params),
+         {:ok, rows} <- Sqlite3.fetch_all(conn, statement),
+         :ok <- Sqlite3.release(conn, statement) do
+      {:ok, rows}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp parse_cid(nil), do: {:error, :missing_commit_cid}
+
+  defp parse_cid(cid) do
+    case Cid.parse(cid) do
+      {:ok, cid} -> {:ok, cid}
+      {:error, reason} -> {:error, {:invalid_commit_cid, reason}}
+    end
+  end
+
   defp random_clock_id do
     <<value::16>> = :crypto.strong_rand_bytes(2)
     rem(value, Tid.max_clock_id() + 1)
-  end
-
-  defp timestamp do
-    DateTime.utc_now()
-    |> DateTime.truncate(:second)
-    |> DateTime.to_iso8601()
   end
 end

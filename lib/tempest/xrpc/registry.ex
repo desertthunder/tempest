@@ -88,7 +88,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :bearer,
       input: @json,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Repo, :create_record},
       errors: ["InvalidSwap"]
     },
     %Method{

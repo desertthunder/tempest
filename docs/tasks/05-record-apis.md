@@ -8,15 +8,15 @@ Goal: persist records in per-account repositories and expose repository XRPC rea
 
 ## Tasks
 
-- [ ] T05-01: Add per-DID repo database creation.
-- [ ] T05-02: Add `blocks` table.
-- [ ] T05-03: Add `records` table.
-- [ ] T05-04: Add `commits` table.
-- [ ] T05-05: Add `repo_metadata` table.
-- [ ] T05-06: Initialize empty repo on account creation.
-- [ ] T05-07: Implement record Lexicon validation boundary.
-- [ ] T05-08: Implement `createRecord`.
-- [ ] T05-09: Implement duplicate-rkey conflict handling.
+- [x] T05-01: Add per-DID repo database creation.
+- [x] T05-02: Add `blocks` table.
+- [x] T05-03: Add `records` table.
+- [x] T05-04: Add `commits` table.
+- [x] T05-05: Add `repo_metadata` table.
+- [x] T05-06: Initialize empty repo on account creation.
+- [x] T05-07: Implement record Lexicon validation boundary.
+- [x] T05-08: Implement `createRecord`.
+- [x] T05-09: Implement duplicate-rkey conflict handling.
 - [ ] T05-10: Implement `putRecord`.
 - [ ] T05-11: Implement `swapRecord` and `swapCommit`.
 - [ ] T05-12: Implement `deleteRecord`.
