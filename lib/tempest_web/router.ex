@@ -17,6 +17,7 @@ defmodule TempestWeb.Router do
   pipeline :xrpc do
     plug :accepts, ["json"]
     plug :put_xrpc_cors_headers
+    plug TempestWeb.Plugs.XrpcAuth
   end
 
   scope "/", TempestWeb do

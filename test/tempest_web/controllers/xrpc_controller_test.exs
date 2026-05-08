@@ -53,10 +53,7 @@ defmodule TempestWeb.XrpcControllerTest do
   end
 
   test "registered but unimplemented method returns JSON 501", %{conn: conn} do
-    conn =
-      conn
-      |> put_req_header("content-type", "application/json")
-      |> post(~p"/xrpc/com.atproto.server.createSession", Jason.encode!(%{}))
+    conn = get(conn, ~p"/xrpc/com.atproto.identity.resolveHandle")
 
     response = json_response(conn, 501)
 
@@ -64,6 +61,6 @@ defmodule TempestWeb.XrpcControllerTest do
     assert response["error"] == "NotImplemented"
 
     assert response["message"] ==
-             "com.atproto.server.createSession is registered but not implemented"
+             "com.atproto.identity.resolveHandle is registered but not implemented"
   end
 end

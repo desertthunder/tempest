@@ -11,18 +11,18 @@ Goal: create local accounts and authenticate XRPC calls.
 
 - [x] T02-01: Replace Postgres dependency/config with SQLite-first config if still present.
 - [x] T02-02: Add migrations or bootstrap code for `account.sqlite`.
-- [ ] T02-03: Add `accounts` table and schema/context.
-- [ ] T02-04: Add password hashing dependency and wrapper.
-- [ ] T02-05: Implement account creation with validation.
-- [ ] T02-06: Add refresh token table and hashed storage.
-- [ ] T02-07: Add access token signing and verification.
-- [ ] T02-08: Implement `createSession`.
-- [ ] T02-09: Implement `refreshSession` with token rotation.
-- [ ] T02-10: Implement `deleteSession`.
-- [ ] T02-11: Implement `getSession`.
-- [ ] T02-12: Add bearer auth plug and auth context assign.
-- [ ] T02-13: Add integration tests for create, login, refresh, delete.
-- [ ] T02-14: Add failure tests for wrong password and reused refresh token.
+- [x] T02-03: Add `accounts` table and schema/context.
+- [x] T02-04: Add password hashing dependency and wrapper.
+- [x] T02-05: Implement account creation with validation.
+- [x] T02-06: Add refresh token table and hashed storage.
+- [x] T02-07: Add access token signing and verification.
+- [x] T02-08: Implement `createSession`.
+- [x] T02-09: Implement `refreshSession` with token rotation.
+- [x] T02-10: Implement `deleteSession`.
+- [x] T02-11: Implement `getSession`.
+- [x] T02-12: Add bearer auth plug and auth context assign.
+- [x] T02-13: Add integration tests for create, login, refresh, delete.
+- [x] T02-14: Add failure tests for wrong password and reused refresh token.
 
 ## Integration Tests
 

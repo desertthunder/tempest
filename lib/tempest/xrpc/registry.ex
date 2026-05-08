@@ -25,7 +25,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: @json,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Server, :create_account},
       errors: ["InvalidInviteCode", "HandleNotAvailable"]
     },
     %Method{
@@ -34,25 +34,34 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: @json,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Server, :create_session},
       errors: ["AuthenticationRequired", "AccountTakedown"]
     },
     %Method{
       nsid: "com.atproto.server.refreshSession",
       kind: :procedure,
       auth: :bearer,
-      input: @json,
+      input: nil,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Server, :refresh_session},
       errors: ["ExpiredToken", "InvalidToken"]
     },
     %Method{
       nsid: "com.atproto.server.deleteSession",
       kind: :procedure,
       auth: :bearer,
-      input: @json,
+      input: nil,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Server, :delete_session},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
+      nsid: "com.atproto.server.getSession",
+      kind: :query,
+      auth: :bearer,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :get_session},
       errors: ["ExpiredToken", "InvalidToken"]
     },
     %Method{
