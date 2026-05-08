@@ -170,21 +170,19 @@ defmodule Tempest.RepoStorage do
          {:ok, conn, _path} <- open_repo(config, account.did) do
       transact(conn, fn ->
         with {:ok, current} <- current_repo(conn),
-             :ok <- ensure_swap_commit(current, attrs.swap_commit),
-             {:ok, existing_record} <- current_record(conn, attrs.collection, attrs.rkey),
-             :ok <- ensure_swap_record(existing_record, attrs.swap_record) do
+             {:ok, existing_record} <- current_record(conn, attrs.collection, attrs.rkey) do
           case existing_record do
             nil ->
               {:ok,
                %{
                  uri: "at://" <> account.did <> "/" <> attrs.collection <> "/" <> attrs.rkey,
-                 commit_cid: current.commit_cid,
-                 rev: current.rev,
                  deleted?: false
                }}
 
             _record ->
-              with {:ok, repo} <- build_delete_record_repo(account.did, private_key, current, attrs),
+              with :ok <- ensure_swap_commit(current, attrs.swap_commit),
+                   :ok <- ensure_swap_record(existing_record, attrs.swap_record),
+                   {:ok, repo} <- build_delete_record_repo(account.did, private_key, current, attrs),
                    :ok <- insert_blocks(conn, repo.blocks, repo.inserted_at),
                    :ok <- delete_record_row(conn, repo.collection, repo.rkey),
                    :ok <- insert_commit(conn, repo),

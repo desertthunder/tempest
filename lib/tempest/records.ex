@@ -83,13 +83,17 @@ defmodule Tempest.Records do
              swap_commit: input.swap_commit
            }),
          :ok <- maybe_insert_delete_event(account.did, stored) do
-      {:ok,
-       %{
-         commit: %{
-           cid: stored.commit_cid,
-           rev: stored.rev
-         }
-       }}
+      if stored.deleted? do
+        {:ok,
+         %{
+           commit: %{
+             cid: stored.commit_cid,
+             rev: stored.rev
+           }
+         }}
+      else
+        {:ok, %{}}
+      end
     end
   end
 

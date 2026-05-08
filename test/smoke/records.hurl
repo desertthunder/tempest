@@ -157,3 +157,18 @@ HTTP 200
 [Asserts]
 header "content-type" contains "application/json"
 jsonpath "$.records[0]" not exists
+
+POST {{base_url}}/xrpc/com.atproto.repo.deleteRecord
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+{
+  "repo": "{{created_did}}",
+  "collection": "app.bsky.actor.profile",
+  "rkey": "self",
+  "swapRecord": "{{updated_cid}}",
+  "swapCommit": "{{updated_commit_cid}}"
+}
+HTTP 200
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.commit" not exists

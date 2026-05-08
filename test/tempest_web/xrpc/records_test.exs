@@ -238,6 +238,20 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert json_response(list_conn, 200)["records"] == []
     assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 0
     assert sequencer_event_count(account["did"], "repo.record.delete") == 1
+
+    absent_delete_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.deleteRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self",
+        "swapRecord" => created["cid"],
+        "swapCommit" => created["commit"]["cid"]
+      })
+
+    refute Map.has_key?(json_response(absent_delete_conn, 200), "commit")
+    assert sequencer_event_count(account["did"], "repo.record.delete") == 1
   end
 
   test "listRecords paginates within a collection", %{conn: conn} do
