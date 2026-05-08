@@ -38,6 +38,8 @@ block graph traversal
 - CAR readers and writers must verify that section CIDs match the SHA-256 digest of their block bytes, tolerate arbitrary block order and duplicate blocks, and enforce size/count limits.
 - MST shape must be deterministic from current key/value contents.
 - MST key depth uses SHA-256 and counts leading zero bits in two-bit chunks.
+- MST nodes serialize as DRISL objects with `l` and `e`; entries use `p`, `k`, `v`, and `t`, with byte-string key suffix compression scoped to each node.
+- Empty repositories serialize as a single empty MST node. Empty intermediate MST nodes are allowed only to preserve depth levels and must not be pruned between populated nodes.
 - Repository export uses CAR v1 with MIME type `application/vnd.ipld.car`.
 
 ## Implementation Boundary
@@ -75,6 +77,7 @@ Required before record write endpoints are considered complete:
 - CAR v1 known bytes round trip and malformed archive rejection.
 - MST depth examples from the official spec.
 - MST insert/get/delete/range.
+- MST deterministic root regardless of insertion order.
 - Commit signing and verification.
 - CAR export/import round trip.
 - Repo diff operation inversion against fixtures.
