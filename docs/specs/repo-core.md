@@ -36,7 +36,9 @@ block graph traversal
 
 ## Implementation Boundary
 
-Pure Elixir is acceptable only if golden tests prove compatibility. Rustler is acceptable for byte-level work.
+Repo-core is implemented in pure Elixir. Do not use Rustler for repository primitives unless this spec is explicitly revised.
+
+Golden tests and official atproto vectors are the compatibility boundary for byte-level work.
 
 Candidate API:
 

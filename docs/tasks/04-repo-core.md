@@ -8,9 +8,9 @@ Goal: build and prove the binary repository primitives before exposing writes br
 
 ## Tasks
 
-- [ ] T04-01: Add AT URI parser and tests.
-- [ ] T04-02: Add NSID parser and tests.
-- [ ] T04-03: Add record-key parser and tests.
+- [x] T04-01: Add AT URI parser and tests.
+- [x] T04-02: Add NSID parser and tests.
+- [x] T04-03: Add record-key parser and tests.
 - [ ] T04-04: Add TID generator with monotonic per-DID guard.
 - [ ] T04-05: Add CID wrapper and known-vector tests.
 - [ ] T04-06: Add DRISL CBOR encode/decode boundary.
@@ -23,7 +23,7 @@ Goal: build and prove the binary repository primitives before exposing writes br
 - [ ] T04-13: Add commit object builder with required `prev`.
 - [ ] T04-14: Add commit signing and verification.
 - [ ] T04-15: Add repo-core fixture import from official test cases.
-- [ ] T04-16: ~~Decide and document whether repo-core stays pure Elixir or uses Rustler.~~ Pure elixir.
+- [x] T04-16: ~~Decide and document whether repo-core stays pure Elixir or uses Rustler.~~ Pure Elixir.
 
 ## Integration Tests
 
