@@ -164,6 +164,15 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["RepoNotFound"]
     },
     %Method{
+      nsid: "com.atproto.sync.getBlocks",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @car,
+      handler: {Tempest.Xrpc.Sync, :get_blocks},
+      errors: ["RepoNotFound", "BlockNotFound"]
+    },
+    %Method{
       nsid: "com.atproto.sync.getRecord",
       kind: :query,
       auth: :none,
@@ -173,12 +182,30 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["RecordNotFound", "RepoNotFound"]
     },
     %Method{
+      nsid: "com.atproto.sync.listRepos",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Sync, :list_repos},
+      errors: []
+    },
+    %Method{
       nsid: "com.atproto.sync.getRepoStatus",
       kind: :query,
       auth: :none,
       input: nil,
       output: @json,
       handler: {Tempest.Xrpc.Sync, :get_repo_status},
+      errors: ["RepoNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.sync.listBlobs",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Sync, :list_blobs},
       errors: ["RepoNotFound"]
     },
     %Method{

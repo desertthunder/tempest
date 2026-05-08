@@ -5,7 +5,7 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
 
   alias Tempest.Accounts.Account
   alias Tempest.Repo
-  alias Tempest.RepoCore.{Car, Cid, Drisl}
+  alias Tempest.RepoCore.{Car, CarVerifier, Cid, Drisl}
 
   @password "correct horse battery staple"
 
@@ -34,6 +34,10 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     assert {:ok, car} = Car.decode(repo_conn.resp_body)
     assert car.roots == [Cid.parse!(latest["cid"])]
     assert Enum.any?(car.blocks, &(Cid.to_string(&1.cid) == created["cid"]))
+
+    assert {:ok, verified} = CarVerifier.verify_repo_car(repo_conn.resp_body, did: account["did"])
+    assert verified.commit_cid == Cid.parse!(latest["cid"])
+    assert Map.fetch!(verified.entries, "app.bsky.actor.profile/self") == Cid.parse!(created["cid"])
   end
 
   test "sync getRecord returns a CAR for an existing record", %{conn: conn} do
@@ -153,6 +157,98 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     assert %{"error" => "RecordNotFound"} = json_response(record_conn, 400)
   end
 
+  test "getBlocks returns only requested blocks and rejects invalid CID lists", %{conn: conn} do
+    account = create_account!(conn, "sync-blocks.test", "sync-blocks@example.com")
+    created = create_profile!(conn, account, "Blocks")
+
+    blocks_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlocks", %{
+        "did" => account["did"],
+        "cids" => [created["cid"], created["commit"]["cid"]]
+      })
+
+    assert get_resp_header(blocks_conn, "content-type") == ["application/vnd.ipld.car; charset=utf-8"]
+    assert {:ok, car} = Car.decode(blocks_conn.resp_body)
+    assert car_cids(car) == [created["cid"], created["commit"]["cid"]]
+
+    invalid_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlocks", %{
+        "did" => account["did"],
+        "cids" => ["not-a-cid"]
+      })
+
+    assert %{"error" => "InvalidRequest"} = json_response(invalid_conn, 400)
+  end
+
+  test "listRepos pages hosted accounts with latest commit metadata", %{conn: conn} do
+    first = create_account!(conn, "sync-list-a.test", "sync-list-a@example.com")
+    second = create_account!(conn, "sync-list-b.test", "sync-list-b@example.com")
+    first_record = create_profile!(conn, first, "List A")
+    second_record = create_profile!(conn, second, "List B")
+
+    page_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.listRepos", %{"limit" => "1000"})
+
+    repos = json_response(page_conn, 200)["repos"]
+    first_repo = Enum.find(repos, &(&1["did"] == first["did"]))
+    second_repo = Enum.find(repos, &(&1["did"] == second["did"]))
+
+    assert first_repo["active"] == true
+    assert first_repo["head"] == first_record["commit"]["cid"]
+    assert first_repo["rev"] == first_record["commit"]["rev"]
+    assert second_repo["active"] == true
+    assert second_repo["head"] == second_record["commit"]["cid"]
+  end
+
+  test "listBlobs returns referenced blobs and suppresses inactive repos", %{conn: conn} do
+    account = create_account!(conn, "sync-blobs.test", "sync-blobs@example.com")
+    blob_cid = "blob bytes" |> Cid.for_raw() |> Cid.to_string()
+    unreferenced_cid = "temp bytes" |> Cid.for_raw() |> Cid.to_string()
+
+    create_blob_record!(conn, account, "avatar", blob_cid)
+
+    blobs_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.listBlobs", %{"did" => account["did"]})
+
+    assert json_response(blobs_conn, 200) == %{"cids" => [blob_cid]}
+    refute json_response(blobs_conn, 200)["cids"] |> Enum.member?(unreferenced_cid)
+
+    Account
+    |> where([account], account.did == ^account["did"])
+    |> Repo.update_all(set: [active: false, status: "deactivated"])
+
+    inactive_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.listBlobs", %{"did" => account["did"]})
+
+    assert %{"error" => "RepoDeactivated"} = json_response(inactive_conn, 400)
+  end
+
+  test "latest commit remains consistent after storage bootstrap", %{conn: conn} do
+    account = create_account!(conn, "sync-restart.test", "sync-restart@example.com")
+    created = create_profile!(conn, account, "Restart")
+
+    :ok =
+      Tempest.Config.load!()
+      |> Tempest.Storage.bootstrap!()
+
+    latest_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getLatestCommit", %{"did" => account["did"]})
+
+    assert json_response(latest_conn, 200) == created["commit"]
+  end
+
   test "getRepoStatus exposes inactive hosted account status without exporting repo data", %{conn: conn} do
     account = create_account!(conn, "sync-dana.test", "sync-dana@example.com")
 
@@ -247,6 +343,27 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
       "record" => %{
         "$type" => "app.tempest.note",
         "text" => text
+      }
+    })
+    |> json_response(200)
+  end
+
+  defp create_blob_record!(conn, account, rkey, cid) do
+    conn
+    |> auth_json(account)
+    |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+      "repo" => account["did"],
+      "collection" => "app.tempest.blob",
+      "rkey" => rkey,
+      "validate" => false,
+      "record" => %{
+        "$type" => "app.tempest.blob",
+        "image" => %{
+          "$type" => "blob",
+          "ref" => %{"$link" => cid},
+          "mimeType" => "text/plain",
+          "size" => 10
+        }
       }
     })
     |> json_response(200)

@@ -285,6 +285,46 @@ defmodule Tempest.RepoStorage do
   end
 
   @doc """
+  Exports a CAR containing exactly the requested blocks.
+  """
+  def export_blocks_car(did, cids, %Config{} = config \\ Config.load!()) when is_binary(did) and is_list(cids) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, parsed_cids} <- parse_cids(cids),
+             {:ok, blocks} <- selected_blocks(conn, parsed_cids),
+             {:ok, bytes} <- Car.encode(parsed_cids, blocks) do
+          {:ok, %{roots: Enum.map(parsed_cids, &Cid.to_string/1), bytes: bytes}}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
+  Lists blob CIDs referenced by current records.
+  """
+  def list_referenced_blobs(did, opts \\ []) when is_binary(did) do
+    limit = Keyword.fetch!(opts, :limit)
+    cursor = Keyword.get(opts, :cursor)
+    config = Config.load!()
+
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, rows} <- fetch_all(conn, "SELECT record_json FROM records ORDER BY path ASC", []) do
+          cids =
+            rows
+            |> Enum.flat_map(fn [record_json] -> referenced_blob_cids(record_json) end)
+            |> Enum.uniq()
+            |> Enum.sort()
+
+          page_after_cursor(cids, limit, cursor, :cids)
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
   Exports the blocks needed to read a record at the selected commit.
   """
   def export_record_car(did, collection, rkey, opts \\ [])
@@ -433,6 +473,78 @@ defmodule Tempest.RepoStorage do
         {:ok, blocks} -> {:ok, Enum.reverse(blocks)}
         {:error, reason} -> {:error, reason}
       end
+    end
+  end
+
+  defp parse_cids(cids) do
+    Enum.reduce_while(cids, {:ok, []}, fn cid, {:ok, parsed} ->
+      case Cid.parse(cid) do
+        {:ok, cid} -> {:cont, {:ok, [cid | parsed]}}
+        {:error, _reason} -> {:halt, {:error, :invalid_cid}}
+      end
+    end)
+    |> case do
+      {:ok, parsed} -> {:ok, Enum.reverse(parsed)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp selected_blocks(conn, cids) do
+    Enum.reduce_while(cids, {:ok, []}, fn cid, {:ok, blocks} ->
+      case block_bytes(conn, cid) do
+        {:ok, bytes} -> {:cont, {:ok, [{cid, bytes} | blocks]}}
+        {:error, :block_not_found} -> {:halt, {:error, :block_not_found}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, blocks} -> {:ok, Enum.reverse(blocks)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp referenced_blob_cids(record_json) do
+    case Jason.decode(record_json) do
+      {:ok, record} -> collect_blob_cids(record, [])
+      {:error, _reason} -> []
+    end
+  end
+
+  defp collect_blob_cids(%{"$type" => "blob", "ref" => %{"$link" => cid}}, acc) when is_binary(cid) do
+    if Cid.valid?(cid), do: [cid | acc], else: acc
+  end
+
+  defp collect_blob_cids(%{"cid" => cid, "mimeType" => _mime_type} = value, acc) when is_binary(cid) do
+    if Map.has_key?(value, "$type") and Cid.valid?(cid), do: [cid | acc], else: collect_map_blob_cids(value, acc)
+  end
+
+  defp collect_blob_cids(map, acc) when is_map(map), do: collect_map_blob_cids(map, acc)
+
+  defp collect_blob_cids(list, acc) when is_list(list) do
+    Enum.reduce(list, acc, &collect_blob_cids/2)
+  end
+
+  defp collect_blob_cids(_value, acc), do: acc
+
+  defp collect_map_blob_cids(map, acc) do
+    map
+    |> Map.values()
+    |> Enum.reduce(acc, &collect_blob_cids/2)
+  end
+
+  defp page_after_cursor(values, limit, cursor, key) do
+    page_values =
+      values
+      |> Enum.drop_while(fn value -> cursor && value <= cursor end)
+      |> Enum.take(limit + 1)
+
+    visible = Enum.take(page_values, limit)
+    response = %{key => visible}
+
+    if length(page_values) > limit do
+      {:ok, Map.put(response, :cursor, List.last(visible))}
+    else
+      {:ok, response}
     end
   end
 

@@ -1,0 +1,104 @@
+POST {{base_url}}/xrpc/com.atproto.server.createAccount
+Content-Type: application/json
+{
+  "handle": "sync-{{newUuid}}.test",
+  "email": "sync-{{newUuid}}@example.com",
+  "password": "correct horse battery staple"
+}
+HTTP 200
+[Captures]
+created_did: jsonpath "$.did"
+access_token: jsonpath "$.accessJwt"
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.did" startsWith "did:plc:"
+
+POST {{base_url}}/xrpc/com.atproto.repo.createRecord
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+{
+  "repo": "{{created_did}}",
+  "collection": "app.bsky.actor.profile",
+  "rkey": "self",
+  "record": {
+    "$type": "app.bsky.actor.profile",
+    "displayName": "CAR Sync Smoke"
+  }
+}
+HTTP 200
+[Captures]
+profile_cid: jsonpath "$.cid"
+commit_cid: jsonpath "$.commit.cid"
+commit_rev: jsonpath "$.commit.rev"
+[Asserts]
+jsonpath "$.commit.cid" exists
+jsonpath "$.commit.rev" exists
+
+GET {{base_url}}/xrpc/com.atproto.sync.getLatestCommit?did={{created_did}}
+HTTP 200
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.cid" == "{{commit_cid}}"
+jsonpath "$.rev" == "{{commit_rev}}"
+
+GET {{base_url}}/xrpc/com.atproto.sync.getRepo?did={{created_did}}
+HTTP 200
+[Asserts]
+header "content-type" contains "application/vnd.ipld.car"
+
+GET {{base_url}}/xrpc/com.atproto.sync.getRecord?did={{created_did}}&collection=app.bsky.actor.profile&rkey=self
+HTTP 200
+[Asserts]
+header "content-type" contains "application/vnd.ipld.car"
+
+GET {{base_url}}/xrpc/com.atproto.sync.getBlocks?did={{created_did}}&cids%5B%5D={{profile_cid}}&cids%5B%5D={{commit_cid}}
+HTTP 200
+[Asserts]
+header "content-type" contains "application/vnd.ipld.car"
+
+GET {{base_url}}/xrpc/com.atproto.sync.getBlocks?did={{created_did}}&cids%5B%5D=not-a-cid
+HTTP 400
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.error" == "InvalidRequest"
+
+GET {{base_url}}/xrpc/com.atproto.sync.getRepoStatus?did={{created_did}}
+HTTP 200
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.did" == "{{created_did}}"
+jsonpath "$.active" == true
+jsonpath "$.rev" == "{{commit_rev}}"
+
+GET {{base_url}}/xrpc/com.atproto.sync.listRepos?limit=1000
+HTTP 200
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.repos" exists
+
+POST {{base_url}}/xrpc/com.atproto.repo.createRecord
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+{
+  "repo": "{{created_did}}",
+  "collection": "app.tempest.blob",
+  "rkey": "avatar",
+  "validate": false,
+  "record": {
+    "$type": "app.tempest.blob",
+    "image": {
+      "$type": "blob",
+      "ref": {"$link": "bafkreialjtynvjdbcycvhjerlypesyvyskytxn6hlzptdwqvvqojfnukly"},
+      "mimeType": "text/plain",
+      "size": 10
+    }
+  }
+}
+HTTP 200
+
+GET {{base_url}}/xrpc/com.atproto.sync.listBlobs?did={{created_did}}
+HTTP 200
+[Asserts]
+header "content-type" contains "application/json"
+jsonpath "$.cids[0]" == "bafkreialjtynvjdbcycvhjerlypesyvyskytxn6hlzptdwqvvqojfnukly"
+jsonpath "$.cids[1]" not exists

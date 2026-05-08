@@ -15,12 +15,12 @@ Goal: expose repository state through sync read endpoints.
 - [x] T06-04: Implement `getLatestCommit`.
 - [x] T06-05: Implement `getRecord` in `com.atproto.sync`.
 - [x] T06-06: Implement `getRepoStatus`.
-- [ ] T06-07: Implement `listRepos` for hosted accounts.
-- [ ] T06-08: Implement `getBlocks` for selected CIDs.
-- [ ] T06-09: Implement `listBlobs` for public, referenced blobs.
-- [ ] T06-10: Add CAR import verification helper.
-- [ ] T06-11: Add integration test that exports and verifies a repo.
-- [ ] T06-12: Add restart test for latest commit consistency.
+- [x] T06-07: Implement `listRepos` for hosted accounts.
+- [x] T06-08: Implement `getBlocks` for selected CIDs.
+- [x] T06-09: Implement `listBlobs` for public, referenced blobs.
+- [x] T06-10: Add CAR import verification helper.
+- [x] T06-11: Add integration test that exports and verifies a repo.
+- [x] T06-12: Add restart test for latest commit consistency.
 
 ## Integration Tests
 
