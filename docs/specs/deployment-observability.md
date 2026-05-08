@@ -1,6 +1,6 @@
 ---
 title: Deployment and Observability
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Deployment and Observability
@@ -24,6 +24,13 @@ services:
 
 No external database service is required for the SQLite-first version.
 
+Optional production adapters may add:
+
+- S3-compatible blob storage.
+- S3-compatible SQLite backup upload.
+- SMTP for account verification, reset, and alert notifications.
+- External metrics scraping.
+
 ## Required Environment
 
 ```text
@@ -36,6 +43,8 @@ TEMPEST_ADMIN_TOKEN_HASH=...
 TEMPEST_INVITE_REQUIRED=true
 TEMPEST_BLOB_STORE=local
 TEMPEST_BLOB_MAX_BYTES=10000000
+TEMPEST_SMTP_ENABLED=false
+TEMPEST_BACKUP_STORE=local
 ```
 
 ## Reverse Proxy
@@ -77,6 +86,8 @@ Use Phoenix telemetry and structured logs first. Prometheus/OpenTelemetry can fo
 - Health checks must not require database writes.
 - Logs must not include passwords, private keys, access tokens, refresh tokens, or admin tokens.
 - Reverse proxy docs must include WebSocket behavior.
+- Backup restore drills must verify account DB, sequencer DB, repos, blobs, signing keys, and OAuth keys together.
+- Production docs must tell operators how to rotate JWT/OAuth/signing/admin secrets without silently invalidating account identity.
 
 ## HTTP Verification
 

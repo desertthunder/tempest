@@ -13,9 +13,12 @@ title: Milestone Tasks
 7. [06 CAR and Sync Reads](./06-car-sync-reads.md)
 8. [07 Firehose](./07-firehose.md)
 9. [08 Blobs](./08-blobs.md)
-10. [09 Admin and Deployment](./09-admin-deployment.md)
+10. [09 Lexicon Schemas](./09-lexicon-schemas.md)
 11. [10 Compatibility Hardening](./10-compatibility-hardening.md)
-12. [11 Lexicon Schemas](./11-lexicon-schemas.md)
+12. [11 Security, OAuth, and Delegated Access](./11-security-oauth.md)
+13. [12 Migration and Account Lifecycle](./12-migration-lifecycle.md)
+14. [13 Admin and Deployment](./13-admin-deployment.md)
+15. [14 Operator and Account Management UX](./14-operator-account-ux.md)
 
 Each file in this directory is a milestone. Each task is intended to be the smallest useful unit of work: one focused implementation change, test, or integration check.
 

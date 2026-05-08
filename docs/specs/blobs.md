@@ -1,6 +1,6 @@
 ---
 title: Blobs
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Blobs
@@ -69,7 +69,12 @@ The storage adapter must support:
 - delete blob.
 - list by DID and optional cursor.
 
-S3-compatible storage is a later adapter, not the default.
+S3-compatible storage is a planned production adapter, not the default:
+
+- Store blobs under `blobs/<did>/<cid>`.
+- Support private bucket proxying through `getBlob`.
+- Optionally support CDN redirects when explicitly configured.
+- Keep local metadata authoritative even when bytes live in object storage.
 
 ## Adversarial Checks
 
@@ -78,6 +83,9 @@ S3-compatible storage is a later adapter, not the default.
 - Do not make temp uploads public.
 - Do not delete a blob still referenced by any current record.
 - Account deactivation, takedown, suspension, and deletion must suppress blob serving.
+- `getBlob` must set a restrictive Content Security Policy and `X-Content-Type-Options: nosniff`.
+- Temp blob GC must allow a generous grace period; one hour is the lower bound, several hours is preferred.
+- S3/CDN redirects must not expose blobs for inactive, deleted, suspended, or takendown accounts.
 
 ## HTTP Verification
 

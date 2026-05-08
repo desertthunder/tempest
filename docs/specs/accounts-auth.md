@@ -1,6 +1,6 @@
 ---
 title: Accounts and Auth
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Accounts and Auth
@@ -45,6 +45,8 @@ Session design:
 
 OAuth is required for stronger long-term compatibility, but it should follow repo and sync correctness.
 
+See [Security, OAuth, and Delegated Access](security-oauth.md) for the full OAuth, app-password, MFA, and delegated-access plan. This file owns the legacy session substrate and account tables; OAuth must reuse those account identities rather than introducing a second account model.
+
 ## Account Creation
 
 Account creation must:
@@ -75,6 +77,8 @@ The XRPC auth plug should:
 - Disabled accounts must not write records.
 - App password names are not passwords and must not be returned as credentials.
 - Session responses must not expose password hashes or refresh token hashes.
+- Email, password reset, MFA, OAuth consent, app-password, and delegated-access changes must produce security log entries.
+- Rate limits must be per-account and per-IP for account creation, login, refresh, reset, and email flows.
 
 ## HTTP Verification
 

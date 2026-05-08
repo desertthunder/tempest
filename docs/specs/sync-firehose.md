@@ -1,6 +1,6 @@
 ---
 title: Sync and Firehose
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Sync and Firehose
@@ -13,10 +13,13 @@ Implement:
 
 ```text
 com.atproto.sync.getRepo
+com.atproto.sync.getBlocks
 com.atproto.sync.getLatestCommit
 com.atproto.sync.getRecord
 com.atproto.sync.getRepoStatus
+com.atproto.sync.listBlobs
 com.atproto.sync.listRepos
+com.atproto.sync.requestCrawl
 com.atproto.sync.subscribeRepos
 ```
 
@@ -51,6 +54,8 @@ Rules:
 - Backfill uses `WHERE seq > cursor ORDER BY seq ASC`.
 - Live fanout broadcasts after durable insert.
 - Cursor gaps should be visible to clients.
+- Restart recovery must prove the durable tail cannot be lost, duplicated, or rewound.
+- Torn writes must be detected and recovered without reusing a sequence number.
 
 ## Repo Export
 
@@ -68,6 +73,10 @@ Rules:
 - Do not emit commit events for inactive accounts.
 - Restart must not reset sequence numbers.
 - WebSocket backfill must not skip rows under concurrent writes.
+- Enforce the current firehose frame limit, CAR blocks limit, record block limit, and max ops per commit.
+- Verify commit event fields against the signed commit block before persistence.
+- Add same-rkey batch tests for `applyWrites`, including duplicate writes within one batch.
+- Add MST inversion tests for generated commit events, including websocket end-to-end verification.
 
 ## HTTP Verification
 

@@ -1,6 +1,6 @@
 ---
 title: Tempest AT Protocol PDS Specification Index
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Tempest PDS Specs
@@ -21,10 +21,12 @@ Subsystem specifications live in this directory. Milestone task plans live in `.
 8. [Lexicon Schema Loading and Generation](lexicon-schemas.md)
 9. [Blobs](blobs.md)
 10. [Sync and Firehose](sync-firehose.md)
-11. [Admin Operations](admin-operations.md)
-12. [Deployment and Observability](deployment-observability.md)
-13. [Interop and Integration Testing](interop-testing.md)
-14. [Hurl Smoke Tests](hurl-smoke-tests.md)
+11. [Security, OAuth, and Delegated Access](security-oauth.md)
+12. [Migration and Account Lifecycle](migration-lifecycle.md)
+13. [Admin Operations](admin-operations.md)
+14. [Deployment and Observability](deployment-observability.md)
+15. [Interop and Integration Testing](interop-testing.md)
+16. [Hurl Smoke Tests](hurl-smoke-tests.md)
 
 ## Milestones
 
@@ -46,6 +48,9 @@ Research was checked on 2026-05-07 against:
 - Blob lifecycle guide: <https://atproto.com/guides/blob-lifecycle>
 - Official Bluesky PDS distribution: <https://github.com/bluesky-social/pds>
 - AT Protocol Lexicons: <https://github.com/bluesky-social/atproto/tree/main/lexicons>
+- AT Protocol OAuth spec: <https://atproto.com/specs/oauth>
+- AT Protocol OAuth scopes guide: <https://atproto.com/guides/scopes>
+- AT Protocol account migration guide: <https://atproto.com/guides/account-migration>
 
 ## Documentation Rules
 

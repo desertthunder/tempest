@@ -22,6 +22,9 @@ Goal: upload, reference, serve, and garbage collect blobs.
 - [ ] T08-12: Suppress blob serving for inactive accounts.
 - [ ] T08-13: Add blob garbage collector.
 - [ ] T08-14: Add integration tests for upload, reference, get, delete.
+- [ ] T08-15: Add CSP and nosniff headers to `getBlob`.
+- [ ] T08-16: Add S3-compatible storage behaviour and local adapter contract tests.
+- [ ] T08-17: Add optional CDN redirect behavior with inactive-account suppression.
 
 ## Integration Tests
 
@@ -30,6 +33,8 @@ Goal: upload, reference, serve, and garbage collect blobs.
 - Referenced blob is listed and downloadable.
 - Missing blob reference fails.
 - Blob remains after restart.
+- Blob downloads use defensive content headers.
+- S3/CDN mode preserves account-status enforcement.
 
 ## HTTP Verification
 

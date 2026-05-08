@@ -16,9 +16,11 @@ Goal: expose repository state through sync read endpoints.
 - [ ] T06-05: Implement `getRecord` in `com.atproto.sync`.
 - [ ] T06-06: Implement `getRepoStatus`.
 - [ ] T06-07: Implement `listRepos` for hosted accounts.
-- [ ] T06-08: Add CAR import verification helper.
-- [ ] T06-09: Add integration test that exports and verifies a repo.
-- [ ] T06-10: Add restart test for latest commit consistency.
+- [ ] T06-08: Implement `getBlocks` for selected CIDs.
+- [ ] T06-09: Implement `listBlobs` for public, referenced blobs.
+- [ ] T06-10: Add CAR import verification helper.
+- [ ] T06-11: Add integration test that exports and verifies a repo.
+- [ ] T06-12: Add restart test for latest commit consistency.
 
 ## Integration Tests
 
@@ -26,6 +28,8 @@ Goal: expose repository state through sync read endpoints.
 - CAR root matches latest commit.
 - `getLatestCommit` matches repo metadata.
 - Inactive account returns correct repo status.
+- `getBlocks` returns only requested blocks and rejects invalid CID lists.
+- `listBlobs` excludes temporary and inactive-account blobs.
 
 ## HTTP Verification
 

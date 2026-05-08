@@ -1,6 +1,6 @@
 ---
 title: Architecture
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Architecture
@@ -22,10 +22,13 @@ Tempest.Xrpc
   auth plugs
 
 Tempest.Accounts
-  accounts, sessions, app passwords, account status
+  accounts, sessions, app passwords, account status, recovery
 
 Tempest.Identity
   DID documents, handle verification, PLC calls, signing keys
+
+Tempest.Authz
+  OAuth provider, permission engine, delegated access, MFA
 
 Tempest.RepoCore
   AT URIs, NSIDs, TIDs, CIDs, DRISL CBOR, MST, commits, CAR
@@ -41,6 +44,9 @@ Tempest.Sync
 
 Tempest.Admin
   repair, backup, restore, verification tasks
+
+TempestWeb.AccountUI
+  account management, OAuth consent, repo browser, security settings
 ```
 
 ## Protocol Facts
@@ -56,7 +62,8 @@ Tempest.Admin
 - SQLite is the default storage target.
 - The local filesystem is the default blob store.
 - Repo-core correctness has priority over broad endpoint coverage.
-- OAuth is a later milestone. Session and app-password auth ship first.
+- OAuth is a later milestone, but its data model must be anticipated by sessions, app passwords, and delegated access.
+- A complete self-hosted PDS needs account migration, lifecycle, recovery, and operator UX before production-ready claims.
 - Rustler is allowed for repo-core if Elixir libraries cannot meet byte-level requirements.
 
 ## Write Path
@@ -80,6 +87,8 @@ HTTP request
 - DID, handle, NSID, AT URI, and rkey parsers must reject invalid syntax before storage.
 - Every externally fetched URL must pass SSRF checks.
 - Every feature must have a black-box HTTP test before it is called done.
+- OAuth, app passwords, delegated access, and admin tokens must share one auditable permission boundary.
+- Import, restore, and migration flows must fail closed and must never activate partially verified account state.
 
 ## HTTP Verification
 

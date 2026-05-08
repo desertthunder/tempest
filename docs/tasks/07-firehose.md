@@ -21,6 +21,10 @@ Goal: persist and stream repository, identity, and account events.
 - [ ] T07-11: Add event size checks and `tooBig` behavior.
 - [ ] T07-12: Add integration test for subscribe, write, receive event.
 - [ ] T07-13: Add restart test proving sequence continuity.
+- [ ] T07-14: Add durable-tail recovery test for crash between event persistence and fanout.
+- [ ] T07-15: Add torn-write detection test for sequencer storage.
+- [ ] T07-16: Add MST inversion verification for emitted commit events.
+- [ ] T07-17: Add `requestCrawl` support for configured relays with rate limiting.
 
 ## Integration Tests
 
@@ -28,6 +32,8 @@ Goal: persist and stream repository, identity, and account events.
 - Record write emits commit event.
 - Cursor backfill returns missed events.
 - Sequence number survives restart.
+- Event stream catches invalid commit/event mismatches before fanout.
+- Relay crawl requests are bounded and observable.
 
 ## HTTP Verification
 

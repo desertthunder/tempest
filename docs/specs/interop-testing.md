@@ -1,6 +1,6 @@
 ---
 title: Interop and Integration Testing
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 Protocol work is not done until it passes black-box tests. Unit tests protect parsers and binary code, but every milestone needs an HTTP test that exercises the running Phoenix server.
@@ -13,6 +13,19 @@ Protocol work is not done until it passes black-box tests. Unit tests protect pa
 4. Running-server smoke tests with Hurl.
 5. External fixture tests against official atproto fixtures.
 6. Client compatibility tests against known SDKs or `goat` where useful.
+
+## Coverage Tracking
+
+Maintain an endpoint and behavior checklist against the official Lexicons, protocol specs, reference PDS behavior where useful, and known SDK expectations. The checklist is not a source of protocol truth; it is a way to keep compatibility gaps visible.
+
+Track at least:
+
+- Account security and recovery: email confirmation, email update, password reset, app passwords, OAuth grants, MFA-ready credential state, and security events.
+- Migration and lifecycle: service auth, account status, activation/deactivation, deletion requests, signing-key reservation, PLC operation flows, `importRepo`, and missing blob accounting.
+- Sync completeness: `getRepo`, `getBlocks`, `getLatestCommit`, `getRecord`, `getRepoStatus`, `listBlobs`, `listRepos`, `requestCrawl`, `subscribeRepos`, frame limits, durable restart behavior, and MST inversion checks.
+- Blob operations: temp/public lifecycle, defensive download headers, inactive-account suppression, local storage, S3-compatible storage, and optional CDN redirects.
+- Operator surface: invite management, admin status, repo verify/export/import, blob GC, backup/restore drills, telemetry, and deployment recipes.
+- Compatibility extras: private preferences endpoints and XRPC proxy fallback rules for service endpoints that should be proxied instead of implemented locally.
 
 ## Smoke Tests
 
@@ -49,6 +62,7 @@ Create `test/smoke/tempest_basic.hurl` once Milestone 02 lands. It should:
 - Try invalid handles, DIDs, NSIDs, rkeys, CIDs, and AT URIs.
 - Try oversize blob uploads.
 - Try firehose cursor backfill while writes are happening.
+- Compare coverage against the official endpoint and behavior checklist before calling a subsystem complete.
 
 ## HTTP Verification
 

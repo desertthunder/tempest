@@ -1,6 +1,6 @@
 ---
 title: Identity and Handles
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 Identity is rooted in DIDs. Handles are mutable DNS names that must resolve back to the DID, while the DID document must claim the handle.
@@ -53,12 +53,24 @@ Tempest.Identity.KeyStore
 
 The boundary must make it possible to test against a fake PLC service.
 
+Migration-ready identity support requires:
+
+- `getRecommendedDidCredentials` returning this PDS service endpoint, signing key, handle, and PLC rotation-key recommendations.
+- `requestPlcOperationSignature` and `signPlcOperation` with a separate security token factor.
+- `submitPlcOperation` validating that the operation keeps the account recoverable and points the atproto service at Tempest before submission.
+- `reserveSigningKey` for migration flows that need stable key material before the account is activated.
+- `did:web` support for both PDS-hosted subdomains and bring-your-own domains.
+
+See [Migration and Account Lifecycle](migration-lifecycle.md) for account activation sequencing.
+
 ## Adversarial Checks
 
 - Never trust a handle only because it is stored locally.
 - Do not follow redirects to local, private, or link-local addresses.
 - Preserve signing key material securely; avoid logging private keys.
 - Key rotation must create a new repository commit so the current signing key can verify the latest repo state.
+- PLC operations must be treated as account-recovery actions and require stronger reauth than ordinary record writes.
+- A DID document update that points away from Tempest must move the local account toward inactive or migration-out handling.
 
 ## HTTP Verification
 
