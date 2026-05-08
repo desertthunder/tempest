@@ -20,9 +20,9 @@ Goal: build and prove the binary repository primitives before exposing writes br
 - [x] T04-10: Add MST depth calculation tests from official examples.
 - [x] T04-11: Add MST insert/get/delete.
 - [x] T04-12: Add MST range scan.
-- [ ] T04-13: Add commit object builder with required `prev`.
-- [ ] T04-14: Add commit signing and verification.
-- [ ] T04-15: Add repo-core fixture import from official test cases.
+- [x] T04-13: Add commit object builder with required `prev`.
+- [x] T04-14: Add commit signing and verification.
+- [x] T04-15: Add repo-core fixture import from official test cases.
 - [x] T04-16: ~~Decide and document whether repo-core stays pure Elixir or uses Rustler.~~ Pure Elixir.
 
 ## Integration Tests

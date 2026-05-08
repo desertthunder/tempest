@@ -31,6 +31,7 @@ block graph traversal
 - Commits include `did`, `version`, `data`, `rev`, `prev`, and `sig`.
 - In v3, `prev` must exist and is usually `null`.
 - The commit `rev` is a TID logical clock and must increase per repo.
+- Commit signatures are compact 64-byte low-S secp256k1 signatures over SHA-256 of the unsigned DRISL commit bytes.
 - CIDs are CIDv1 using DRISL-CBOR (`dag-cbor`, `0x71`) or raw (`0x55`) codecs, sha-256 multihashes, and lowercase `b` base32 strings outside CBOR.
 - DRISL-CBOR is deterministic shortest-form CBOR with string-only map keys, bytewise encoded-key map ordering, no indefinite-length items, no floats for atproto data, and only tag 42 for CID links.
 - CBOR decoders must enforce input-size, nesting-depth, item-count, collection-length, string-size, and byte-string-size limits.
@@ -79,6 +80,7 @@ Required before record write endpoints are considered complete:
 - MST insert/get/delete/range.
 - MST deterministic root regardless of insertion order.
 - Commit signing and verification.
+- Official-shape repo CAR fixture import rooted at a signed commit.
 - CAR export/import round trip.
 - Repo diff operation inversion against fixtures.
 
