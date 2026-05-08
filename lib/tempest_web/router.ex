@@ -14,6 +14,10 @@ defmodule TempestWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :well_known do
+    plug :accepts, ["text"]
+  end
+
   pipeline :xrpc do
     plug :accepts, ["json"]
     plug :put_xrpc_cors_headers
@@ -24,6 +28,12 @@ defmodule TempestWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+  end
+
+  scope "/", TempestWeb do
+    pipe_through :well_known
+
+    get "/.well-known/atproto-did", WellKnownController, :atproto_did
   end
 
   scope "/xrpc", TempestWeb do

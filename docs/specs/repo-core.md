@@ -3,8 +3,6 @@ title: Repository Core
 updated: 2026-05-07
 ---
 
-# Repository Core
-
 Repo-core is the highest-risk subsystem. Treat it as a small storage engine with strict binary compatibility requirements.
 
 ## Required Primitives

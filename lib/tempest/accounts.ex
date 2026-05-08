@@ -6,6 +6,7 @@ defmodule Tempest.Accounts do
   import Ecto.Query
 
   alias Tempest.Accounts.{Account, AuthContext, Password, Session, Tokens}
+  alias Tempest.Identity
   alias Tempest.Repo
 
   @public_fields [:did, :handle, :email, :active, :status]
@@ -14,7 +15,7 @@ defmodule Tempest.Accounts do
     with {:ok, password} <- fetch_string(attrs, "password"),
          :ok <- Password.validate(password) do
       password_hash = Password.hash(password)
-      did = Map.get(attrs, "did") || generate_local_did()
+      did = Map.get(attrs, "did") || Identity.generate_hosted_did()
 
       account_attrs =
         attrs
@@ -28,6 +29,7 @@ defmodule Tempest.Accounts do
 
       Repo.transaction(fn ->
         with {:ok, account} <- Repo.insert(Account.create_changeset(%Account{}, account_attrs)),
+             {:ok, _signing_key} <- Identity.create_initial_signing_key(account),
              {:ok, session} <-
                Repo.insert(new_session_changeset(account, refresh_token, Ecto.UUID.generate())) do
           {account, session}
@@ -37,6 +39,9 @@ defmodule Tempest.Accounts do
       end)
       |> case do
         {:ok, {account, session}} ->
+          :ok =
+            Tempest.Sequencer.insert_placeholder(account.did, "identity.account.create", %{"handle" => account.handle})
+
           {:ok, session_response(account, session, refresh_token)}
 
         {:error, {:validation, changeset}} ->
@@ -267,10 +272,6 @@ defmodule Tempest.Accounts do
     identifier
     |> String.trim()
     |> String.downcase()
-  end
-
-  defp generate_local_did do
-    "did:tempest:" <> Ecto.UUID.generate()
   end
 
   defp now do

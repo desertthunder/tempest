@@ -8,19 +8,19 @@ Goal: give local accounts resolvable DID and handle metadata.
 
 ## Tasks
 
-- [ ] T03-01: Add DID syntax validator.
-- [ ] T03-02: Add handle syntax validator.
-- [ ] T03-03: Add `signing_keys` table and encrypted private-key storage boundary.
-- [ ] T03-04: Generate initial signing key for new accounts.
-- [ ] T03-05: Add DID document builder for hosted accounts.
-- [ ] T03-06: Add `/.well-known/atproto-did` route for hosted handles.
-- [ ] T03-07: Implement DNS TXT handle resolver.
-- [ ] T03-08: Implement HTTPS well-known handle resolver with `Req`.
-- [ ] T03-09: Add SSRF protection before outbound handle/DID fetches.
-- [ ] T03-10: Implement `resolveHandle`.
-- [ ] T03-11: Implement `updateHandle` with bidirectional verification.
-- [ ] T03-12: Emit identity event placeholder into sequencer once sequencer exists.
-- [ ] T03-13: Add integration tests using a fake HTTP handle service.
+- [x] T03-01: Add DID syntax validator.
+- [x] T03-02: Add handle syntax validator.
+- [x] T03-03: Add `signing_keys` table and encrypted private-key storage boundary.
+- [x] T03-04: Generate initial signing key for new accounts.
+- [x] T03-05: Add DID document builder for hosted accounts.
+- [x] T03-06: Add `/.well-known/atproto-did` route for hosted handles.
+- [x] T03-07: Implement DNS TXT handle resolver.
+- [x] T03-08: Implement HTTPS well-known handle resolver with `Req`.
+- [x] T03-09: Add SSRF protection before outbound handle/DID fetches.
+- [x] T03-10: Implement `resolveHandle`.
+- [x] T03-11: Implement `updateHandle` with bidirectional verification.
+- [x] T03-12: Emit identity event placeholder into sequencer once sequencer exists.
+- [x] T03-13: Add integration tests using a fake HTTP handle service.
 
 ## Integration Tests
 

@@ -70,8 +70,17 @@ defmodule Tempest.Xrpc.Registry do
       auth: :none,
       input: nil,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Identity, :resolve_handle},
       errors: ["HandleNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.identity.updateHandle",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Identity, :update_handle},
+      errors: ["HandleNotFound", "InvalidRequest"]
     },
     %Method{
       nsid: "com.atproto.repo.createRecord",

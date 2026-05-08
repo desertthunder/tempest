@@ -25,3 +25,15 @@ hurl --test --jobs 1 \
   --variable account_password="correct horse battery staple" \
   test/smoke/accounts.hurl
 ```
+
+Run the identity smoke test with a fresh handle:
+
+```bash
+suffix="$(date +%s)"
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  --variable account_handle="identity-${suffix}.test" \
+  --variable account_email="identity-${suffix}@example.com" \
+  --variable account_password="correct horse battery staple" \
+  test/smoke/identity.hurl
+```

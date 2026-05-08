@@ -2,6 +2,7 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
   use TempestWeb.ConnCase, async: false
 
   alias Tempest.Accounts.{Session, Tokens}
+  alias Tempest.Identity.SigningKey
   alias Tempest.Repo
 
   import Ecto.Query
@@ -13,7 +14,7 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
 
     response = json_response(conn, 200)
 
-    assert response["did"] =~ "did:tempest:"
+    assert response["did"] =~ "did:plc:"
     assert response["handle"] == "alice.test"
     assert response["email"] == "alice@example.com"
     assert response["active"] == true
@@ -21,6 +22,10 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     assert is_binary(response["refreshJwt"])
 
     assert Repo.exists?(from a in Tempest.Accounts.Account, where: a.handle == "alice.test")
+
+    assert Repo.exists?(
+             from key in SigningKey, join: account in assoc(key, :account), where: account.handle == "alice.test"
+           )
   end
 
   test "createSession logs in and getSession returns the account", %{conn: conn} do
