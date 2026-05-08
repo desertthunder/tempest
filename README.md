@@ -3,6 +3,16 @@
 A self-hostable AT Protocol Personal Data Server (PDS) built in Elixir for single-users
 or small communities.
 
+## PDS Completion TODO
+
+- [ ] Sync: CAR export, latest commit/status reads, and `subscribeRepos`.
+- [ ] Blobs: upload, validate, serve, list, reference-check, and garbage collect.
+- [ ] Lexicons: generate pinned AT Protocol schemas and validate supported records/endpoints.
+- [ ] Auth/operations: token hardening, app passwords, admin tools, repo import/export/verify,
+      and backups.
+- [ ] Deployment: release packaging, Docker/Compose, HTTPS proxy docs, telemetry, and SMTP.
+- [ ] Compatibility: official fixtures, SDK smoke tests, rate limits, and relay/AppView checks.
+
 ## Local Server
 
 Start the Phoenix server:
@@ -24,8 +34,5 @@ TEMPEST_DATA_DIR=/absolute/path/to/tempest/priv/tempest_dev
 TEMPEST_BLOB_MAX_BYTES=10000000
 ```
 
-Run the foundation smoke test with Hurl:
-
-```bash
-hurl --test --variable base_url=http://localhost:4000 test/smoke/health.hurl
-```
+Run smoke tests with [hurl](https://hurl.dev/). See the [smoke test](./test/smoke/README.md)
+module for more details.
