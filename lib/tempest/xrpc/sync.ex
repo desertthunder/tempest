@@ -38,13 +38,11 @@ defmodule Tempest.Xrpc.Sync do
   defp sync_error(:repo_suspended), do: {:error, 400, "RepoSuspended", "repository is suspended"}
   defp sync_error(:repo_deactivated), do: {:error, 400, "RepoDeactivated", "repository is deactivated"}
   defp sync_error(:record_not_found), do: {:error, 400, "RecordNotFound", "record could not be found"}
+  defp sync_error(:commit_not_found), do: {:error, 400, "InvalidRequest", "commit could not be found"}
   defp sync_error(:invalid_did), do: {:error, 400, "InvalidRequest", "did is invalid"}
   defp sync_error(:invalid_collection), do: {:error, 400, "InvalidRequest", "collection is invalid"}
   defp sync_error(:invalid_rkey), do: {:error, 400, "InvalidRequest", "rkey is invalid"}
   defp sync_error(:invalid_commit), do: {:error, 400, "InvalidRequest", "commit is invalid"}
-
-  defp sync_error(:commit_not_supported),
-    do: {:error, 400, "InvalidRequest", "historical commit reads are not supported"}
 
   defp sync_error({:missing_field, field}), do: {:error, 400, "InvalidRequest", "#{field} is required"}
   defp sync_error(_reason), do: {:error, 500, "InternalServerError", "sync read failed"}

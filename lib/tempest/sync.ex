@@ -36,8 +36,8 @@ defmodule Tempest.Sync do
     with {:ok, input} <- validate_get_record_params(params),
          {:ok, account} <- fetch_account(input.did),
          :ok <- ensure_active(account),
-         {:ok, _record} <- RepoStorage.get_record(account.did, input.collection, input.rkey),
-         {:ok, export} <- RepoStorage.export_car(account.did) do
+         {:ok, export} <-
+           RepoStorage.export_record_car(account.did, input.collection, input.rkey, commit: input.commit) do
       {:ok, export.bytes}
     end
   end
@@ -57,8 +57,8 @@ defmodule Tempest.Sync do
     with {:ok, did} <- validate_did_param(params),
          {:ok, collection} <- validate_collection(Map.get(params, "collection")),
          {:ok, rkey} <- validate_rkey(Map.get(params, "rkey")),
-         :ok <- validate_unsupported_commit(Map.get(params, "commit")) do
-      {:ok, %{did: did, collection: collection, rkey: rkey}}
+         {:ok, commit} <- validate_optional_commit(Map.get(params, "commit")) do
+      {:ok, %{did: did, collection: collection, rkey: rkey, commit: commit}}
     end
   end
 
@@ -89,11 +89,11 @@ defmodule Tempest.Sync do
     end
   end
 
-  defp validate_unsupported_commit(nil), do: :ok
+  defp validate_optional_commit(nil), do: {:ok, nil}
 
-  defp validate_unsupported_commit(commit) do
+  defp validate_optional_commit(commit) do
     case Cid.parse(commit) do
-      {:ok, _cid} -> {:error, :commit_not_supported}
+      {:ok, _cid} -> {:ok, commit}
       {:error, _reason} -> {:error, :invalid_commit}
     end
   end

@@ -284,6 +284,35 @@ defmodule Tempest.RepoStorage do
     end
   end
 
+  @doc """
+  Exports the blocks needed to read a record at the selected commit.
+  """
+  def export_record_car(did, collection, rkey, opts \\ [])
+      when is_binary(did) and is_binary(collection) and is_binary(rkey) do
+    commit = Keyword.get(opts, :commit)
+    config = Config.load!()
+
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      path = collection <> "/" <> rkey
+
+      result =
+        with {:ok, commit_row} <- commit_row(conn, commit),
+             {:ok, commit_cid} <- parse_cid(commit_row.cid),
+             {:ok, commit} <- decode_commit(commit_row.commit_bytes, commit_cid),
+             {:ok, proof} <- mst_record_proof(conn, commit.data, path),
+             {:ok, record_bytes} <- block_bytes(conn, proof.record_cid),
+             {:ok, bytes} <-
+               Car.encode([commit_cid], [
+                 {commit_cid, commit_row.commit_bytes}
+                 | proof.mst_blocks ++ [{proof.record_cid, record_bytes}]
+               ]) do
+          {:ok, %{root: Cid.to_string(commit_cid), record: Cid.to_string(proof.record_cid), bytes: bytes}}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
   def repo_db_path!(%Config{} = config, did) when is_binary(did) do
     with {:ok, did} <- Did.parse(did) do
       Config.repo_db_path(config, did)
@@ -432,6 +461,143 @@ defmodule Tempest.RepoStorage do
     case Map.fetch(metadata, key) do
       {:ok, value} -> {:ok, value}
       :error -> {:error, {:missing_repo_metadata, key}}
+    end
+  end
+
+  defp commit_row(conn, nil) do
+    with {:ok, metadata} <- repo_metadata(conn),
+         {:ok, cid} <- fetch_metadata(metadata, "current_commit_cid") do
+      commit_row(conn, cid)
+    end
+  end
+
+  defp commit_row(conn, commit_cid) when is_binary(commit_cid) do
+    with {:ok, rows} <-
+           fetch_all(conn, "SELECT cid, rev, data_cid, commit_bytes FROM commits WHERE cid = ?1", [commit_cid]) do
+      case rows do
+        [[cid, rev, data_cid, commit_bytes]] ->
+          {:ok, %{cid: cid, rev: rev, data_cid: data_cid, commit_bytes: commit_bytes}}
+
+        [] ->
+          {:error, :commit_not_found}
+      end
+    end
+  end
+
+  defp decode_commit(commit_bytes, expected_cid) do
+    with {:ok, commit} <- Commit.decode(commit_bytes),
+         ^expected_cid <- Commit.cid!(commit) do
+      {:ok, commit}
+    else
+      {:error, reason} -> {:error, {:invalid_commit, reason}}
+      _mismatch -> {:error, :commit_cid_mismatch}
+    end
+  end
+
+  defp mst_record_proof(conn, root_cid, path) do
+    with {:ok, proof} <- collect_mst(conn, root_cid, MapSet.new(), %{}) do
+      case Map.fetch(proof.entries, path) do
+        {:ok, record_cid} ->
+          {:ok, %{record_cid: record_cid, mst_blocks: Enum.reverse(proof.blocks)}}
+
+        :error ->
+          {:error, :record_not_found}
+      end
+    end
+  end
+
+  defp collect_mst(_conn, nil, visited, entries), do: {:ok, %{visited: visited, entries: entries, blocks: []}}
+
+  defp collect_mst(conn, %Cid{} = cid, visited, entries) do
+    cid_value = Cid.to_string(cid)
+
+    if MapSet.member?(visited, cid_value) do
+      {:error, :mst_cycle}
+    else
+      with {:ok, bytes} <- block_bytes(conn, cid),
+           {:ok, node} <- decode_mst_node(bytes),
+           visited = MapSet.put(visited, cid_value),
+           {:ok, left_proof} <- collect_mst_child(conn, Map.fetch!(node, "l"), visited, entries),
+           {:ok, entries_proof} <-
+             collect_mst_entries(conn, Map.fetch!(node, "e"), left_proof.visited, left_proof.entries) do
+        {:ok, %{entries_proof | blocks: [{cid, bytes} | left_proof.blocks ++ entries_proof.blocks]}}
+      end
+    end
+  end
+
+  defp collect_mst_child(conn, child, visited, entries) do
+    case collect_mst(conn, child, visited, entries) do
+      {:ok, proof} -> {:ok, proof}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp collect_mst_entries(conn, entries, visited, acc_entries) when is_list(entries) do
+    Enum.reduce_while(entries, {:ok, %{visited: visited, entries: acc_entries, blocks: [], previous_key: ""}}, fn entry,
+                                                                                                                  {:ok,
+                                                                                                                   proof} ->
+      with {:ok, key, value, tree} <- decode_mst_entry(entry, proof.previous_key),
+           {:ok, child} <- collect_mst_child(conn, tree, proof.visited, Map.put(proof.entries, key, value)) do
+        {:cont,
+         {:ok,
+          %{
+            visited: child.visited,
+            entries: child.entries,
+            blocks: proof.blocks ++ child.blocks,
+            previous_key: key
+          }}}
+      else
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, proof} -> {:ok, Map.delete(proof, :previous_key)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp collect_mst_entries(_conn, _entries, _visited, _acc_entries), do: {:error, :invalid_mst_node}
+
+  defp decode_mst_node(bytes) do
+    case Drisl.decode(bytes) do
+      {:ok, %{"l" => left, "e" => entries} = node} when is_list(entries) ->
+        if cid_or_nil?(left), do: {:ok, node}, else: {:error, :invalid_mst_node}
+
+      {:ok, _value} ->
+        {:error, :invalid_mst_node}
+
+      {:error, reason} ->
+        {:error, {:invalid_mst_node, reason}}
+    end
+  end
+
+  defp decode_mst_entry(
+         %{"p" => prefix_length, "k" => %Drisl.Bytes{bytes: suffix}, "v" => %Cid{} = value, "t" => tree},
+         previous_key
+       )
+       when is_integer(prefix_length) and prefix_length >= 0 do
+    if cid_or_nil?(tree) and prefix_length <= byte_size(previous_key) do
+      key = binary_part(previous_key, 0, prefix_length) <> suffix
+      {:ok, key, value, tree}
+    else
+      {:error, :invalid_mst_entry}
+    end
+  end
+
+  defp decode_mst_entry(_entry, _previous_key), do: {:error, :invalid_mst_entry}
+
+  defp cid_or_nil?(nil), do: true
+  defp cid_or_nil?(%Cid{}), do: true
+  defp cid_or_nil?(_value), do: false
+
+  defp block_bytes(conn, %Cid{} = cid) do
+    cid_value = Cid.to_string(cid)
+
+    with {:ok, rows} <- fetch_all(conn, "SELECT bytes FROM blocks WHERE cid = ?1", [cid_value]) do
+      case rows do
+        [[bytes]] -> {:ok, bytes}
+        [] -> {:error, :block_not_found}
+      end
     end
   end
 
