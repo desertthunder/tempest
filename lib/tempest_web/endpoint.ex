@@ -27,6 +27,12 @@ defmodule TempestWeb.Endpoint do
     only: TempestWeb.static_paths(),
     raise_on_missing_only: code_reloading?
 
+  plug Plug.Static,
+    at: "/fonts",
+    from: Path.expand("../../assets/fonts", __DIR__),
+    gzip: false,
+    only: ~w(MonaspaceNeonVar.woff2)
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
