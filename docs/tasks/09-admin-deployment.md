@@ -40,11 +40,3 @@ hurl --test --jobs 1 \
   --variable admin_token="$ADMIN_TOKEN" \
   test/smoke/deployment.hurl
 ```
-
-## Done
-
-Run:
-
-```bash
-mix precommit
-```

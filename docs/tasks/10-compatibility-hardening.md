@@ -41,11 +41,3 @@ Expected:
 
 - Both Hurl smoke tests exit successfully.
 - Output includes account DID, latest commit, exported CAR size, blob CID, and observed firehose seq.
-
-## Done
-
-Run:
-
-```bash
-mix precommit
-```

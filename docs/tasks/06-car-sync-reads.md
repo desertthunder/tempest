@@ -32,11 +32,3 @@ Goal: expose repository state through sync read endpoints.
 ```bash
 hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/car-sync.hurl
 ```
-
-## Done
-
-Run:
-
-```bash
-mix precommit
-```

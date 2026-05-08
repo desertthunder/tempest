@@ -36,11 +36,3 @@ Goal: upload, reference, serve, and garbage collect blobs.
 ```bash
 hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/blobs.hurl
 ```
-
-## Done
-
-Run:
-
-```bash
-mix precommit
-```

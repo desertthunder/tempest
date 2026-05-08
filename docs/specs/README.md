@@ -18,12 +18,13 @@ Subsystem specifications live in this directory. Milestone task plans live in `.
 5. [Identity and Handles](identity-handles.md)
 6. [Repository Core](repo-core.md)
 7. [Record APIs](record-apis.md)
-8. [Blobs](blobs.md)
-9. [Sync and Firehose](sync-firehose.md)
-10. [Admin Operations](admin-operations.md)
-11. [Deployment and Observability](deployment-observability.md)
-12. [Interop and Integration Testing](interop-testing.md)
-13. [Hurl Smoke Tests](hurl-smoke-tests.md)
+8. [Lexicon Schema Loading and Generation](lexicon-schemas.md)
+9. [Blobs](blobs.md)
+10. [Sync and Firehose](sync-firehose.md)
+11. [Admin Operations](admin-operations.md)
+12. [Deployment and Observability](deployment-observability.md)
+13. [Interop and Integration Testing](interop-testing.md)
+14. [Hurl Smoke Tests](hurl-smoke-tests.md)
 
 ## Milestones
 

@@ -38,11 +38,3 @@ hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/fireho
 Expected:
 
 - Subscriber receives a commit event with increasing `seq`.
-
-## Done
-
-Run:
-
-```bash
-mix precommit
-```
