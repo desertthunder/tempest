@@ -52,15 +52,12 @@ defmodule TempestWeb.XrpcControllerTest do
     assert response["message"] == "request body must use content-type application/json"
   end
 
-  test "registered but unimplemented method returns JSON 501", %{conn: conn} do
+  test "subscription method requires a websocket upgrade", %{conn: conn} do
     conn = get(conn, ~p"/xrpc/com.atproto.sync.subscribeRepos")
 
-    response = json_response(conn, 501)
+    response = json_response(conn, 426)
 
     assert get_resp_header(conn, "content-type") == ["application/json; charset=utf-8"]
-    assert response["error"] == "NotImplemented"
-
-    assert response["message"] ==
-             "com.atproto.sync.subscribeRepos is registered but not implemented"
+    assert response["error"] == "UpgradeRequired"
   end
 end

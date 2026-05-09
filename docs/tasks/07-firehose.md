@@ -15,9 +15,9 @@ Goal: persist and stream repository, identity, and account events.
 - [x] T07-05: Insert commit events during record writes.
 - [x] T07-06: Generate CAR slices for commit events.
 - [x] T07-07: Add Phoenix.PubSub fanout after durable insert.
-- [ ] T07-08: Add WebSocket route for `subscribeRepos`.
-- [ ] T07-09: Encode event stream frames as required by current Lexicon/event stream specs.
-- [ ] T07-10: Add cursor backfill.
+- [x] T07-08: Add WebSocket route for `subscribeRepos`.
+- [x] T07-09: Encode event stream frames as required by current Lexicon/event stream specs.
+- [x] T07-10: Add cursor backfill.
 - [ ] T07-11: Add event size checks and `tooBig` behavior.
 - [ ] T07-12: Add integration test for subscribe, write, receive event.
 - [ ] T07-13: Add restart test proving sequence continuity.

@@ -213,8 +213,8 @@ defmodule Tempest.Xrpc.Registry do
       kind: :subscription,
       auth: :none,
       input: nil,
-      output: "application/jsonl",
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      output: "application/vnd.atproto.eventstream",
+      handler: {TempestWeb.FirehoseController, :subscribe_repos},
       errors: []
     }
   ]

@@ -40,6 +40,7 @@ defmodule TempestWeb.Router do
     pipe_through :xrpc
 
     get "/_health", HealthController, :show
+    get "/com.atproto.sync.subscribeRepos", FirehoseController, :subscribe_repos
     match :*, "/:method", XrpcController, :handle
   end
 
