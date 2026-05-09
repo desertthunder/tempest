@@ -129,7 +129,7 @@ defmodule TempestWeb.Xrpc.IdentityHandlesTest do
 
     assert response["did"] == account["did"]
     assert response["handle"] == "diana.test"
-    assert sequencer_event_count(account["did"], "identity.handle.update") == 1
+    assert sequencer_event_count(account["did"], "#identity", "handle.update") == 1
   end
 
   defp create_account!(conn, handle, email) do
@@ -151,21 +151,11 @@ defmodule TempestWeb.Xrpc.IdentityHandlesTest do
     )
   end
 
-  defp sequencer_event_count(did, event_type) do
-    path =
-      Tempest.Config.load!()
-      |> Tempest.Config.sequencer_db_path()
+  defp sequencer_event_count(did, event_type, action) do
+    {:ok, events} = Tempest.Sequencer.list_after(0, did: did)
 
-    {:ok, conn} = Exqlite.Sqlite3.open(path)
-
-    {:ok, statement} =
-      Exqlite.Sqlite3.prepare(conn, "SELECT COUNT(*) FROM repo_seq WHERE did = ?1 AND event_type = ?2")
-
-    :ok = Exqlite.Sqlite3.bind(statement, [did, event_type])
-    {:ok, [[count]]} = Exqlite.Sqlite3.fetch_all(conn, statement)
-    :ok = Exqlite.Sqlite3.release(conn, statement)
-    :ok = Exqlite.Sqlite3.close(conn)
-
-    count
+    Enum.count(events, fn event ->
+      event.did == did and event.event_type == event_type and event.payload["action"] == action
+    end)
   end
 end

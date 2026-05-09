@@ -8,11 +8,11 @@ Goal: persist and stream repository, identity, and account events.
 
 ## Tasks
 
-- [ ] T07-01: Add `sequencer.sqlite` bootstrap.
-- [ ] T07-02: Add `repo_seq` table and indexes.
-- [ ] T07-03: Add sequencer insert API.
-- [ ] T07-04: Insert account and identity events during account creation/update.
-- [ ] T07-05: Insert commit events during record writes.
+- [x] T07-01: Add `sequencer.sqlite` bootstrap.
+- [x] T07-02: Add `repo_seq` table and indexes.
+- [x] T07-03: Add sequencer insert API.
+- [x] T07-04: Insert account and identity events during account creation/update.
+- [x] T07-05: Insert commit events during record writes.
 - [ ] T07-06: Generate CAR slices for commit events.
 - [ ] T07-07: Add Phoenix.PubSub fanout after durable insert.
 - [ ] T07-08: Add WebSocket route for `subscribeRepos`.

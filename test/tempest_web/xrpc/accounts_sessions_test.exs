@@ -26,6 +26,12 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     assert Repo.exists?(
              from key in SigningKey, join: account in assoc(key, :account), where: account.handle == "alice.test"
            )
+
+    assert [
+             %Tempest.Sequencer.Event{event_type: "#identity", payload: %{"action" => "create"}},
+             %Tempest.Sequencer.Event{event_type: "#account", payload: %{"action" => "create"}},
+             %Tempest.Sequencer.Event{event_type: "#commit", payload: %{"action" => "repo.init", "ops" => []}}
+           ] = sequencer_events(response["did"])
   end
 
   test "createSession logs in and getSession returns the account", %{conn: conn} do
@@ -154,5 +160,10 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
       "identifier" => identifier,
       "password" => password
     })
+  end
+
+  defp sequencer_events(did) do
+    {:ok, events} = Tempest.Sequencer.list_after(0, did: did)
+    events
   end
 end

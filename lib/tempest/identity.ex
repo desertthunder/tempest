@@ -7,7 +7,7 @@ defmodule Tempest.Identity do
 
   alias Tempest.Accounts.{Account, AuthContext}
   alias Tempest.Identity.{DidDocument, HandleResolver, KeyStore, Validators}
-  alias Tempest.Repo
+  alias Tempest.{Repo, Sequencer}
 
   def validate_did_syntax(did), do: Validators.validate_did(did)
   def validate_handle_syntax(handle), do: Validators.validate_handle(handle)
@@ -67,9 +67,9 @@ defmodule Tempest.Identity do
          {:ok, document} <- did_document_for_did(did),
          true <- DidDocument.claims_handle?(document, handle),
          {:ok, updated_account} <- persist_handle(account, handle) do
-      :ok = Tempest.Sequencer.insert_placeholder(did, "identity.handle.update", %{"handle" => handle})
-
-      {:ok, updated_account}
+      with {:ok, _event} <- Sequencer.insert_identity_event(did, "handle.update", %{"handle" => handle}) do
+        {:ok, updated_account}
+      end
     else
       {:ok, _other_did} -> {:error, :handle_did_mismatch}
       false -> {:error, :did_document_mismatch}

@@ -29,7 +29,7 @@ defmodule Tempest.Records do
              record: input.record,
              swap_commit: input.swap_commit
            }),
-         :ok <- insert_sequence_event(account.did, stored) do
+         {:ok, _event} <- insert_sequence_event(account.did, stored, "create", input.collection, rkey) do
       {:ok,
        %{
          uri: stored.uri,
@@ -57,7 +57,7 @@ defmodule Tempest.Records do
              swap_record: input.swap_record,
              swap_commit: input.swap_commit
            }),
-         :ok <- insert_sequence_event(account.did, stored, "repo.record.put") do
+         {:ok, _event} <- insert_sequence_event(account.did, stored, "update", input.collection, input.rkey) do
       {:ok,
        %{
          uri: stored.uri,
@@ -82,7 +82,7 @@ defmodule Tempest.Records do
              swap_record: input.swap_record,
              swap_commit: input.swap_commit
            }),
-         :ok <- maybe_insert_delete_event(account.did, stored) do
+         {:ok, _event} <- maybe_insert_delete_event(account.did, stored, input.collection, input.rkey) do
       if stored.deleted? do
         {:ok,
          %{
@@ -187,20 +187,35 @@ defmodule Tempest.Records do
     end
   end
 
-  defp insert_sequence_event(did, stored, event_type \\ "repo.record.create") do
-    Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, event_type, %{
-      "uri" => stored.uri,
-      "cid" => stored.record_cid
+  defp insert_sequence_event(did, stored, action, collection, rkey) do
+    Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, %{
+      "ops" => [
+        %{
+          "action" => action,
+          "path" => collection <> "/" <> rkey,
+          "cid" => stored.record_cid
+        }
+      ],
+      "blobs" => [],
+      "tooBig" => false
     })
   end
 
-  defp maybe_insert_delete_event(did, %{deleted?: true} = stored) do
-    Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "repo.record.delete", %{
-      "uri" => stored.uri
+  defp maybe_insert_delete_event(did, %{deleted?: true} = stored, collection, rkey) do
+    Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "delete", %{
+      "ops" => [
+        %{
+          "action" => "delete",
+          "path" => collection <> "/" <> rkey,
+          "cid" => nil
+        }
+      ],
+      "blobs" => [],
+      "tooBig" => false
     })
   end
 
-  defp maybe_insert_delete_event(_did, %{deleted?: false}), do: :ok
+  defp maybe_insert_delete_event(_did, %{deleted?: false}, _collection, _rkey), do: {:ok, nil}
 
   defp handle_correct?(%Account{} = account, did_doc) do
     did = account.did

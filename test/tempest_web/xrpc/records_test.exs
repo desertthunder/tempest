@@ -37,7 +37,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert scalar(repo_db, "SELECT COUNT(*) FROM commits") == 2
     assert metadata(repo_db)["current_commit_cid"] == commit_cid
     assert metadata(repo_db)["current_rev"] == rev
-    assert sequencer_event_count(account["did"], "repo.record.create") == 1
+    assert sequencer_event_count(account["did"], "#commit", "create") == 1
 
     get_conn =
       conn
@@ -195,7 +195,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
       })
 
     assert json_response(get_conn, 200)["value"]["displayName"] == "Erin Updated"
-    assert sequencer_event_count(account["did"], "repo.record.put") == 1
+    assert sequencer_event_count(account["did"], "#commit", "update") == 1
   end
 
   test "deleteRecord removes current record from getRecord and listRecords", %{conn: conn} do
@@ -237,7 +237,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
 
     assert json_response(list_conn, 200)["records"] == []
     assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 0
-    assert sequencer_event_count(account["did"], "repo.record.delete") == 1
+    assert sequencer_event_count(account["did"], "#commit", "delete") == 1
 
     absent_delete_conn =
       conn
@@ -251,7 +251,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
       })
 
     refute Map.has_key?(json_response(absent_delete_conn, 200), "commit")
-    assert sequencer_event_count(account["did"], "repo.record.delete") == 1
+    assert sequencer_event_count(account["did"], "#commit", "delete") == 1
   end
 
   test "listRecords paginates within a collection", %{conn: conn} do
@@ -403,18 +403,12 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     value
   end
 
-  defp sequencer_event_count(did, event_type) do
-    path =
-      Tempest.Config.load!()
-      |> Tempest.Config.sequencer_db_path()
+  defp sequencer_event_count(did, event_type, action) do
+    {:ok, events} = Tempest.Sequencer.list_after(0, did: did)
 
-    {:ok, conn} = Exqlite.Sqlite3.open(path)
-    {:ok, statement} = Exqlite.Sqlite3.prepare(conn, "SELECT COUNT(*) FROM repo_seq WHERE did = ?1 AND event_type = ?2")
-    :ok = Exqlite.Sqlite3.bind(statement, [did, event_type])
-    {:ok, [[count]]} = Exqlite.Sqlite3.fetch_all(conn, statement)
-    :ok = Exqlite.Sqlite3.release(conn, statement)
-    :ok = Exqlite.Sqlite3.close(conn)
-    count
+    Enum.count(events, fn event ->
+      event.did == did and event.event_type == event_type and event.payload["action"] == action
+    end)
   end
 
   defp fetch_all(path, sql) do

@@ -21,6 +21,11 @@ defmodule Tempest.Storage do
     event_cbor BLOB NOT NULL,
     created_at TEXT NOT NULL
   );
+
+  CREATE INDEX IF NOT EXISTS repo_seq_did_seq_idx ON repo_seq (did, seq);
+  CREATE INDEX IF NOT EXISTS repo_seq_event_type_seq_idx ON repo_seq (event_type, seq);
+  CREATE INDEX IF NOT EXISTS repo_seq_rev_idx ON repo_seq (rev);
+  CREATE INDEX IF NOT EXISTS repo_seq_commit_cid_idx ON repo_seq (commit_cid);
   """
 
   @doc """

@@ -7,7 +7,7 @@ defmodule Tempest.Accounts do
 
   alias Tempest.Accounts.{Account, AuthContext, Password, Session, Tokens}
   alias Tempest.Identity
-  alias Tempest.{Repo, RepoStorage}
+  alias Tempest.{Repo, RepoStorage, Sequencer}
 
   @public_fields [:did, :handle, :email, :active, :status]
 
@@ -41,10 +41,9 @@ defmodule Tempest.Accounts do
       end)
       |> case do
         {:ok, {account, session}} ->
-          :ok =
-            Tempest.Sequencer.insert_placeholder(account.did, "identity.account.create", %{"handle" => account.handle})
-
-          {:ok, session_response(account, session, refresh_token)}
+          with {:ok, _events} <- emit_account_creation_events(account) do
+            {:ok, session_response(account, session, refresh_token)}
+          end
 
         {:error, {:validation, changeset}} ->
           {:error, :validation, changeset}
@@ -209,6 +208,27 @@ defmodule Tempest.Accounts do
     |> case do
       {:ok, session} -> {:ok, session_response(account, session, refresh_token)}
       {:error, changeset} -> {:error, :validation, changeset}
+    end
+  end
+
+  defp emit_account_creation_events(%Account{} = account) do
+    with {:ok, latest} <- RepoStorage.latest_commit(account.did),
+         {:ok, identity_event} <-
+           Sequencer.insert_identity_event(account.did, "create", %{
+             "handle" => account.handle
+           }),
+         {:ok, account_event} <-
+           Sequencer.insert_account_event(account.did, "create", %{
+             "active" => account.active,
+             "status" => account.status
+           }),
+         {:ok, commit_event} <-
+           Sequencer.insert_repo_commit(account.did, latest.rev, latest.cid, "repo.init", %{
+             "ops" => [],
+             "blobs" => [],
+             "tooBig" => false
+           }) do
+      {:ok, [identity_event, account_event, commit_event]}
     end
   end
 

@@ -1,65 +1,220 @@
 defmodule Tempest.Sequencer do
   @moduledoc """
-  Minimal sequencer write boundary for placeholder events.
+  Durable PDS-wide event sequence for sync/firehose consumers.
+
+  `repo_seq` is the source of truth. Live fanout can happen after this boundary,
+  but callers should only treat an event as visible once the durable insert
+  returns a concrete monotonic `seq`.
   """
 
   alias Exqlite.Sqlite3
+  alias Tempest.RepoCore.Drisl
   alias Tempest.Storage.Timestamp
 
-  @insert_sql """
-  INSERT INTO repo_seq (did, event_type, event_cbor, created_at)
-  VALUES (?1, ?2, ?3, ?4)
-  """
+  @identity "#identity"
+  @account "#account"
+  @commit "#commit"
 
-  @insert_repo_commit_sql """
+  @insert_sql """
   INSERT INTO repo_seq (did, event_type, rev, commit_cid, event_cbor, created_at)
   VALUES (?1, ?2, ?3, ?4, ?5, ?6)
   """
 
-  def insert_placeholder(did, event_type, payload \\ %{}) when is_binary(did) and is_binary(event_type) do
+  @update_event_sql "UPDATE repo_seq SET event_cbor = ?1 WHERE seq = ?2"
+  @last_insert_sql "SELECT last_insert_rowid()"
+
+  defmodule Event do
+    @moduledoc """
+    Event returned after a durable sequencer insert.
+    """
+
+    @enforce_keys [:seq, :did, :event_type, :payload, :event_cbor, :created_at]
+    defstruct [:seq, :did, :event_type, :rev, :commit_cid, :payload, :event_cbor, :created_at]
+  end
+
+  def insert_identity_event(did, action, payload \\ %{}) do
+    insert_event(did, @identity, action, payload)
+  end
+
+  def insert_account_event(did, action, payload \\ %{}) do
+    insert_event(did, @account, action, payload)
+  end
+
+  def insert_repo_commit(did, rev, commit_cid, action, payload \\ %{})
+      when is_binary(did) and is_binary(rev) and is_binary(commit_cid) and is_binary(action) do
+    payload =
+      payload
+      |> normalize_payload()
+      |> Map.merge(%{
+        "rev" => rev,
+        "commit" => commit_cid
+      })
+
+    insert_event(did, @commit, action, payload, rev: rev, commit_cid: commit_cid)
+  end
+
+  def list_after(cursor, opts \\ []) when is_integer(cursor) and cursor >= 0 do
+    limit = Keyword.get(opts, :limit, 500)
+    did = Keyword.get(opts, :did)
+
     path =
       Tempest.Config.load!()
       |> Tempest.Config.sequencer_db_path()
 
-    event =
-      payload
-      |> Map.put("placeholder", true)
-      |> Jason.encode!()
+    {sql, bindings} = list_after_query(cursor, limit, did)
 
     with {:ok, conn} <- Sqlite3.open(path),
-         {:ok, statement} <- Sqlite3.prepare(conn, @insert_sql),
-         :ok <- Sqlite3.bind(statement, [did, event_type, event, Timestamp.iso8601_utc()]),
-         :done <- Sqlite3.step(conn, statement),
+         {:ok, statement} <- Sqlite3.prepare(conn, sql),
+         :ok <- Sqlite3.bind(statement, bindings),
+         {:ok, rows} <- Sqlite3.fetch_all(conn, statement),
          :ok <- Sqlite3.release(conn, statement),
          :ok <- Sqlite3.close(conn) do
-      :ok
+      {:ok, Enum.map(rows, &event_from_row/1)}
     else
       {:error, reason} -> {:error, reason}
-      other -> {:error, other}
     end
   end
 
-  def insert_repo_commit(did, rev, commit_cid, event_type, payload \\ %{})
-      when is_binary(did) and is_binary(rev) and is_binary(commit_cid) and is_binary(event_type) do
+  defp list_after_query(cursor, limit, did) when is_binary(did) do
+    {"""
+     SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
+     FROM repo_seq
+     WHERE seq > ?1 AND did = ?2
+     ORDER BY seq ASC
+     LIMIT ?3
+     """, [cursor, did, limit]}
+  end
+
+  defp list_after_query(cursor, limit, _did) do
+    {"""
+     SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
+     FROM repo_seq
+     WHERE seq > ?1
+     ORDER BY seq ASC
+     LIMIT ?2
+     """, [cursor, limit]}
+  end
+
+  defp insert_event(did, event_type, action, payload, opts \\ [])
+       when is_binary(did) and is_binary(event_type) and is_binary(action) and is_map(payload) do
     path =
       Tempest.Config.load!()
       |> Tempest.Config.sequencer_db_path()
 
-    event =
-      payload
-      |> Map.put("placeholder", true)
-      |> Jason.encode!()
+    created_at = Timestamp.iso8601_utc()
+    rev = Keyword.get(opts, :rev)
+    commit_cid = Keyword.get(opts, :commit_cid)
+    payload = normalize_payload(payload)
 
-    with {:ok, conn} <- Sqlite3.open(path),
-         {:ok, statement} <- Sqlite3.prepare(conn, @insert_repo_commit_sql),
-         :ok <- Sqlite3.bind(statement, [did, event_type, rev, commit_cid, event, Timestamp.iso8601_utc()]),
-         :done <- Sqlite3.step(conn, statement),
-         :ok <- Sqlite3.release(conn, statement),
-         :ok <- Sqlite3.close(conn) do
-      :ok
+    with {:ok, conn} <- Sqlite3.open(path) do
+      result = transact_insert_event(conn, did, event_type, action, payload, rev, commit_cid, created_at)
+
+      case Sqlite3.close(conn) do
+        :ok -> result
+        {:error, reason} -> {:error, reason}
+      end
     else
-      {:error, reason} -> {:error, reason}
-      other -> {:error, other}
+      {:error, reason} ->
+        {:error, reason}
     end
   end
+
+  defp transact_insert_event(conn, did, event_type, action, payload, rev, commit_cid, created_at) do
+    result =
+      with :ok <- Sqlite3.execute(conn, "BEGIN IMMEDIATE"),
+           {:ok, seq} <- insert_empty_event(conn, did, event_type, rev, commit_cid, created_at),
+           event_payload <- build_payload(seq, did, event_type, action, payload, rev, commit_cid, created_at),
+           {:ok, event_cbor} <- Drisl.encode(event_payload),
+           :ok <- update_event_cbor(conn, seq, event_cbor),
+           :ok <- Sqlite3.execute(conn, "COMMIT") do
+        {:ok,
+         %Event{
+           seq: seq,
+           did: did,
+           event_type: event_type,
+           rev: rev,
+           commit_cid: commit_cid,
+           payload: event_payload,
+           event_cbor: event_cbor,
+           created_at: created_at
+         }}
+      end
+
+    case result do
+      {:ok, _event} ->
+        result
+
+      {:error, _reason} ->
+        _ = Sqlite3.execute(conn, "ROLLBACK")
+        result
+
+      other ->
+        _ = Sqlite3.execute(conn, "ROLLBACK")
+        {:error, other}
+    end
+  end
+
+  defp insert_empty_event(conn, did, event_type, rev, commit_cid, created_at) do
+    with {:ok, statement} <- Sqlite3.prepare(conn, @insert_sql),
+         :ok <- Sqlite3.bind(statement, [did, event_type, rev, commit_cid, "", created_at]),
+         :done <- Sqlite3.step(conn, statement),
+         :ok <- Sqlite3.release(conn, statement),
+         {:ok, seq} <- last_insert_rowid(conn) do
+      {:ok, seq}
+    end
+  end
+
+  defp last_insert_rowid(conn) do
+    with {:ok, statement} <- Sqlite3.prepare(conn, @last_insert_sql),
+         {:ok, [[seq]]} <- Sqlite3.fetch_all(conn, statement),
+         :ok <- Sqlite3.release(conn, statement) do
+      {:ok, seq}
+    end
+  end
+
+  defp update_event_cbor(conn, seq, event_cbor) do
+    with {:ok, statement} <- Sqlite3.prepare(conn, @update_event_sql),
+         :ok <- Sqlite3.bind(statement, [event_cbor, seq]),
+         :done <- Sqlite3.step(conn, statement),
+         :ok <- Sqlite3.release(conn, statement) do
+      :ok
+    end
+  end
+
+  defp build_payload(seq, did, event_type, action, payload, rev, commit_cid, created_at) do
+    %{
+      "$type" => "com.atproto.sync.subscribeRepos" <> event_type,
+      "seq" => seq,
+      "did" => did,
+      "action" => action,
+      "time" => created_at
+    }
+    |> maybe_put("rev", rev)
+    |> maybe_put("commit", commit_cid)
+    |> Map.merge(payload)
+  end
+
+  defp event_from_row([seq, did, event_type, rev, commit_cid, event_cbor, created_at]) do
+    %Event{
+      seq: seq,
+      did: did,
+      event_type: event_type,
+      rev: rev,
+      commit_cid: commit_cid,
+      payload: Drisl.decode!(event_cbor),
+      event_cbor: event_cbor,
+      created_at: created_at
+    }
+  end
+
+  defp normalize_payload(payload) do
+    Map.new(payload, fn {key, value} -> {to_string(key), normalize_value(value)} end)
+  end
+
+  defp normalize_value(value) when is_map(value), do: normalize_payload(value)
+  defp normalize_value(value) when is_list(value), do: Enum.map(value, &normalize_value/1)
+  defp normalize_value(value), do: value
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 end
