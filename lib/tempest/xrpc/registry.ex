@@ -209,6 +209,15 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["RepoNotFound"]
     },
     %Method{
+      nsid: "com.atproto.sync.requestCrawl",
+      kind: :procedure,
+      auth: :none,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Sync, :request_crawl},
+      errors: []
+    },
+    %Method{
       nsid: "com.atproto.sync.subscribeRepos",
       kind: :subscription,
       auth: :none,

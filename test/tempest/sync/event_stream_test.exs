@@ -43,4 +43,24 @@ defmodule Tempest.Sync.EventStreamTest do
     refute Map.has_key?(decoded, "$type")
     refute Map.has_key?(decoded, "did")
   end
+
+  test "rejects oversized event stream frames" do
+    event = %Event{
+      seq: 43,
+      did: "did:plc:frame",
+      event_type: "#identity",
+      created_at: "2026-05-09T00:00:00Z",
+      event_cbor: "stored",
+      payload: %{
+        "$type" => "com.atproto.sync.subscribeRepos#identity",
+        "seq" => 43,
+        "did" => "did:plc:frame",
+        "action" => "create",
+        "handle" => String.duplicate("a", 5_000_001),
+        "time" => "2026-05-09T00:00:00Z"
+      }
+    }
+
+    assert EventStream.encode_message(event) == {:error, :frame_too_large}
+  end
 end

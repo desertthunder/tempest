@@ -7,7 +7,12 @@ defmodule Tempest.RepoCore.CarVerifier do
   MST.
   """
 
-  alias Tempest.RepoCore.{Car, Cid, Commit, Drisl}
+  alias Tempest.RepoCore.{Car, Cid, Commit, Drisl, Mst}
+
+  @firehose_max_frame_bytes 5_000_000
+  @firehose_max_car_bytes 2_000_000
+  @firehose_max_record_bytes 1_000_000
+  @firehose_max_ops 200
 
   @type result :: %{
           car: Car.t(),
@@ -22,6 +27,14 @@ defmodule Tempest.RepoCore.CarVerifier do
           | :commit_cid_mismatch
           | :did_mismatch
           | :mst_cycle
+          | :too_many_ops
+          | :firehose_frame_too_large
+          | :firehose_car_too_large
+          | :firehose_record_too_large
+          | :commit_rev_mismatch
+          | :commit_root_mismatch
+          | :commit_event_mismatch
+          | :invalid_commit_event
           | :invalid_mst_node
           | :invalid_mst_entry
           | {:car_error, term()}
@@ -49,6 +62,30 @@ defmodule Tempest.RepoCore.CarVerifier do
   end
 
   def verify_repo_car(_bytes, _opts), do: {:error, {:car_error, :invalid_car}}
+
+  @spec verify_commit_event(map()) :: :ok | {:error, error()}
+  def verify_commit_event(payload) when is_map(payload) do
+    with {:ok, blocks} <- commit_event_blocks(payload),
+         :ok <- verify_firehose_car_size(blocks),
+         :ok <- verify_frame_size(payload),
+         :ok <- verify_ops_size(Map.get(payload, "ops", [])),
+         {:ok, car} <- decode_car(blocks),
+         {:ok, commit_cid} <- first_root(car),
+         :ok <- verify_payload_commit(payload, commit_cid),
+         blocks_by_cid = blocks_by_cid(car),
+         {:ok, commit_bytes} <- fetch_block(blocks_by_cid, commit_cid, :commit_block_missing),
+         {:ok, commit} <- decode_commit(commit_bytes),
+         :ok <- verify_commit_cid(commit, commit_cid),
+         :ok <- verify_did(commit, Map.get(payload, "did")),
+         :ok <- verify_rev(commit, Map.get(payload, "rev")),
+         {:ok, proof} <- collect_mst(blocks_by_cid, commit.data, MapSet.new(), %{}),
+         :ok <- verify_record_block_sizes(blocks_by_cid, Map.get(payload, "ops", [])),
+         :ok <- verify_mst_inversion(proof.entries, payload) do
+      :ok
+    end
+  end
+
+  def verify_commit_event(_payload), do: {:error, :invalid_commit_event}
 
   defp decode_car(bytes) do
     case Car.decode(bytes) do
@@ -85,6 +122,121 @@ defmodule Tempest.RepoCore.CarVerifier do
   defp verify_did(_commit, nil), do: :ok
   defp verify_did(%Commit{did: did}, did), do: :ok
   defp verify_did(%Commit{}, _did), do: {:error, :did_mismatch}
+
+  defp verify_rev(_commit, nil), do: :ok
+  defp verify_rev(%Commit{rev: rev}, rev), do: :ok
+  defp verify_rev(%Commit{}, _rev), do: {:error, :commit_rev_mismatch}
+
+  defp verify_payload_commit(payload, commit_cid) do
+    case Map.get(payload, "commit") do
+      nil ->
+        :ok
+
+      value ->
+        with {:ok, expected} <- cid_value(value) do
+          if expected == commit_cid, do: :ok, else: {:error, :commit_root_mismatch}
+        end
+    end
+  end
+
+  defp commit_event_blocks(%{"blocks" => %Drisl.Bytes{bytes: bytes}}), do: {:ok, bytes}
+  defp commit_event_blocks(_payload), do: {:error, :invalid_commit_event}
+
+  defp verify_firehose_car_size(bytes) do
+    if byte_size(bytes) <= @firehose_max_car_bytes do
+      :ok
+    else
+      {:error, :firehose_car_too_large}
+    end
+  end
+
+  defp verify_frame_size(payload) do
+    case Drisl.encode(payload) do
+      {:ok, bytes} when byte_size(bytes) <= @firehose_max_frame_bytes -> :ok
+      {:ok, _bytes} -> {:error, :firehose_frame_too_large}
+      {:error, reason} -> {:error, {:commit_event_encode_error, reason}}
+    end
+  end
+
+  defp verify_ops_size(ops) when is_list(ops) and length(ops) <= @firehose_max_ops, do: :ok
+  defp verify_ops_size(ops) when is_list(ops), do: {:error, :too_many_ops}
+  defp verify_ops_size(_ops), do: {:error, :invalid_commit_event}
+
+  defp verify_record_block_sizes(blocks, ops) when is_list(ops) do
+    Enum.reduce_while(ops, :ok, fn op, :ok ->
+      case cid_value(Map.get(op, "cid")) do
+        {:ok, cid} ->
+          case Map.fetch(blocks, Cid.to_string(cid)) do
+            {:ok, bytes} when byte_size(bytes) <= @firehose_max_record_bytes -> {:cont, :ok}
+            {:ok, _bytes} -> {:halt, {:error, :firehose_record_too_large}}
+            :error -> {:cont, :ok}
+          end
+
+        {:error, :missing_cid} ->
+          {:cont, :ok}
+
+        {:error, reason} ->
+          {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp verify_mst_inversion(_entries, %{"tooBig" => true}), do: :ok
+  defp verify_mst_inversion(_entries, %{"action" => "repo.init"}), do: :ok
+
+  defp verify_mst_inversion(entries, %{"prevData" => prev_data, "ops" => ops})
+       when is_list(ops) and not is_nil(prev_data) do
+    with {:ok, expected_prev_root} <- cid_value(prev_data),
+         {:ok, inverted_entries} <- invert_ops(entries, ops),
+         {:ok, mst} <- Mst.from_entries(Map.to_list(inverted_entries)),
+         {:ok, actual_prev_root} <- Mst.root_cid(mst) do
+      if actual_prev_root == expected_prev_root do
+        :ok
+      else
+        {:error, :commit_event_mismatch}
+      end
+    end
+  end
+
+  defp verify_mst_inversion(_entries, _payload), do: :ok
+
+  defp invert_ops(entries, ops) do
+    Enum.reduce_while(Enum.reverse(ops), {:ok, entries}, fn op, {:ok, acc} ->
+      with {:ok, path} <- op_path(op),
+           {:ok, updated} <- invert_op(acc, path, op) do
+        {:cont, {:ok, updated}}
+      else
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp invert_op(entries, path, %{"action" => "create"}) do
+    {:ok, Map.delete(entries, path)}
+  end
+
+  defp invert_op(entries, path, %{"action" => action} = op) when action in ["update", "delete"] do
+    with {:ok, previous_cid} <- cid_value(Map.get(op, "prev")) do
+      {:ok, Map.put(entries, path, previous_cid)}
+    end
+  end
+
+  defp invert_op(_entries, _path, _op), do: {:error, :invalid_commit_event}
+
+  defp op_path(%{"path" => path}) when is_binary(path) and path != "", do: {:ok, path}
+  defp op_path(_op), do: {:error, :invalid_commit_event}
+
+  defp cid_value(nil), do: {:error, :missing_cid}
+  defp cid_value(%Cid{} = cid), do: {:ok, cid}
+
+  defp cid_value(value) when is_binary(value) do
+    case Cid.parse(value) do
+      {:ok, cid} -> {:ok, cid}
+      {:error, reason} -> {:error, {:invalid_cid, reason}}
+    end
+  end
+
+  defp cid_value(_value), do: {:error, :invalid_cid}
 
   @typep blocks_by_cid :: %{String.t() => binary()}
   @typep mst_entries :: %{String.t() => Cid.t()}

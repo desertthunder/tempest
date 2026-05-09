@@ -121,7 +121,9 @@ defmodule Tempest.RepoStorage do
              uri: repo.uri,
              record_cid: repo.record_cid,
              commit_cid: repo.commit_cid,
-             rev: repo.rev
+             rev: repo.rev,
+             prev_rev: current.rev,
+             prev_data: current.root_cid
            }}
         end
       end)
@@ -153,7 +155,10 @@ defmodule Tempest.RepoStorage do
              uri: repo.uri,
              record_cid: repo.record_cid,
              commit_cid: repo.commit_cid,
-             rev: repo.rev
+             rev: repo.rev,
+             prev_rev: current.rev,
+             prev_data: current.root_cid,
+             prev_record_cid: existing_record && existing_record.cid
            }}
         end
       end)
@@ -192,6 +197,9 @@ defmodule Tempest.RepoStorage do
                    uri: repo.uri,
                    commit_cid: repo.commit_cid,
                    rev: repo.rev,
+                   prev_rev: current.rev,
+                   prev_data: current.root_cid,
+                   prev_record_cid: existing_record.cid,
                    deleted?: true
                  }}
               end

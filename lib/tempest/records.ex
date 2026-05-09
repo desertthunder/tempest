@@ -12,9 +12,9 @@ defmodule Tempest.Records do
   alias Tempest.Records.LexiconValidator
   alias Tempest.Repo
   alias Tempest.RepoStorage
+  alias Tempest.RepoCore.{CarVerifier, Drisl}
   alias Tempest.RepoCore.Tid
   alias Tempest.RepoCore.Tid.Clock
-  alias Tempest.RepoCore.Drisl
 
   def create_record(%AuthContext{account: account}, params) do
     with {:ok, input} <- LexiconValidator.validate_create_record_input(params),
@@ -191,42 +191,87 @@ defmodule Tempest.Records do
   defp insert_sequence_event(did, stored, action, collection, rkey) do
     path = collection <> "/" <> rkey
 
-    with {:ok, car_slice} <- RepoStorage.export_commit_car_slice(did, stored.commit_cid, paths: [path]) do
-      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, %{
-        "blocks" => Drisl.bytes(car_slice.bytes),
-        "ops" => [
-          %{
-            "action" => action,
-            "path" => path,
-            "cid" => stored.record_cid
-          }
-        ],
-        "blobs" => [],
-        "tooBig" => false
-      })
+    op =
+      %{
+        "action" => action,
+        "path" => path,
+        "cid" => stored.record_cid
+      }
+      |> maybe_put("prev", Map.get(stored, :prev_record_cid))
+
+    with {:ok, payload} <- commit_payload(did, stored, [path], [op]) do
+      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, payload)
     end
   end
 
   defp maybe_insert_delete_event(did, %{deleted?: true} = stored, collection, rkey) do
     path = collection <> "/" <> rkey
+    op = %{"action" => "delete", "path" => path, "cid" => nil, "prev" => stored.prev_record_cid}
 
-    with {:ok, car_slice} <- RepoStorage.export_commit_car_slice(did, stored.commit_cid, paths: [path]) do
-      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "delete", %{
-        "blocks" => Drisl.bytes(car_slice.bytes),
-        "ops" => [
-          %{
-            "action" => "delete",
-            "path" => path,
-            "cid" => nil
-          }
-        ],
-        "blobs" => [],
-        "tooBig" => false
-      })
+    with {:ok, payload} <- commit_payload(did, stored, [path], [op]) do
+      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "delete", payload)
     end
   end
 
   defp maybe_insert_delete_event(_did, %{deleted?: false}, _collection, _rkey), do: {:ok, nil}
+
+  defp commit_payload(did, stored, paths, ops) do
+    base = %{
+      "ops" => ops,
+      "blobs" => [],
+      "tooBig" => false
+    }
+
+    with {:ok, car_slice} <- RepoStorage.export_commit_car_slice(did, stored.commit_cid, paths: paths) do
+      payload =
+        base
+        |> put_common_commit_fields(stored)
+        |> Map.put("blocks", Drisl.bytes(car_slice.bytes))
+
+      case CarVerifier.verify_commit_event(
+             Map.merge(payload, %{"did" => did, "commit" => stored.commit_cid, "rev" => stored.rev})
+           ) do
+        :ok ->
+          {:ok, payload}
+
+        {:error, reason}
+        when reason in [:firehose_car_too_large, :firehose_record_too_large, :firehose_frame_too_large] ->
+          too_big_commit_payload(did, stored, ops)
+
+        {:error, reason} ->
+          {:error, {:invalid_commit_event, reason}}
+      end
+    end
+  end
+
+  defp too_big_commit_payload(did, stored, ops) do
+    with {:ok, car_slice} <- RepoStorage.export_commit_car_slice(did, stored.commit_cid, paths: []) do
+      payload =
+        %{
+          "blocks" => Drisl.bytes(car_slice.bytes),
+          "ops" => ops,
+          "blobs" => [],
+          "tooBig" => true
+        }
+        |> put_common_commit_fields(stored)
+
+      case CarVerifier.verify_commit_event(
+             Map.merge(payload, %{"did" => did, "commit" => stored.commit_cid, "rev" => stored.rev})
+           ) do
+        :ok -> {:ok, payload}
+        {:error, reason} -> {:error, {:invalid_commit_event, reason}}
+      end
+    end
+  end
+
+  defp put_common_commit_fields(payload, stored) do
+    payload
+    |> maybe_put("since", Map.get(stored, :prev_rev))
+    |> maybe_put("prevData", Map.get(stored, :prev_data))
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 
   defp handle_correct?(%Account{} = account, did_doc) do
     did = account.did

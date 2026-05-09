@@ -18,13 +18,13 @@ Goal: persist and stream repository, identity, and account events.
 - [x] T07-08: Add WebSocket route for `subscribeRepos`.
 - [x] T07-09: Encode event stream frames as required by current Lexicon/event stream specs.
 - [x] T07-10: Add cursor backfill.
-- [ ] T07-11: Add event size checks and `tooBig` behavior.
-- [ ] T07-12: Add integration test for subscribe, write, receive event.
-- [ ] T07-13: Add restart test proving sequence continuity.
-- [ ] T07-14: Add durable-tail recovery test for crash between event persistence and fanout.
-- [ ] T07-15: Add torn-write detection test for sequencer storage.
-- [ ] T07-16: Add MST inversion verification for emitted commit events.
-- [ ] T07-17: Add `requestCrawl` support for configured relays with rate limiting.
+- [x] T07-11: Add event size checks and `tooBig` behavior.
+- [x] T07-12: Add MST inversion verification for emitted commit events.
+- [x] T07-13: Add `requestCrawl` support for configured relays with rate limiting.
+- [ ] T07-14: Add integration test for subscribe, write, receive event.
+- [ ] T07-15: Add restart test proving sequence continuity.
+- [ ] T07-16: Add durable-tail recovery test for crash between event persistence and fanout.
+- [ ] T07-17: Add torn-write detection test for sequencer storage.
 
 ## Integration Tests
 

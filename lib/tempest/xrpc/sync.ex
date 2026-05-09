@@ -54,6 +54,13 @@ defmodule Tempest.Xrpc.Sync do
     end
   end
 
+  def request_crawl(_conn, params, _method) do
+    case Sync.request_crawl(params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> sync_error(reason)
+    end
+  end
+
   defp sync_error(:repo_not_found), do: {:error, 400, "RepoNotFound", "repository could not be found"}
   defp sync_error(:repo_takendown), do: {:error, 400, "RepoTakendown", "repository is taken down"}
   defp sync_error(:repo_suspended), do: {:error, 400, "RepoSuspended", "repository is suspended"}
@@ -69,6 +76,10 @@ defmodule Tempest.Xrpc.Sync do
   defp sync_error(:invalid_cid), do: {:error, 400, "InvalidRequest", "cid is invalid"}
   defp sync_error(:invalid_limit), do: {:error, 400, "InvalidRequest", "limit must be between 1 and 1000"}
   defp sync_error(:invalid_cursor), do: {:error, 400, "InvalidRequest", "cursor is invalid"}
+  defp sync_error(:invalid_hostname), do: {:error, 400, "InvalidRequest", "hostname is invalid"}
+  defp sync_error(:rate_limited), do: {:error, 429, "RateLimitExceeded", "requestCrawl is rate limited"}
+  defp sync_error({:relay_status, _status}), do: {:error, 502, "UpstreamFailure", "relay request failed"}
+  defp sync_error({:relay_request_failed, _reason}), do: {:error, 502, "UpstreamFailure", "relay request failed"}
 
   defp sync_error({:missing_field, field}), do: {:error, 400, "InvalidRequest", "#{field} is required"}
   defp sync_error(_reason), do: {:error, 500, "InternalServerError", "sync read failed"}

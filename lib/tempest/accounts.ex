@@ -7,6 +7,7 @@ defmodule Tempest.Accounts do
 
   alias Tempest.Accounts.{Account, AuthContext, Password, Session, Tokens}
   alias Tempest.Identity
+  alias Tempest.RepoCore.{CarVerifier, Drisl}
   alias Tempest.{Repo, RepoStorage, Sequencer}
 
   @public_fields [:did, :handle, :email, :active, :status]
@@ -223,14 +224,25 @@ defmodule Tempest.Accounts do
              "active" => account.active,
              "status" => account.status
            }),
+         commit_payload = %{
+           "blocks" => Drisl.bytes(car_slice.bytes),
+           "ops" => [],
+           "blobs" => [],
+           "tooBig" => false
+         },
+         :ok <- verify_initial_commit_payload(commit_payload, account.did, latest),
          {:ok, commit_event} <-
-           Sequencer.insert_repo_commit(account.did, latest.rev, latest.cid, "repo.init", %{
-             "blocks" => Tempest.RepoCore.Drisl.bytes(car_slice.bytes),
-             "ops" => [],
-             "blobs" => [],
-             "tooBig" => false
-           }) do
+           Sequencer.insert_repo_commit(account.did, latest.rev, latest.cid, "repo.init", commit_payload) do
       {:ok, [identity_event, account_event, commit_event]}
+    end
+  end
+
+  defp verify_initial_commit_payload(payload, did, latest) do
+    case CarVerifier.verify_commit_event(
+           Map.merge(payload, %{"did" => did, "commit" => latest.cid, "rev" => latest.rev})
+         ) do
+      :ok -> :ok
+      {:error, reason} -> {:error, {:invalid_commit_event, reason}}
     end
   end
 

@@ -6,10 +6,14 @@ defmodule Tempest.Sync.EventStream do
   alias Tempest.RepoCore.{Cid, Drisl}
   alias Tempest.Sequencer.Event
 
+  @max_frame_bytes 5_000_000
+
   def encode_message(%Event{} = event) do
     with {:ok, header} <- Drisl.encode(%{"op" => 1, "t" => event.event_type}),
-         {:ok, payload} <- event |> payload() |> Drisl.encode() do
-      {:ok, header <> payload}
+         {:ok, payload} <- event |> payload() |> Drisl.encode(),
+         frame = header <> payload,
+         :ok <- check_frame_size(frame) do
+      {:ok, frame}
     end
   end
 
@@ -56,4 +60,12 @@ defmodule Tempest.Sync.EventStream do
   end
 
   defp update_ops(payload), do: payload
+
+  defp check_frame_size(frame) do
+    if byte_size(frame) <= @max_frame_bytes do
+      :ok
+    else
+      {:error, :frame_too_large}
+    end
+  end
 end

@@ -1,7 +1,7 @@
 defmodule TempestWeb.Xrpc.RecordsTest do
   use TempestWeb.ConnCase, async: false
 
-  alias Tempest.RepoCore.{Car, Drisl}
+  alias Tempest.RepoCore.{Car, CarVerifier, Drisl}
 
   @password "correct horse battery staple"
 
@@ -423,6 +423,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
       end)
 
     assert %Drisl.Bytes{bytes: car_bytes} = event.payload["blocks"]
+    assert :ok = CarVerifier.verify_commit_event(event.payload)
     assert {:ok, car} = Car.decode(car_bytes)
     assert Enum.map(car.roots, &Tempest.RepoCore.Cid.to_string/1) == [commit_cid]
     assert Enum.any?(car.blocks, &(Tempest.RepoCore.Cid.to_string(&1.cid) == record_cid))

@@ -11,6 +11,17 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
 
   setup context do
     Tempest.LexiconFixtures.install!(context)
+    Req.Test.set_req_test_from_context(context)
+    Req.Test.verify_on_exit!(context)
+
+    old_sync_config = Application.get_env(:tempest, Tempest.Sync, [])
+
+    on_exit(fn ->
+      Application.put_env(:tempest, Tempest.Sync, old_sync_config)
+      clear_request_crawl_rate_limits()
+    end)
+
+    clear_request_crawl_rate_limits()
   end
 
   test "getRepo exports a CAR rooted at the latest commit", %{conn: conn} do
@@ -233,6 +244,55 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     assert %{"error" => "RepoDeactivated"} = json_response(inactive_conn, 400)
   end
 
+  test "requestCrawl fans out to configured relays", %{conn: conn} do
+    Application.put_env(:tempest, Tempest.Sync,
+      relays: ["https://relay.test"],
+      request_crawl_window_ms: 0,
+      http_req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.method == "POST"
+      assert req_conn.host == "relay.test"
+      assert req_conn.request_path == "/xrpc/com.atproto.sync.requestCrawl"
+      assert {:ok, %{"hostname" => "localhost"}, _conn} = Plug.Conn.read_body(req_conn) |> decode_req_body(req_conn)
+
+      Plug.Conn.send_resp(req_conn, 200, "{}")
+    end)
+
+    crawl_conn =
+      conn
+      |> recycle()
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.sync.requestCrawl", %{"hostname" => "localhost"})
+
+    assert json_response(crawl_conn, 200) == %{}
+  end
+
+  test "requestCrawl is rate limited per hostname", %{conn: conn} do
+    Application.put_env(:tempest, Tempest.Sync,
+      relays: [],
+      request_crawl_window_ms: 60_000,
+      http_req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    first_conn =
+      conn
+      |> recycle()
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.sync.requestCrawl", %{"hostname" => "localhost"})
+
+    assert json_response(first_conn, 200) == %{}
+
+    second_conn =
+      conn
+      |> recycle()
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.sync.requestCrawl", %{"hostname" => "localhost"})
+
+    assert %{"error" => "RateLimitExceeded"} = json_response(second_conn, 429)
+  end
+
   test "latest commit remains consistent after storage bootstrap", %{conn: conn} do
     account = create_account!(conn, "sync-restart.test", "sync-restart@example.com")
     created = create_profile!(conn, account, "Restart")
@@ -291,6 +351,15 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
       "password" => @password
     })
     |> json_response(200)
+  end
+
+  defp decode_req_body({:ok, body, conn}, _req_conn), do: {:ok, Jason.decode!(body), conn}
+
+  defp clear_request_crawl_rate_limits do
+    case :ets.whereis(:tempest_request_crawl_limits) do
+      :undefined -> :ok
+      table -> :ets.delete_all_objects(table)
+    end
   end
 
   defp auth_json(conn, account) do

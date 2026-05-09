@@ -10,6 +10,8 @@ defmodule Tempest.Sync do
   alias Tempest.RepoCore.{Cid, Did, Nsid, RecordKey}
   alias Tempest.RepoStorage
 
+  @request_crawl_table :tempest_request_crawl_limits
+
   def get_repo(params) when is_map(params) do
     with {:ok, did} <- validate_did_param(params),
          {:ok, account} <- fetch_account(did),
@@ -102,6 +104,21 @@ defmodule Tempest.Sync do
   end
 
   def list_blobs(_params), do: {:error, :invalid_request_body}
+
+  def request_crawl(params) when is_map(params) do
+    with {:ok, hostname} <- validate_request_crawl_hostname(Map.get(params, "hostname")),
+         :ok <- check_request_crawl_rate(hostname),
+         {:ok, result} <- request_configured_relays(hostname) do
+      :telemetry.execute([:tempest, :sync, :request_crawl], %{relay_count: result.requested}, %{
+        hostname: hostname,
+        skipped: result.skipped
+      })
+
+      {:ok, %{}}
+    end
+  end
+
+  def request_crawl(_params), do: {:error, :invalid_request_body}
 
   defp validate_get_record_params(params) do
     with {:ok, did} <- validate_did_param(params),
@@ -208,6 +225,117 @@ defmodule Tempest.Sync do
   defp validate_optional_cursor(nil), do: {:ok, nil}
   defp validate_optional_cursor(cursor) when is_binary(cursor) and cursor != "", do: {:ok, cursor}
   defp validate_optional_cursor(_cursor), do: {:error, :invalid_cursor}
+
+  defp validate_request_crawl_hostname(hostname) when is_binary(hostname) do
+    configured = Tempest.Config.load!().hostname
+    hostname = String.trim(hostname)
+
+    cond do
+      hostname == "" ->
+        {:error, {:missing_field, "hostname"}}
+
+      hostname != configured ->
+        {:error, :invalid_hostname}
+
+      String.contains?(hostname, ["://", "/", "\\", " "]) ->
+        {:error, :invalid_hostname}
+
+      true ->
+        {:ok, hostname}
+    end
+  end
+
+  defp validate_request_crawl_hostname(_hostname), do: {:error, {:missing_field, "hostname"}}
+
+  defp check_request_crawl_rate(hostname) do
+    table = request_crawl_table()
+    now = System.monotonic_time(:millisecond)
+    window_ms = request_crawl_window_ms()
+
+    case :ets.lookup(table, hostname) do
+      [{^hostname, last_seen}] when now - last_seen < window_ms ->
+        {:error, :rate_limited}
+
+      _other ->
+        :ets.insert(table, {hostname, now})
+        :ok
+    end
+  end
+
+  defp request_crawl_table do
+    case :ets.whereis(@request_crawl_table) do
+      :undefined ->
+        try do
+          :ets.new(@request_crawl_table, [:named_table, :public, :set])
+        rescue
+          ArgumentError -> @request_crawl_table
+        end
+
+      _tid ->
+        @request_crawl_table
+    end
+  end
+
+  defp request_crawl_window_ms do
+    :tempest
+    |> Application.get_env(__MODULE__, [])
+    |> Keyword.get(:request_crawl_window_ms, 60_000)
+  end
+
+  defp request_configured_relays(hostname) do
+    relays =
+      :tempest
+      |> Application.get_env(__MODULE__, [])
+      |> Keyword.get(:relays, [])
+      |> Enum.uniq()
+
+    req_options =
+      :tempest
+      |> Application.get_env(__MODULE__, [])
+      |> Keyword.get(:http_req_options, [])
+
+    Enum.reduce_while(relays, {:ok, %{requested: 0, skipped: 0}}, fn relay, {:ok, acc} ->
+      case request_relay_crawl(relay, hostname, req_options) do
+        :ok -> {:cont, {:ok, %{acc | requested: acc.requested + 1}}}
+        {:skip, _reason} -> {:cont, {:ok, %{acc | skipped: acc.skipped + 1}}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp request_relay_crawl(relay, hostname, req_options) when is_binary(relay) do
+    case relay_url(relay) do
+      {:ok, url} ->
+        request =
+          Keyword.merge(req_options,
+            url: url,
+            json: %{"hostname" => hostname},
+            retry: false
+          )
+
+        case Req.post(request) do
+          {:ok, %{status: status}} when status in 200..299 -> :ok
+          {:ok, %{status: status}} -> {:error, {:relay_status, status}}
+          {:error, reason} -> {:error, {:relay_request_failed, reason}}
+        end
+
+      {:error, reason} ->
+        {:skip, reason}
+    end
+  end
+
+  defp request_relay_crawl(_relay, _hostname, _req_options), do: {:skip, :invalid_relay}
+
+  defp relay_url(relay) do
+    relay = String.trim_trailing(relay, "/")
+    uri = URI.parse(relay)
+
+    if uri.scheme in ["http", "https"] and is_binary(uri.host) and uri.host != "" do
+      {:ok, relay <> "/xrpc/com.atproto.sync.requestCrawl"}
+    else
+      {:error, :invalid_relay}
+    end
+  end
 
   defp fetch_account(did, opts \\ []) do
     active_required? = Keyword.get(opts, :active_required?, true)
