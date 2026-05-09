@@ -3,6 +3,7 @@ defmodule Tempest.SequencerTest do
 
   alias Tempest.RepoCore.Drisl
   alias Tempest.Sequencer
+  alias Tempest.Storage.Timestamp
 
   test "insert broadcasts only after the durable event exists" do
     did = "did:plc:pubsub#{System.unique_integer([:positive])}"
@@ -45,5 +46,67 @@ defmodule Tempest.SequencerTest do
 
     assert {:ok, events} = Sequencer.list_after(identity.seq - 1, did: did)
     assert Enum.map(events, & &1.seq) == [identity.seq, account.seq, commit.seq]
+  end
+
+  test "sequence continuity survives storage bootstrap restart" do
+    did = "did:plc:restart#{System.unique_integer([:positive])}"
+
+    assert {:ok, first} = Sequencer.insert_identity_event(did, "create", %{"handle" => "restart.test"})
+
+    :ok =
+      Tempest.Config.load!()
+      |> Tempest.Storage.bootstrap!()
+
+    assert {:ok, second} = Sequencer.insert_account_event(did, "activate", %{"active" => true})
+    assert second.seq > first.seq
+
+    assert {:ok, events} = Sequencer.list_after(first.seq - 1, did: did)
+    assert Enum.map(events, & &1.seq) == [first.seq, second.seq]
+  end
+
+  test "durable tail is recoverable when pubsub fanout is missed" do
+    did = "did:plc:tail#{System.unique_integer([:positive])}"
+
+    assert {:ok, cursor} = Sequencer.current_seq()
+    assert {:ok, event} = Sequencer.insert_identity_event(did, "create", %{"handle" => "tail.test"})
+
+    assert {:ok, [recovered]} = Sequencer.list_after(cursor, did: did)
+    assert recovered.seq == event.seq
+    assert recovered.event_cbor == event.event_cbor
+  end
+
+  test "torn sequencer rows are detected and skipped without reusing sequence numbers" do
+    did = "did:plc:torn#{System.unique_integer([:positive])}"
+
+    assert {:ok, before_seq} = Sequencer.current_seq()
+    insert_torn_row!(did)
+
+    assert {:ok, torn_count} = Sequencer.torn_write_count()
+    assert torn_count >= 1
+
+    assert {:ok, event} = Sequencer.insert_identity_event(did, "create", %{"handle" => "torn.test"})
+    assert event.seq > before_seq + 1
+
+    assert {:ok, events} = Sequencer.list_after(before_seq, did: did)
+    assert Enum.map(events, & &1.seq) == [event.seq]
+  end
+
+  defp insert_torn_row!(did) do
+    path =
+      Tempest.Config.load!()
+      |> Tempest.Config.sequencer_db_path()
+
+    {:ok, conn} = Exqlite.Sqlite3.open(path)
+
+    {:ok, statement} =
+      Exqlite.Sqlite3.prepare(
+        conn,
+        "INSERT INTO repo_seq (did, event_type, event_cbor, created_at) VALUES (?1, ?2, ?3, ?4)"
+      )
+
+    :ok = Exqlite.Sqlite3.bind(statement, [did, "#identity", "", Timestamp.iso8601_utc()])
+    :done = Exqlite.Sqlite3.step(conn, statement)
+    :ok = Exqlite.Sqlite3.release(conn, statement)
+    :ok = Exqlite.Sqlite3.close(conn)
   end
 end

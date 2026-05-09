@@ -21,10 +21,10 @@ Goal: persist and stream repository, identity, and account events.
 - [x] T07-11: Add event size checks and `tooBig` behavior.
 - [x] T07-12: Add MST inversion verification for emitted commit events.
 - [x] T07-13: Add `requestCrawl` support for configured relays with rate limiting.
-- [ ] T07-14: Add integration test for subscribe, write, receive event.
-- [ ] T07-15: Add restart test proving sequence continuity.
-- [ ] T07-16: Add durable-tail recovery test for crash between event persistence and fanout.
-- [ ] T07-17: Add torn-write detection test for sequencer storage.
+- [x] T07-14: Add integration test for subscribe, write, receive event.
+- [x] T07-15: Add restart test proving sequence continuity.
+- [x] T07-16: Add durable-tail recovery test for crash between event persistence and fanout.
+- [x] T07-17: Add torn-write detection test for sequencer storage.
 
 ## Integration Tests
 

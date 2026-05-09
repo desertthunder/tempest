@@ -37,3 +37,11 @@ hurl --test --jobs 1 \
   --variable account_password="correct horse battery staple" \
   test/smoke/identity.hurl
 ```
+
+Run the firehose smoke test:
+
+```bash
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  test/smoke/firehose.hurl
+```

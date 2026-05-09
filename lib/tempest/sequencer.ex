@@ -24,6 +24,7 @@ defmodule Tempest.Sequencer do
   @update_event_sql "UPDATE repo_seq SET event_cbor = ?1 WHERE seq = ?2"
   @last_insert_sql "SELECT last_insert_rowid()"
   @current_seq_sql "SELECT COALESCE(MAX(seq), 0) FROM repo_seq"
+  @torn_write_count_sql "SELECT COUNT(*) FROM repo_seq WHERE event_cbor = ''"
 
   defmodule Event do
     @moduledoc """
@@ -99,11 +100,27 @@ defmodule Tempest.Sequencer do
     end
   end
 
+  def torn_write_count do
+    path =
+      Tempest.Config.load!()
+      |> Tempest.Config.sequencer_db_path()
+
+    with {:ok, conn} <- Sqlite3.open(path),
+         {:ok, statement} <- Sqlite3.prepare(conn, @torn_write_count_sql),
+         {:ok, [[count]]} <- Sqlite3.fetch_all(conn, statement),
+         :ok <- Sqlite3.release(conn, statement),
+         :ok <- Sqlite3.close(conn) do
+      {:ok, count}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp list_after_query(cursor, limit, did) when is_binary(did) do
     {"""
      SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
      FROM repo_seq
-     WHERE seq > ?1 AND did = ?2 AND event_type IN ('#identity', '#account', '#commit')
+     WHERE seq > ?1 AND did = ?2 AND event_type IN ('#identity', '#account', '#commit') AND event_cbor != ''
      ORDER BY seq ASC
      LIMIT ?3
      """, [cursor, did, limit]}
@@ -113,7 +130,7 @@ defmodule Tempest.Sequencer do
     {"""
      SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
      FROM repo_seq
-     WHERE seq > ?1 AND event_type IN ('#identity', '#account', '#commit')
+     WHERE seq > ?1 AND event_type IN ('#identity', '#account', '#commit') AND event_cbor != ''
      ORDER BY seq ASC
      LIMIT ?2
      """, [cursor, limit]}
