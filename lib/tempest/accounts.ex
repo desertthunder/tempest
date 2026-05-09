@@ -213,6 +213,7 @@ defmodule Tempest.Accounts do
 
   defp emit_account_creation_events(%Account{} = account) do
     with {:ok, latest} <- RepoStorage.latest_commit(account.did),
+         {:ok, car_slice} <- RepoStorage.export_commit_car_slice(account.did, latest.cid),
          {:ok, identity_event} <-
            Sequencer.insert_identity_event(account.did, "create", %{
              "handle" => account.handle
@@ -224,6 +225,7 @@ defmodule Tempest.Accounts do
            }),
          {:ok, commit_event} <-
            Sequencer.insert_repo_commit(account.did, latest.rev, latest.cid, "repo.init", %{
+             "blocks" => Tempest.RepoCore.Drisl.bytes(car_slice.bytes),
              "ops" => [],
              "blobs" => [],
              "tooBig" => false

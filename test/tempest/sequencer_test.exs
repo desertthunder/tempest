@@ -4,6 +4,19 @@ defmodule Tempest.SequencerTest do
   alias Tempest.RepoCore.Drisl
   alias Tempest.Sequencer
 
+  test "insert broadcasts only after the durable event exists" do
+    did = "did:plc:pubsub#{System.unique_integer([:positive])}"
+
+    :ok = Sequencer.subscribe()
+
+    assert {:ok, event} = Sequencer.insert_identity_event(did, "create", %{"handle" => "pubsub.test"})
+    assert_receive {:tempest_firehose_event, ^event}
+
+    assert {:ok, [stored]} = Sequencer.list_after(event.seq - 1, did: did)
+    assert stored.seq == event.seq
+    assert stored.event_cbor == event.event_cbor
+  end
+
   test "insert APIs persist monotonic CBOR events for cursor backfill" do
     did = "did:plc:sequencer#{System.unique_integer([:positive])}"
 

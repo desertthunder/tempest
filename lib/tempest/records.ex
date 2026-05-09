@@ -14,6 +14,7 @@ defmodule Tempest.Records do
   alias Tempest.RepoStorage
   alias Tempest.RepoCore.Tid
   alias Tempest.RepoCore.Tid.Clock
+  alias Tempest.RepoCore.Drisl
 
   def create_record(%AuthContext{account: account}, params) do
     with {:ok, input} <- LexiconValidator.validate_create_record_input(params),
@@ -188,31 +189,41 @@ defmodule Tempest.Records do
   end
 
   defp insert_sequence_event(did, stored, action, collection, rkey) do
-    Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, %{
-      "ops" => [
-        %{
-          "action" => action,
-          "path" => collection <> "/" <> rkey,
-          "cid" => stored.record_cid
-        }
-      ],
-      "blobs" => [],
-      "tooBig" => false
-    })
+    path = collection <> "/" <> rkey
+
+    with {:ok, car_slice} <- RepoStorage.export_commit_car_slice(did, stored.commit_cid, paths: [path]) do
+      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, %{
+        "blocks" => Drisl.bytes(car_slice.bytes),
+        "ops" => [
+          %{
+            "action" => action,
+            "path" => path,
+            "cid" => stored.record_cid
+          }
+        ],
+        "blobs" => [],
+        "tooBig" => false
+      })
+    end
   end
 
   defp maybe_insert_delete_event(did, %{deleted?: true} = stored, collection, rkey) do
-    Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "delete", %{
-      "ops" => [
-        %{
-          "action" => "delete",
-          "path" => collection <> "/" <> rkey,
-          "cid" => nil
-        }
-      ],
-      "blobs" => [],
-      "tooBig" => false
-    })
+    path = collection <> "/" <> rkey
+
+    with {:ok, car_slice} <- RepoStorage.export_commit_car_slice(did, stored.commit_cid, paths: [path]) do
+      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "delete", %{
+        "blocks" => Drisl.bytes(car_slice.bytes),
+        "ops" => [
+          %{
+            "action" => "delete",
+            "path" => path,
+            "cid" => nil
+          }
+        ],
+        "blobs" => [],
+        "tooBig" => false
+      })
+    end
   end
 
   defp maybe_insert_delete_event(_did, %{deleted?: false}, _collection, _rkey), do: {:ok, nil}

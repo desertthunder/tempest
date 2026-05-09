@@ -14,6 +14,7 @@ defmodule Tempest.Sequencer do
   @identity "#identity"
   @account "#account"
   @commit "#commit"
+  @topic "firehose:repo_seq"
 
   @insert_sql """
   INSERT INTO repo_seq (did, event_type, rev, commit_cid, event_cbor, created_at)
@@ -30,6 +31,12 @@ defmodule Tempest.Sequencer do
 
     @enforce_keys [:seq, :did, :event_type, :payload, :event_cbor, :created_at]
     defstruct [:seq, :did, :event_type, :rev, :commit_cid, :payload, :event_cbor, :created_at]
+  end
+
+  def topic, do: @topic
+
+  def subscribe do
+    Phoenix.PubSub.subscribe(Tempest.PubSub, @topic)
   end
 
   def insert_identity_event(did, action, payload \\ %{}) do
@@ -110,7 +117,7 @@ defmodule Tempest.Sequencer do
       result = transact_insert_event(conn, did, event_type, action, payload, rev, commit_cid, created_at)
 
       case Sqlite3.close(conn) do
-        :ok -> result
+        :ok -> broadcast_insert(result)
         {:error, reason} -> {:error, reason}
       end
     else
@@ -118,6 +125,13 @@ defmodule Tempest.Sequencer do
         {:error, reason}
     end
   end
+
+  defp broadcast_insert({:ok, %Event{} = event}) do
+    :ok = Phoenix.PubSub.broadcast(Tempest.PubSub, @topic, {:tempest_firehose_event, event})
+    {:ok, event}
+  end
+
+  defp broadcast_insert(result), do: result
 
   defp transact_insert_event(conn, did, event_type, action, payload, rev, commit_cid, created_at) do
     result =
@@ -211,6 +225,7 @@ defmodule Tempest.Sequencer do
     Map.new(payload, fn {key, value} -> {to_string(key), normalize_value(value)} end)
   end
 
+  defp normalize_value(%Drisl.Bytes{} = value), do: value
   defp normalize_value(value) when is_map(value), do: normalize_payload(value)
   defp normalize_value(value) when is_list(value), do: Enum.map(value, &normalize_value/1)
   defp normalize_value(value), do: value

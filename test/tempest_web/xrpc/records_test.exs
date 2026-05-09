@@ -1,6 +1,8 @@
 defmodule TempestWeb.Xrpc.RecordsTest do
   use TempestWeb.ConnCase, async: false
 
+  alias Tempest.RepoCore.{Car, Drisl}
+
   @password "correct horse battery staple"
 
   setup context do
@@ -38,6 +40,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert metadata(repo_db)["current_commit_cid"] == commit_cid
     assert metadata(repo_db)["current_rev"] == rev
     assert sequencer_event_count(account["did"], "#commit", "create") == 1
+    assert_commit_event_car_slice(account["did"], commit_cid, response["cid"])
 
     get_conn =
       conn
@@ -409,6 +412,20 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     Enum.count(events, fn event ->
       event.did == did and event.event_type == event_type and event.payload["action"] == action
     end)
+  end
+
+  defp assert_commit_event_car_slice(did, commit_cid, record_cid) do
+    {:ok, events} = Tempest.Sequencer.list_after(0, did: did)
+
+    event =
+      Enum.find(events, fn event ->
+        event.event_type == "#commit" and event.commit_cid == commit_cid
+      end)
+
+    assert %Drisl.Bytes{bytes: car_bytes} = event.payload["blocks"]
+    assert {:ok, car} = Car.decode(car_bytes)
+    assert Enum.map(car.roots, &Tempest.RepoCore.Cid.to_string/1) == [commit_cid]
+    assert Enum.any?(car.blocks, &(Tempest.RepoCore.Cid.to_string(&1.cid) == record_cid))
   end
 
   defp fetch_all(path, sql) do

@@ -353,6 +353,33 @@ defmodule Tempest.RepoStorage do
     end
   end
 
+  @doc """
+  Exports a firehose CAR slice rooted at a specific commit.
+
+  The slice contains the commit block, the MST blocks reachable from that
+  commit, and any current record blocks for the requested paths.
+  """
+  def export_commit_car_slice(did, commit_cid, opts \\ [])
+      when is_binary(did) and is_binary(commit_cid) do
+    paths = Keyword.get(opts, :paths, [])
+    config = Config.load!()
+
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, commit_row} <- commit_row(conn, commit_cid),
+             {:ok, parsed_commit_cid} <- parse_cid(commit_row.cid),
+             {:ok, commit} <- decode_commit(commit_row.commit_bytes, parsed_commit_cid),
+             {:ok, proof} <- collect_mst(conn, commit.data, MapSet.new(), %{}),
+             {:ok, record_blocks} <- record_blocks_for_paths(conn, proof.entries, paths),
+             blocks <- unique_blocks([{parsed_commit_cid, commit_row.commit_bytes} | proof.blocks ++ record_blocks]),
+             {:ok, bytes} <- Car.encode([parsed_commit_cid], blocks) do
+          {:ok, %{root: Cid.to_string(parsed_commit_cid), bytes: bytes}}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
   def repo_db_path!(%Config{} = config, did) when is_binary(did) do
     with {:ok, did} <- Did.parse(did) do
       Config.repo_db_path(config, did)
@@ -711,6 +738,42 @@ defmodule Tempest.RepoStorage do
         [] -> {:error, :block_not_found}
       end
     end
+  end
+
+  defp record_blocks_for_paths(conn, entries, paths) when is_list(paths) do
+    paths
+    |> Enum.uniq()
+    |> Enum.reduce_while({:ok, []}, fn path, {:ok, blocks} ->
+      case Map.fetch(entries, path) do
+        {:ok, %Cid{} = cid} ->
+          case block_bytes(conn, cid) do
+            {:ok, bytes} -> {:cont, {:ok, [{cid, bytes} | blocks]}}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+
+        :error ->
+          {:cont, {:ok, blocks}}
+      end
+    end)
+    |> case do
+      {:ok, blocks} -> {:ok, Enum.reverse(blocks)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp unique_blocks(blocks) do
+    blocks
+    |> Enum.reduce({MapSet.new(), []}, fn {cid, bytes}, {seen, unique} ->
+      cid_value = Cid.to_string(cid)
+
+      if MapSet.member?(seen, cid_value) do
+        {seen, unique}
+      else
+        {MapSet.put(seen, cid_value), [{cid, bytes} | unique]}
+      end
+    end)
+    |> elem(1)
+    |> Enum.reverse()
   end
 
   defp current_record_entries(conn) do
