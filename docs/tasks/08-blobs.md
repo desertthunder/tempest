@@ -8,11 +8,11 @@ Goal: upload, reference, serve, and garbage collect blobs.
 
 ## Tasks
 
-- [ ] T08-01: Add blob metadata table to `account.sqlite`.
-- [ ] T08-02: Add local blob storage adapter.
-- [ ] T08-03: Add blob CID calculation.
-- [ ] T08-04: Add upload size validation.
-- [ ] T08-05: Add MIME validation/sniffing boundary.
+- [x] T08-01: Add blob metadata table to `account.sqlite`.
+- [x] T08-02: Add local blob storage adapter.
+- [x] T08-03: Add blob CID calculation.
+- [x] T08-04: Add upload size validation.
+- [x] T08-05: Add MIME validation/sniffing boundary.
 - [ ] T08-06: Implement `uploadBlob`.
 - [ ] T08-07: Scan records for blob references during writes.
 - [ ] T08-08: Reject new records that reference missing blobs.
@@ -23,7 +23,7 @@ Goal: upload, reference, serve, and garbage collect blobs.
 - [ ] T08-13: Add blob garbage collector.
 - [ ] T08-14: Add integration tests for upload, reference, get, delete.
 - [ ] T08-15: Add CSP and nosniff headers to `getBlob`.
-- [ ] T08-16: Add S3-compatible storage behaviour and local adapter contract tests.
+- [ ] T08-16: Add S3-compatible storage behavior and local adapter contract tests.
 - [ ] T08-17: Add optional CDN redirect behavior with inactive-account suppression.
 
 ## Integration Tests

@@ -6,6 +6,13 @@ defmodule Tempest.Config do
   @enforce_keys [:hostname, :public_url, :data_dir, :blob_max_bytes]
   defstruct [:hostname, :public_url, :data_dir, :blob_max_bytes]
 
+  @type t :: %__MODULE__{
+          hostname: String.t(),
+          public_url: String.t(),
+          data_dir: String.t(),
+          blob_max_bytes: pos_integer()
+        }
+
   @default_secret_key_bases [
     "+uUQkQUThGq4zX4Vl0a0Jfn8JGPw6ZlqzIJ2FRI+qzdG6VLTMlZN0Pyq7xKGQBRH",
     "jUcVlVDRHeNy2EGaVJyMzeDJ1AcW9fVjUDsiCRVq/sHuh0JxjgVHT+0FVrs49BPO"

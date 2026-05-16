@@ -11,6 +11,24 @@ defmodule Tempest.Storage do
   PRAGMA busy_timeout = 5000;
   """
 
+  @account_schema """
+  CREATE TABLE IF NOT EXISTS blob_metadata (
+    did TEXT NOT NULL,
+    cid TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size INTEGER NOT NULL CHECK (size >= 0),
+    state TEXT NOT NULL CHECK (state IN ('temp', 'public')),
+    inserted_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    temp_expires_at TEXT,
+    referenced_at TEXT,
+    PRIMARY KEY (did, cid)
+  );
+
+  CREATE INDEX IF NOT EXISTS blob_metadata_did_state_cid_idx ON blob_metadata (did, state, cid);
+  CREATE INDEX IF NOT EXISTS blob_metadata_state_temp_expires_at_idx ON blob_metadata (state, temp_expires_at);
+  """
+
   @sequencer_schema """
   CREATE TABLE IF NOT EXISTS repo_seq (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +55,7 @@ defmodule Tempest.Storage do
 
     config
     |> Config.account_db_path()
-    |> bootstrap_sqlite_file!()
+    |> bootstrap_sqlite_file!(@account_schema)
 
     config
     |> Config.sequencer_db_path()
@@ -61,7 +79,7 @@ defmodule Tempest.Storage do
     }
   end
 
-  defp bootstrap_sqlite_file!(path, schema \\ "") do
+  defp bootstrap_sqlite_file!(path, schema) do
     File.mkdir_p!(Path.dirname(path))
 
     with {:ok, conn} <- Sqlite3.open(path),

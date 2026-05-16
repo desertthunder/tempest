@@ -26,6 +26,9 @@ defmodule Tempest.StorageTest do
     assert File.dir?(Path.join(data_dir, "backups"))
     assert File.exists?(Path.join(data_dir, "account.sqlite"))
     assert File.exists?(Path.join(data_dir, "sequencer.sqlite"))
+    assert sqlite_table_exists?(Path.join(data_dir, "account.sqlite"), "blob_metadata")
+    assert sqlite_index_exists?(Path.join(data_dir, "account.sqlite"), "blob_metadata_did_state_cid_idx")
+    assert sqlite_index_exists?(Path.join(data_dir, "account.sqlite"), "blob_metadata_state_temp_expires_at_idx")
     assert sequencer_table_exists?(Path.join(data_dir, "sequencer.sqlite"))
     assert sequencer_index_exists?(Path.join(data_dir, "sequencer.sqlite"), "repo_seq_did_seq_idx")
     assert sequencer_index_exists?(Path.join(data_dir, "sequencer.sqlite"), "repo_seq_event_type_seq_idx")
@@ -61,19 +64,28 @@ defmodule Tempest.StorageTest do
   end
 
   defp sequencer_table_exists?(path) do
+    sqlite_table_exists?(path, "repo_seq")
+  end
+
+  defp sequencer_index_exists?(path, name) do
+    sqlite_index_exists?(path, name)
+  end
+
+  defp sqlite_table_exists?(path, name) do
     {:ok, conn} = Exqlite.Sqlite3.open(path)
 
     {:ok, statement} =
-      Exqlite.Sqlite3.prepare(conn, "SELECT name FROM sqlite_master WHERE name = 'repo_seq'")
+      Exqlite.Sqlite3.prepare(conn, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?1")
 
-    {:ok, [["repo_seq"]]} = Exqlite.Sqlite3.fetch_all(conn, statement)
+    :ok = Exqlite.Sqlite3.bind(statement, [name])
+    {:ok, [[^name]]} = Exqlite.Sqlite3.fetch_all(conn, statement)
     :ok = Exqlite.Sqlite3.release(conn, statement)
     :ok = Exqlite.Sqlite3.close(conn)
 
     true
   end
 
-  defp sequencer_index_exists?(path, name) do
+  defp sqlite_index_exists?(path, name) do
     {:ok, conn} = Exqlite.Sqlite3.open(path)
 
     {:ok, statement} =
