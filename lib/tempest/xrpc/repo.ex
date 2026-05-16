@@ -3,7 +3,35 @@ defmodule Tempest.Xrpc.Repo do
   Handlers for `com.atproto.repo.*` XRPC methods.
   """
 
+  alias Plug.Conn
+  alias Tempest.Blobs
+  alias Tempest.Blobs.LocalStorage
+  alias Tempest.Config
   alias Tempest.Records
+
+  def upload_blob(conn, _params, _method) do
+    config = Config.load!()
+
+    with {:ok, declared_size} <- content_length(conn),
+         {:ok, declared_mime_type} <- content_type(conn),
+         {:ok, bytes, conn} <- read_upload_body(conn, config.blob_max_bytes),
+         {:ok, metadata} <- Blobs.validate_upload(bytes, declared_size, declared_mime_type, config),
+         {:ok, _stored} <-
+           LocalStorage.put_temp_blob(config, conn.assigns.auth_context.account.did, metadata.cid, bytes),
+         :ok <- Blobs.put_temp_metadata(conn.assigns.auth_context.account.did, metadata) do
+      {:ok,
+       %{
+         blob: %{
+           "$type" => "blob",
+           ref: %{"$link" => metadata.cid},
+           mimeType: metadata.mime_type,
+           size: metadata.size
+         }
+       }}
+    else
+      {:error, reason} -> repo_error(reason)
+    end
+  end
 
   def create_record(conn, params, _method) do
     case Records.create_record(conn.assigns.auth_context, params) do
@@ -47,6 +75,33 @@ defmodule Tempest.Xrpc.Repo do
     end
   end
 
+  defp read_upload_body(conn, max_bytes) do
+    case Conn.read_body(conn, length: max_bytes + 1, read_length: max_bytes + 1) do
+      {:ok, bytes, conn} ->
+        {:ok, bytes, conn}
+
+      {:more, _partial, _conn} ->
+        {:error, :blob_too_large}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp content_length(conn) do
+    case Conn.get_req_header(conn, "content-length") do
+      [value] -> {:ok, value}
+      _headers -> {:error, :invalid_content_length}
+    end
+  end
+
+  defp content_type(conn) do
+    case Conn.get_req_header(conn, "content-type") do
+      [value | _rest] -> {:ok, value}
+      [] -> {:error, :missing_mime_type}
+    end
+  end
+
   defp repo_error(:duplicate_record), do: {:error, 409, "InvalidRequest", "record already exists"}
 
   defp repo_error(:invalid_swap),
@@ -65,6 +120,16 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:invalid_swap_commit), do: {:error, 400, "InvalidRequest", "swapCommit is invalid"}
   defp repo_error(:invalid_validate), do: {:error, 400, "InvalidRequest", "validate must be a boolean"}
   defp repo_error(:invalid_request_body), do: {:error, 400, "InvalidRequest", "request body is invalid"}
+  defp repo_error(:invalid_content_length), do: {:error, 400, "InvalidRequest", "Content-Length is invalid"}
+
+  defp repo_error(:content_length_mismatch),
+    do: {:error, 400, "InvalidRequest", "Content-Length does not match body size"}
+
+  defp repo_error(:blob_too_large), do: {:error, 400, "BlobTooLarge", "blob exceeds the configured size limit"}
+  defp repo_error(:missing_mime_type), do: {:error, 400, "InvalidRequest", "Content-Type is required"}
+  defp repo_error(:invalid_mime_type), do: {:error, 400, "InvalidRequest", "Content-Type is invalid"}
+  defp repo_error(:mime_type_mismatch), do: {:error, 400, "InvalidRequest", "Content-Type does not match blob bytes"}
+  defp repo_error(:missing_blob), do: {:error, 400, "InvalidRequest", "record references a missing blob"}
   defp repo_error(:missing_record_type), do: {:error, 400, "InvalidRequest", "record must include a $type field"}
   defp repo_error(:record_type_mismatch), do: {:error, 400, "InvalidRequest", "record $type must match collection"}
   defp repo_error(:unknown_lexicon), do: {:error, 400, "InvalidRequest", "record lexicon is unknown"}

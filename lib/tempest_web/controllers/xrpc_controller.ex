@@ -54,6 +54,14 @@ defmodule TempestWeb.XrpcController do
     end
   end
 
+  defp validate_content_type(%{method: "POST"} = conn, %{nsid: "com.atproto.repo.uploadBlob"}) do
+    if conn |> get_req_header("content-type") |> Enum.any?() do
+      :ok
+    else
+      {:error, 400, "InvalidRequest", "request body must include a content-type"}
+    end
+  end
+
   defp validate_content_type(%{method: "POST"} = conn, %{input: input}) when is_binary(input) do
     if content_type?(conn, input) do
       :ok
@@ -91,6 +99,15 @@ defmodule TempestWeb.XrpcController do
   end
 
   defp respond(conn, %{output: @json}, body), do: json(conn, body)
+
+  defp respond(conn, %{nsid: "com.atproto.sync.getBlob"}, %{bytes: bytes} = blob) do
+    conn
+    |> put_resp_content_type(blob.mime_type, nil)
+    |> put_resp_header("content-length", Integer.to_string(blob.content_length))
+    |> put_resp_header("content-security-policy", "default-src 'none'; sandbox")
+    |> put_resp_header("x-content-type-options", "nosniff")
+    |> send_resp(200, bytes)
+  end
 
   defp respond(conn, %{output: content_type}, body) when is_binary(content_type) and is_binary(body) do
     conn

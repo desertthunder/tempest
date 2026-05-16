@@ -54,6 +54,13 @@ defmodule Tempest.Xrpc.Sync do
     end
   end
 
+  def get_blob(_conn, params, _method) do
+    case Sync.get_blob(params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> sync_error(reason)
+    end
+  end
+
   def request_crawl(_conn, params, _method) do
     case Sync.request_crawl(params) do
       {:ok, response} -> {:ok, response}
@@ -67,6 +74,7 @@ defmodule Tempest.Xrpc.Sync do
   defp sync_error(:repo_deactivated), do: {:error, 400, "RepoDeactivated", "repository is deactivated"}
   defp sync_error(:record_not_found), do: {:error, 400, "RecordNotFound", "record could not be found"}
   defp sync_error(:block_not_found), do: {:error, 400, "BlockNotFound", "block could not be found"}
+  defp sync_error(:blob_not_found), do: {:error, 400, "BlobNotFound", "blob could not be found"}
   defp sync_error(:commit_not_found), do: {:error, 400, "InvalidRequest", "commit could not be found"}
   defp sync_error(:invalid_did), do: {:error, 400, "InvalidRequest", "did is invalid"}
   defp sync_error(:invalid_collection), do: {:error, 400, "InvalidRequest", "collection is invalid"}

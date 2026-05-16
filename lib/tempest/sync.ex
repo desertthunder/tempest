@@ -6,6 +6,9 @@ defmodule Tempest.Sync do
   import Ecto.Query
 
   alias Tempest.Accounts.Account
+  alias Tempest.Blobs
+  alias Tempest.Blobs.LocalStorage
+  alias Tempest.Config
   alias Tempest.Repo
   alias Tempest.RepoCore.{Cid, Did, Nsid, RecordKey}
   alias Tempest.RepoStorage
@@ -98,12 +101,25 @@ defmodule Tempest.Sync do
          {:ok, cursor} <- validate_optional_cursor(Map.get(params, "cursor")),
          {:ok, account} <- fetch_account(did),
          :ok <- ensure_active(account),
-         {:ok, page} <- RepoStorage.list_referenced_blobs(account.did, limit: limit, cursor: cursor) do
+         {:ok, page} <- Blobs.list_public(account.did, limit: limit, cursor: cursor) do
       {:ok, page}
     end
   end
 
   def list_blobs(_params), do: {:error, :invalid_request_body}
+
+  def get_blob(params) when is_map(params) do
+    with {:ok, input} <- validate_get_blob_params(params),
+         {:ok, account} <- fetch_account(input.did),
+         :ok <- ensure_active(account),
+         {:ok, metadata} <- Blobs.get_public_metadata(account.did, input.cid),
+         {:ok, blob} <- LocalStorage.get_blob(Config.load!(), account.did, input.cid, metadata.mime_type),
+         :ok <- ensure_blob_size(blob, metadata) do
+      {:ok, Map.put(blob, :cid, input.cid)}
+    end
+  end
+
+  def get_blob(_params), do: {:error, :invalid_request_body}
 
   def request_crawl(params) when is_map(params) do
     with {:ok, hostname} <- validate_request_crawl_hostname(Map.get(params, "hostname")),
@@ -135,6 +151,21 @@ defmodule Tempest.Sync do
       {:ok, %{did: did, cids: cids}}
     end
   end
+
+  defp validate_get_blob_params(params) do
+    with {:ok, did} <- validate_did_param(params),
+         {:ok, cid} <- validate_cid_param(Map.get(params, "cid")) do
+      {:ok, %{did: did, cid: cid}}
+    end
+  end
+
+  defp validate_cid_param(nil), do: {:error, {:missing_field, "cid"}}
+
+  defp validate_cid_param(cid) when is_binary(cid) do
+    if Cid.valid?(cid), do: {:ok, cid}, else: {:error, :invalid_cid}
+  end
+
+  defp validate_cid_param(_cid), do: {:error, :invalid_cid}
 
   defp validate_did_param(params) do
     case Map.get(params, "did") do
@@ -225,6 +256,9 @@ defmodule Tempest.Sync do
   defp validate_optional_cursor(nil), do: {:ok, nil}
   defp validate_optional_cursor(cursor) when is_binary(cursor) and cursor != "", do: {:ok, cursor}
   defp validate_optional_cursor(_cursor), do: {:error, :invalid_cursor}
+
+  defp ensure_blob_size(%{content_length: size}, %{size: size}), do: :ok
+  defp ensure_blob_size(_blob, _metadata), do: {:error, :blob_not_found}
 
   defp validate_request_crawl_hostname(hostname) when is_binary(hostname) do
     configured = Tempest.Config.load!().hostname

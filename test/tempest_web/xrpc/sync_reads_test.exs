@@ -217,10 +217,10 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     assert second_repo["head"] == second_record["commit"]["cid"]
   end
 
-  test "listBlobs returns referenced blobs and suppresses inactive repos", %{conn: conn} do
+  test "listBlobs returns public blobs and suppresses inactive repos", %{conn: conn} do
     account = create_account!(conn, "sync-blobs.test", "sync-blobs@example.com")
-    blob_cid = "blob bytes" |> Cid.for_raw() |> Cid.to_string()
-    unreferenced_cid = "temp bytes" |> Cid.for_raw() |> Cid.to_string()
+    blob_cid = upload_blob!(conn, account, "blob bytes")["blob"]["ref"]["$link"]
+    unreferenced_cid = upload_blob!(conn, account, "temp bytes")["blob"]["ref"]["$link"]
 
     create_blob_record!(conn, account, "avatar", blob_cid)
 
@@ -242,6 +242,46 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
       |> get(~p"/xrpc/com.atproto.sync.listBlobs", %{"did" => account["did"]})
 
     assert %{"error" => "RepoDeactivated"} = json_response(inactive_conn, 400)
+  end
+
+  test "getBlob downloads public blobs with defensive headers and inactive suppression", %{conn: conn} do
+    account = create_account!(conn, "sync-get-blob.test", "sync-get-blob@example.com")
+    bytes = "downloadable blob"
+    blob = upload_blob!(conn, account, bytes)["blob"]
+    cid = blob["ref"]["$link"]
+    unreferenced_cid = upload_blob!(conn, account, "private temp")["blob"]["ref"]["$link"]
+
+    create_blob_record!(conn, account, "download", cid)
+
+    blob_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => cid})
+
+    assert blob_conn.status == 200
+    assert blob_conn.resp_body == bytes
+    assert get_resp_header(blob_conn, "content-type") == ["text/plain"]
+    assert get_resp_header(blob_conn, "content-length") == [Integer.to_string(byte_size(bytes))]
+    assert get_resp_header(blob_conn, "x-content-type-options") == ["nosniff"]
+    assert get_resp_header(blob_conn, "content-security-policy") == ["default-src 'none'; sandbox"]
+
+    missing_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => unreferenced_cid})
+
+    assert %{"error" => "BlobNotFound"} = json_response(missing_conn, 400)
+
+    Account
+    |> where([account], account.did == ^account["did"])
+    |> Repo.update_all(set: [active: false, status: "suspended"])
+
+    inactive_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => cid})
+
+    assert %{"error" => "RepoSuspended"} = json_response(inactive_conn, 400)
   end
 
   test "requestCrawl fans out to configured relays", %{conn: conn} do
@@ -435,6 +475,16 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
         }
       }
     })
+    |> json_response(200)
+  end
+
+  defp upload_blob!(conn, account, bytes) do
+    conn
+    |> recycle()
+    |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+    |> put_req_header("content-type", "text/plain")
+    |> put_req_header("content-length", Integer.to_string(byte_size(bytes)))
+    |> post(~p"/xrpc/com.atproto.repo.uploadBlob", bytes)
     |> json_response(200)
   end
 

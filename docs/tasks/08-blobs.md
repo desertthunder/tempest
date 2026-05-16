@@ -13,16 +13,16 @@ Goal: upload, reference, serve, and garbage collect blobs.
 - [x] T08-03: Add blob CID calculation.
 - [x] T08-04: Add upload size validation.
 - [x] T08-05: Add MIME validation/sniffing boundary.
-- [ ] T08-06: Implement `uploadBlob`.
-- [ ] T08-07: Scan records for blob references during writes.
-- [ ] T08-08: Reject new records that reference missing blobs.
-- [ ] T08-09: Promote temp blobs after successful record commit.
-- [ ] T08-10: Implement `listBlobs`.
-- [ ] T08-11: Implement `getBlob`.
-- [ ] T08-12: Suppress blob serving for inactive accounts.
-- [ ] T08-13: Add blob garbage collector.
+- [x] T08-06: Implement `uploadBlob`.
+- [x] T08-07: Scan records for blob references during writes.
+- [x] T08-08: Reject new records that reference missing blobs.
+- [x] T08-09: Promote temp blobs after successful record commit.
+- [x] T08-10: Implement `listBlobs`.
+- [x] T08-11: Implement `getBlob`.
+- [x] T08-12: Suppress blob serving for inactive accounts.
+- [x] T08-13: Add blob garbage collector.
 - [ ] T08-14: Add integration tests for upload, reference, get, delete.
-- [ ] T08-15: Add CSP and nosniff headers to `getBlob`.
+- [x] T08-15: Add CSP and nosniff headers to `getBlob`.
 - [ ] T08-16: Add S3-compatible storage behavior and local adapter contract tests.
 - [ ] T08-17: Add optional CDN redirect behavior with inactive-account suppression.
 

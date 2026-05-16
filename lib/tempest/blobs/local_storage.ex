@@ -91,6 +91,17 @@ defmodule Tempest.Blobs.LocalStorage do
   end
 
   @doc """
+  Deletes only the temporary copy of a blob.
+  """
+  @spec delete_temp_blob(Config.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  def delete_temp_blob(%Config{} = config, did, cid) when is_binary(did) and is_binary(cid) do
+    with {:ok, did} <- normalize_did(did),
+         :ok <- validate_cid(cid) do
+      remove_if_exists(temp_path(config, did, cid))
+    end
+  end
+
+  @doc """
   Lists promoted blob CIDs for a DID.
   """
   @spec list_blobs(Config.t(), String.t(), keyword()) ::

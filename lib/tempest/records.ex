@@ -5,6 +5,9 @@ defmodule Tempest.Records do
 
   alias Tempest.Accounts.AuthContext
   alias Tempest.Accounts.Account
+  alias Tempest.Blobs
+  alias Tempest.Blobs.LocalStorage
+  alias Tempest.Config
   alias Tempest.Identity
   alias Tempest.Identity.DidDocument
   alias Tempest.Identity.Validators
@@ -22,6 +25,8 @@ defmodule Tempest.Records do
          {:ok, rkey} <- record_key(input.rkey),
          {:ok, validation_status} <-
            LexiconValidator.validate_record(input.collection, rkey, input.record, input.validate),
+         blob_cids = Blobs.referenced_cids(input.record),
+         :ok <- Blobs.ensure_present(account.did, blob_cids),
          {:ok, signing_key} <- active_signing_key(account),
          {:ok, stored} <-
            RepoStorage.create_record(account, signing_key, %{
@@ -30,6 +35,7 @@ defmodule Tempest.Records do
              record: input.record,
              swap_commit: input.swap_commit
            }),
+         :ok <- promote_blobs(account.did, blob_cids),
          {:ok, _event} <- insert_sequence_event(account.did, stored, "create", input.collection, rkey) do
       {:ok,
        %{
@@ -49,6 +55,8 @@ defmodule Tempest.Records do
          :ok <- ensure_repo_owner(account, input.repo),
          {:ok, validation_status} <-
            LexiconValidator.validate_record(input.collection, input.rkey, input.record, input.validate),
+         blob_cids = Blobs.referenced_cids(input.record),
+         :ok <- Blobs.ensure_present(account.did, blob_cids),
          {:ok, signing_key} <- active_signing_key(account),
          {:ok, stored} <-
            RepoStorage.put_record(account, signing_key, %{
@@ -58,6 +66,7 @@ defmodule Tempest.Records do
              swap_record: input.swap_record,
              swap_commit: input.swap_commit
            }),
+         :ok <- promote_blobs(account.did, blob_cids),
          {:ok, _event} <- insert_sequence_event(account.did, stored, "update", input.collection, input.rkey) do
       {:ok,
        %{
@@ -186,6 +195,21 @@ defmodule Tempest.Records do
       nil -> {:error, :missing_signing_key}
       signing_key -> {:ok, signing_key}
     end
+  end
+
+  defp promote_blobs(_did, []), do: :ok
+
+  defp promote_blobs(did, blob_cids) do
+    config = Config.load!()
+
+    Enum.reduce_while(blob_cids, :ok, fn cid, :ok ->
+      with {:ok, _path} <- LocalStorage.promote_blob(config, did, cid),
+           :ok <- Blobs.mark_public(did, [cid]) do
+        {:cont, :ok}
+      else
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
   end
 
   defp insert_sequence_event(did, stored, action, collection, rkey) do

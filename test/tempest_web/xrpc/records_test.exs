@@ -337,6 +337,56 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert response["value"]["displayName"] == "Hana"
   end
 
+  test "uploadBlob stores temp metadata and createRecord promotes referenced blobs", %{conn: conn} do
+    account = create_account!(conn, "records-blob.test", "records-blob@example.com")
+    uploaded = upload_blob!(conn, account, "hello blob", "text/plain")
+    blob = uploaded["blob"]
+    cid = blob["ref"]["$link"]
+
+    assert blob == %{
+             "$type" => "blob",
+             "ref" => %{"$link" => cid},
+             "mimeType" => "text/plain",
+             "size" => 10
+           }
+
+    assert blob_metadata(account["did"], cid).state == "temp"
+    assert File.exists?(Path.join([Tempest.Config.load!().data_dir, "tmp", "blobs", path_did(account["did"]), cid]))
+
+    created =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", blob_record_params(account["did"], "avatar", blob))
+      |> json_response(200)
+
+    assert created["uri"] == "at://#{account["did"]}/app.tempest.blob/avatar"
+    assert blob_metadata(account["did"], cid).state == "public"
+    assert File.exists?(Path.join([Tempest.Config.load!().data_dir, "blobs", path_did(account["did"]), cid]))
+  end
+
+  test "record writes reject missing blob references", %{conn: conn} do
+    account = create_account!(conn, "records-missing-blob.test", "records-missing-blob@example.com")
+    cid = Tempest.Blobs.cid_for("not uploaded")
+
+    rejected_conn =
+      conn
+      |> auth_json(account)
+      |> post(
+        ~p"/xrpc/com.atproto.repo.createRecord",
+        blob_record_params(account["did"], "avatar", %{
+          "$type" => "blob",
+          "ref" => %{"$link" => cid},
+          "mimeType" => "text/plain",
+          "size" => 12
+        })
+      )
+
+    response = json_response(rejected_conn, 400)
+    assert response["error"] == "InvalidRequest"
+    assert response["message"] =~ "missing blob"
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 0
+  end
+
   defp create_account!(conn, handle, email) do
     conn
     |> put_req_header("content-type", "application/json")
@@ -378,6 +428,29 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     |> json_response(200)
   end
 
+  defp upload_blob!(conn, account, bytes, mime_type) do
+    conn
+    |> recycle()
+    |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+    |> put_req_header("content-type", mime_type)
+    |> put_req_header("content-length", Integer.to_string(byte_size(bytes)))
+    |> post(~p"/xrpc/com.atproto.repo.uploadBlob", bytes)
+    |> json_response(200)
+  end
+
+  defp blob_record_params(repo, rkey, blob) do
+    %{
+      "repo" => repo,
+      "collection" => "app.tempest.blob",
+      "rkey" => rkey,
+      "validate" => false,
+      "record" => %{
+        "$type" => "app.tempest.blob",
+        "image" => blob
+      }
+    }
+  end
+
   defp profile_params(repo, display_name) do
     %{
       "repo" => repo,
@@ -405,6 +478,13 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     [[value]] = fetch_all(path, sql)
     value
   end
+
+  defp blob_metadata(did, cid) do
+    {:ok, metadata} = Tempest.Blobs.get_metadata(did, cid)
+    metadata
+  end
+
+  defp path_did(did), do: String.replace(did, ~r/[^A-Za-z0-9._-]/, "_")
 
   defp sequencer_event_count(did, event_type, action) do
     {:ok, events} = Tempest.Sequencer.list_after(0, did: did)

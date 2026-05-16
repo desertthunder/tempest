@@ -142,7 +142,7 @@ defmodule Tempest.Xrpc.Registry do
       auth: :bearer,
       input: @blob,
       output: @json,
-      handler: {Tempest.Xrpc.NotImplemented, :handle},
+      handler: {Tempest.Xrpc.Repo, :upload_blob},
       errors: ["BlobTooLarge"]
     },
     %Method{
@@ -207,6 +207,15 @@ defmodule Tempest.Xrpc.Registry do
       output: @json,
       handler: {Tempest.Xrpc.Sync, :list_blobs},
       errors: ["RepoNotFound"]
+    },
+    %Method{
+      nsid: "com.atproto.sync.getBlob",
+      kind: :query,
+      auth: :none,
+      input: nil,
+      output: @blob,
+      handler: {Tempest.Xrpc.Sync, :get_blob},
+      errors: ["RepoNotFound", "BlobNotFound"]
     },
     %Method{
       nsid: "com.atproto.sync.requestCrawl",

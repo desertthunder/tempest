@@ -11,6 +11,8 @@ config :tempest, Tempest.Config,
   data_dir: test_data_dir,
   public_url: "http://localhost:4002"
 
+config :tempest, Tempest.Blobs.GarbageCollector, enabled?: false
+
 config :tempest, Tempest.Repo,
   database: Path.join(test_data_dir, "account.sqlite"),
   pool: Ecto.Adapters.SQL.Sandbox,

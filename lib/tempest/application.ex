@@ -13,6 +13,7 @@ defmodule Tempest.Application do
     children = [
       TempestWeb.Telemetry,
       Tempest.Repo,
+      Tempest.Blobs.GarbageCollector,
       {DNSCluster, query: Application.get_env(:tempest, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Tempest.PubSub},
       # Start a worker by calling: Tempest.Worker.start_link(arg)
