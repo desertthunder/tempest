@@ -60,3 +60,9 @@ Available as of [2026-05-08](./CHANGELOG.md#2026-05-08)
 - `GET /xrpc/com.atproto.sync.getRepoStatus`
 - `GET /xrpc/com.atproto.sync.listRepos`
 - `GET /xrpc/com.atproto.sync.listBlobs`
+
+## Credits
+
+- [Cocoon](https://github.com/haileyok/cocoon) - a PDS written in Go
+- [Tranquil](https://tangled.org/tranquil.farm/tranquil-pds) - a PDS written in Rust
+- [PDS Reference Implementation](https://github.com/bluesky-social/atproto/tree/main/packages/pds)
