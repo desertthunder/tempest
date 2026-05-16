@@ -45,3 +45,11 @@ hurl --test --jobs 1 \
   --variable base_url=http://localhost:4000 \
   test/smoke/firehose.hurl
 ```
+
+Run the blob smoke test:
+
+```bash
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  test/smoke/blobs.hurl
+```

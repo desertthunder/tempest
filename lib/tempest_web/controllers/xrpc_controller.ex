@@ -100,6 +100,14 @@ defmodule TempestWeb.XrpcController do
 
   defp respond(conn, %{output: @json}, body), do: json(conn, body)
 
+  defp respond(conn, %{nsid: "com.atproto.sync.getBlob"}, %{redirect: url}) do
+    conn
+    |> put_resp_header("location", url)
+    |> put_resp_header("content-security-policy", "default-src 'none'; sandbox")
+    |> put_resp_header("x-content-type-options", "nosniff")
+    |> send_resp(302, "")
+  end
+
   defp respond(conn, %{nsid: "com.atproto.sync.getBlob"}, %{bytes: bytes} = blob) do
     conn
     |> put_resp_content_type(blob.mime_type, nil)

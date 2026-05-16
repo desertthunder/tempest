@@ -15,9 +15,11 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     Req.Test.verify_on_exit!(context)
 
     old_sync_config = Application.get_env(:tempest, Tempest.Sync, [])
+    old_blob_config = Application.get_env(:tempest, Tempest.Blobs, [])
 
     on_exit(fn ->
       Application.put_env(:tempest, Tempest.Sync, old_sync_config)
+      Application.put_env(:tempest, Tempest.Blobs, old_blob_config)
       clear_request_crawl_rate_limits()
     end)
 
@@ -284,6 +286,84 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     assert %{"error" => "RepoSuspended"} = json_response(inactive_conn, 400)
   end
 
+  test "getBlob redirects to configured CDN only after public and active checks", %{conn: conn} do
+    Application.put_env(:tempest, Tempest.Blobs, cdn_base_url: "https://cdn.example.test/pds")
+
+    account = create_account!(conn, "sync-cdn-blob.test", "sync-cdn-blob@example.com")
+    public_cid = upload_blob!(conn, account, "cdn public")["blob"]["ref"]["$link"]
+    temp_cid = upload_blob!(conn, account, "cdn temp")["blob"]["ref"]["$link"]
+
+    create_blob_record!(conn, account, "cdn", public_cid)
+
+    redirect_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => public_cid})
+
+    assert redirect_conn.status == 302
+
+    assert get_resp_header(redirect_conn, "location") == [
+             "https://cdn.example.test/pds/blobs/#{URI.encode(account["did"], &URI.char_unreserved?/1)}/#{public_cid}"
+           ]
+
+    assert get_resp_header(redirect_conn, "x-content-type-options") == ["nosniff"]
+
+    temp_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => temp_cid})
+
+    assert %{"error" => "BlobNotFound"} = json_response(temp_conn, 400)
+
+    Account
+    |> where([account], account.did == ^account["did"])
+    |> Repo.update_all(set: [active: false, status: "deactivated"])
+
+    inactive_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => public_cid})
+
+    assert %{"error" => "RepoDeactivated"} = json_response(inactive_conn, 400)
+    assert get_resp_header(inactive_conn, "location") == []
+  end
+
+  test "deleteRecord removes blob bytes when no current record references them", %{conn: conn} do
+    account = create_account!(conn, "sync-delete-blob.test", "sync-delete-blob@example.com")
+    blob = upload_blob!(conn, account, "delete blob")["blob"]
+    cid = blob["ref"]["$link"]
+    created = create_blob_record!(conn, account, "delete-me", cid)
+
+    assert get_blob_status(conn, account["did"], cid) == 200
+
+    delete_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.deleteRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.blob",
+        "rkey" => "delete-me",
+        "swapRecord" => created["cid"],
+        "swapCommit" => created["commit"]["cid"]
+      })
+
+    assert %{"commit" => %{"cid" => _cid}} = json_response(delete_conn, 200)
+
+    deleted_blob_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => cid})
+
+    assert %{"error" => "BlobNotFound"} = json_response(deleted_blob_conn, 400)
+
+    list_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.listBlobs", %{"did" => account["did"]})
+
+    assert json_response(list_conn, 200) == %{"cids" => []}
+  end
+
   test "requestCrawl fans out to configured relays", %{conn: conn} do
     Application.put_env(:tempest, Tempest.Sync,
       relays: ["https://relay.test"],
@@ -476,6 +556,13 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
       }
     })
     |> json_response(200)
+  end
+
+  defp get_blob_status(conn, did, cid) do
+    conn
+    |> recycle()
+    |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => did, "cid" => cid})
+    |> Map.fetch!(:status)
   end
 
   defp upload_blob!(conn, account, bytes) do

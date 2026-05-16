@@ -1,0 +1,157 @@
+defmodule Tempest.Blobs.S3Storage do
+  @moduledoc """
+  S3-compatible object storage adapter.
+
+  This adapter assumes the configured endpoint accepts the supplied request
+  options, including any authentication headers or Req options needed by the
+  deployment. Metadata stays in `account.sqlite`.
+  """
+
+  @behaviour Tempest.Blobs.StorageAdapter
+
+  alias Tempest.RepoCore.{Cid, Did}
+
+  @impl true
+  def put_temp_blob(config, did, cid, bytes) when is_list(config) and is_binary(bytes) do
+    with {:ok, did} <- normalize_did(did),
+         :ok <- validate_cid(cid),
+         {:ok, request} <- request_options(config, temp_key(did, cid), method: :put, body: bytes) do
+      case Req.request(request) do
+        {:ok, %{status: status}} when status in 200..299 ->
+          {:ok, %{cid: cid, path: temp_key(did, cid), size: byte_size(bytes)}}
+
+        {:ok, %{status: status}} ->
+          {:error, {:s3_status, status}}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+
+  @impl true
+  def promote_blob(config, did, cid) when is_list(config) do
+    with {:ok, did} <- normalize_did(did),
+         :ok <- validate_cid(cid),
+         source <- temp_key(did, cid),
+         destination <- blob_key(did, cid),
+         {:ok, request} <-
+           request_options(config, destination,
+             method: :put,
+             headers: [{"x-amz-copy-source", "/" <> bucket!(config) <> "/" <> source}]
+           ) do
+      case Req.request(request) do
+        {:ok, %{status: status}} when status in 200..299 ->
+          _ = delete_temp_blob(config, did, cid)
+          {:ok, destination}
+
+        {:ok, %{status: 404}} ->
+          {:error, :blob_not_found}
+
+        {:ok, %{status: status}} ->
+          {:error, {:s3_status, status}}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+
+  @impl true
+  def get_blob(config, did, cid, mime_type \\ "application/octet-stream") when is_list(config) do
+    with {:ok, did} <- normalize_did(did),
+         :ok <- validate_cid(cid),
+         {:ok, request} <- request_options(config, blob_key(did, cid), method: :get) do
+      case Req.request(request) do
+        {:ok, %{status: status, body: bytes}} when status in 200..299 and is_binary(bytes) ->
+          {:ok, %{bytes: bytes, content_length: byte_size(bytes), mime_type: mime_type}}
+
+        {:ok, %{status: 404}} ->
+          {:error, :blob_not_found}
+
+        {:ok, %{status: status}} ->
+          {:error, {:s3_status, status}}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+
+  @impl true
+  def delete_blob(config, did, cid) when is_list(config) do
+    with :ok <- delete_temp_blob(config, did, cid) do
+      delete_key(config, did, cid, &blob_key/2)
+    end
+  end
+
+  @impl true
+  def delete_temp_blob(config, did, cid) when is_list(config) do
+    delete_key(config, did, cid, &temp_key/2)
+  end
+
+  @impl true
+  def list_blobs(_config, _did, _opts \\ []) do
+    {:error, :metadata_authoritative}
+  end
+
+  defp delete_key(config, did, cid, key_fun) do
+    with {:ok, did} <- normalize_did(did),
+         :ok <- validate_cid(cid),
+         {:ok, request} <- request_options(config, key_fun.(did, cid), method: :delete) do
+      case Req.request(request) do
+        {:ok, %{status: status}} when status in 200..299 or status == 404 -> :ok
+        {:ok, %{status: status}} -> {:error, {:s3_status, status}}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp request_options(config, key, opts) do
+    endpoint_url = required!(config, :endpoint_url)
+    bucket = bucket!(config)
+
+    request =
+      config
+      |> Keyword.get(:req_options, [])
+      |> Keyword.merge(opts)
+      |> Keyword.update(:headers, default_headers(config), &(default_headers(config) ++ List.wrap(&1)))
+      |> Keyword.put(:url, object_url(endpoint_url, bucket, key))
+
+    {:ok, request}
+  rescue
+    e in KeyError -> {:error, {:missing_s3_config, e.key}}
+  end
+
+  defp object_url(endpoint_url, bucket, key) do
+    endpoint_url
+    |> String.trim_trailing("/")
+    |> Kernel.<>("/" <> URI.encode(bucket) <> "/" <> encode_key(key))
+  end
+
+  defp encode_key(key) do
+    key
+    |> String.split("/")
+    |> Enum.map(fn segment -> URI.encode(segment, &URI.char_unreserved?/1) end)
+    |> Enum.join("/")
+  end
+
+  defp default_headers(config), do: Keyword.get(config, :headers, [])
+
+  defp required!(config, key), do: Keyword.fetch!(config, key)
+  defp bucket!(config), do: required!(config, :bucket)
+
+  defp temp_key(did, cid), do: "temp/blobs/" <> did <> "/" <> cid
+  defp blob_key(did, cid), do: "blobs/" <> did <> "/" <> cid
+
+  defp normalize_did(did) do
+    case Did.parse(did) do
+      {:ok, did} -> {:ok, did}
+      {:error, _reason} -> {:error, :invalid_did}
+    end
+  end
+
+  defp validate_cid(cid) do
+    if Cid.valid?(cid), do: :ok, else: {:error, :invalid_cid}
+  end
+end

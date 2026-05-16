@@ -3,6 +3,8 @@ defmodule Tempest.Blobs.LocalStorage do
   Local filesystem blob storage adapter.
   """
 
+  @behaviour Tempest.Blobs.StorageAdapter
+
   alias Tempest.Config
   alias Tempest.RepoCore.{Cid, Did}
 

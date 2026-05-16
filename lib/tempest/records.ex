@@ -57,6 +57,7 @@ defmodule Tempest.Records do
            LexiconValidator.validate_record(input.collection, input.rkey, input.record, input.validate),
          blob_cids = Blobs.referenced_cids(input.record),
          :ok <- Blobs.ensure_present(account.did, blob_cids),
+         {:ok, old_blob_cids} <- current_record_blob_cids(account.did, input.collection, input.rkey),
          {:ok, signing_key} <- active_signing_key(account),
          {:ok, stored} <-
            RepoStorage.put_record(account, signing_key, %{
@@ -67,6 +68,7 @@ defmodule Tempest.Records do
              swap_commit: input.swap_commit
            }),
          :ok <- promote_blobs(account.did, blob_cids),
+         :ok <- delete_unreferenced_blobs(account.did, old_blob_cids),
          {:ok, _event} <- insert_sequence_event(account.did, stored, "update", input.collection, input.rkey) do
       {:ok,
        %{
@@ -84,6 +86,7 @@ defmodule Tempest.Records do
   def delete_record(%AuthContext{account: account}, params) do
     with {:ok, input} <- LexiconValidator.validate_delete_record_input(params),
          :ok <- ensure_repo_owner(account, input.repo),
+         {:ok, old_blob_cids} <- current_record_blob_cids(account.did, input.collection, input.rkey),
          {:ok, signing_key} <- active_signing_key(account),
          {:ok, stored} <-
            RepoStorage.delete_record(account, signing_key, %{
@@ -92,6 +95,7 @@ defmodule Tempest.Records do
              swap_record: input.swap_record,
              swap_commit: input.swap_commit
            }),
+         :ok <- maybe_delete_unreferenced_blobs(account.did, old_blob_cids, stored),
          {:ok, _event} <- maybe_insert_delete_event(account.did, stored, input.collection, input.rkey) do
       if stored.deleted? do
         {:ok,
@@ -210,6 +214,50 @@ defmodule Tempest.Records do
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  defp current_record_blob_cids(did, collection, rkey) do
+    case RepoStorage.get_record(did, collection, rkey) do
+      {:ok, %{value: record}} -> {:ok, Blobs.referenced_cids(record)}
+      {:error, :record_not_found} -> {:ok, []}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp maybe_delete_unreferenced_blobs(did, old_blob_cids, %{deleted?: true}) do
+    delete_unreferenced_blobs(did, old_blob_cids)
+  end
+
+  defp maybe_delete_unreferenced_blobs(_did, _old_blob_cids, %{deleted?: false}), do: :ok
+
+  defp delete_unreferenced_blobs(_did, []), do: :ok
+
+  defp delete_unreferenced_blobs(did, old_blob_cids) do
+    config = Config.load!()
+
+    with {:ok, current_blob_cids} <- all_current_blob_cids(did) do
+      old_blob_cids
+      |> Enum.reject(&(&1 in current_blob_cids))
+      |> Enum.reduce_while(:ok, fn cid, :ok ->
+        with :ok <- LocalStorage.delete_blob(config, did, cid),
+             :ok <- Blobs.delete_metadata(did, [cid]) do
+          {:cont, :ok}
+        else
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+      end)
+    end
+  end
+
+  defp all_current_blob_cids(did, cursor \\ nil, acc \\ []) do
+    with {:ok, page} <- RepoStorage.list_referenced_blobs(did, limit: 1000, cursor: cursor) do
+      cids = acc ++ page.cids
+
+      case Map.get(page, :cursor) do
+        nil -> {:ok, cids}
+        cursor -> all_current_blob_cids(did, cursor, cids)
+      end
+    end
   end
 
   defp insert_sequence_event(did, stored, action, collection, rkey) do

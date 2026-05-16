@@ -38,6 +38,10 @@ if blob_max_bytes = System.get_env("TEMPEST_BLOB_MAX_BYTES") do
   config :tempest, Tempest.Config, blob_max_bytes: String.to_integer(blob_max_bytes)
 end
 
+if blob_cdn_base_url = System.get_env("TEMPEST_BLOB_CDN_BASE_URL") do
+  config :tempest, Tempest.Blobs, cdn_base_url: blob_cdn_base_url
+end
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

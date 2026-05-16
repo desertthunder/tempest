@@ -113,9 +113,8 @@ defmodule Tempest.Sync do
          {:ok, account} <- fetch_account(input.did),
          :ok <- ensure_active(account),
          {:ok, metadata} <- Blobs.get_public_metadata(account.did, input.cid),
-         {:ok, blob} <- LocalStorage.get_blob(Config.load!(), account.did, input.cid, metadata.mime_type),
-         :ok <- ensure_blob_size(blob, metadata) do
-      {:ok, Map.put(blob, :cid, input.cid)}
+         {:ok, response} <- blob_response(account.did, input.cid, metadata) do
+      {:ok, response}
     end
   end
 
@@ -259,6 +258,19 @@ defmodule Tempest.Sync do
 
   defp ensure_blob_size(%{content_length: size}, %{size: size}), do: :ok
   defp ensure_blob_size(_blob, _metadata), do: {:error, :blob_not_found}
+
+  defp blob_response(did, cid, metadata) do
+    case Blobs.cdn_url(did, cid) do
+      {:ok, url} ->
+        {:ok, %{redirect: url, cid: cid}}
+
+      :disabled ->
+        with {:ok, blob} <- LocalStorage.get_blob(Config.load!(), did, cid, metadata.mime_type),
+             :ok <- ensure_blob_size(blob, metadata) do
+          {:ok, Map.put(blob, :cid, cid)}
+        end
+    end
+  end
 
   defp validate_request_crawl_hostname(hostname) when is_binary(hostname) do
     configured = Tempest.Config.load!().hostname

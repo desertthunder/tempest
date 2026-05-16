@@ -233,6 +233,21 @@ defmodule Tempest.Blobs do
   end
 
   @doc """
+  Deletes metadata rows for blobs that are no longer referenced.
+  """
+  @spec delete_metadata(String.t(), [String.t()]) :: :ok | {:error, term()}
+  def delete_metadata(_did, []), do: :ok
+
+  def delete_metadata(did, cids) when is_binary(did) and is_list(cids) do
+    Enum.reduce_while(Enum.uniq(cids), :ok, fn cid, :ok ->
+      case Repo.query("DELETE FROM blob_metadata WHERE did = ?1 AND cid = ?2", [did, cid]) do
+        {:ok, _result} -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  @doc """
   Extracts valid AT Protocol blob reference CIDs from a record-shaped value.
   """
   @spec referenced_cids(term()) :: [String.t()]
@@ -241,6 +256,20 @@ defmodule Tempest.Blobs do
     |> collect_blob_cids([])
     |> Enum.uniq()
     |> Enum.sort()
+  end
+
+  @doc """
+  Returns a CDN URL for a public blob when CDN redirects are configured.
+  """
+  @spec cdn_url(String.t(), String.t()) :: {:ok, String.t()} | :disabled
+  def cdn_url(did, cid) when is_binary(did) and is_binary(cid) do
+    case Keyword.get(blob_config(), :cdn_base_url) do
+      base_url when is_binary(base_url) and base_url != "" ->
+        {:ok, base_url |> String.trim_trailing("/") |> Kernel.<>("/blobs/" <> encode_path_segment(did) <> "/" <> cid)}
+
+      _disabled ->
+        :disabled
+    end
   end
 
   @doc """
@@ -363,4 +392,10 @@ defmodule Tempest.Blobs do
     |> Map.values()
     |> Enum.reduce(acc, &collect_blob_cids/2)
   end
+
+  defp blob_config do
+    Application.get_env(:tempest, __MODULE__, [])
+  end
+
+  defp encode_path_segment(value), do: URI.encode(value, &URI.char_unreserved?/1)
 end
