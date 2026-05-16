@@ -4,7 +4,7 @@ defmodule Tempest.LexiconFixtures do
   def install!(test_context) do
     previous_config = Application.get_env(:tempest, Tempest.Lexicon.Registry, [])
 
-    Application.put_env(:tempest, Tempest.Lexicon.Registry, documents: documents())
+    Application.put_env(:tempest, Tempest.Lexicon.Registry, bundled?: false, documents: documents())
 
     ExUnit.Callbacks.on_exit(test_context, fn ->
       Application.put_env(:tempest, Tempest.Lexicon.Registry, previous_config)

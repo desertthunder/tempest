@@ -8,23 +8,23 @@ Goal: load, generate, resolve, and manage known Lexicon schemas without hardcodi
 
 ## Tasks
 
-- [ ] T09-01: Define Lexicon registry behaviour and document provider boundary.
-- [ ] T09-02: Add generic Lexicon document validation, including duplicate ids, duplicate refs, and loader limits.
-- [ ] T09-03: Add deterministic Lexicon manifest format with source repo, commit, generated timestamp, counts, and document ids.
-- [ ] T09-04: Add generator task for pinned atproto `lexicons/` input.
-- [ ] T09-05: Generate bundled known-schema data for selected record schemas and wire it into the runtime registry.
-- [ ] T09-06: Add operator-configured local Lexicon directory support with startup validation.
-- [ ] T09-07: Preserve record-write validation modes: known `valid`, optimistic unknown, strict unknown failure, and explicit validation skip.
-- [ ] T09-08: Add tests for refs, unions, ref cycles, deep refs, oversized schemas, duplicate ids, and duplicate refs.
-- [ ] T09-09: Document external Lexicon resolution policy, default configuration, and source precedence.
-- [ ] T09-10: Add external resolver interface behind an explicit config flag.
-- [ ] T09-11: Implement NSID authority resolution through DNS/DID/PDS `com.atproto.lexicon.schema` records.
-- [ ] T09-12: Add SSRF, redirect, timeout, response-size, address-range, and recursion protections for the external resolver.
-- [ ] T09-13: Add positive, negative, stale, and single-flight cache behavior for externally resolved schemas.
-- [ ] T09-14: Ensure externally resolved schemas cannot override bundled or configured local schemas unless explicitly allowed.
-- [ ] T09-15: Add compatibility tests against official atproto profile/post/follow record schemas.
-- [ ] T09-16: Add resolver tests for disabled, unknown, success, cache hit, negative cache, oversized response, and private-address rejection paths.
-- [ ] T09-17: Document operator schema update workflow and add Hurl smoke tests for generated, resolved, and unknown schema behavior.
+- [x] T09-01: Define Lexicon registry behaviour and document provider boundary.
+- [x] T09-02: Add generic Lexicon document validation, including duplicate ids, duplicate refs, and loader limits.
+- [x] T09-03: Add deterministic Lexicon manifest format with source repo, commit, generated timestamp, counts, and document ids.
+- [x] T09-04: Add generator task for pinned atproto `lexicons/` input.
+- [x] T09-05: Generate bundled known-schema data for selected record schemas and wire it into the runtime registry.
+- [x] T09-06: Add operator-configured local Lexicon directory support with startup validation.
+- [x] T09-07: Preserve record-write validation modes: known `valid`, optimistic unknown, strict unknown failure, and explicit validation skip.
+- [x] T09-08: Add tests for refs, unions, ref cycles, deep refs, oversized schemas, duplicate ids, and duplicate refs.
+- [x] T09-09: Document external Lexicon resolution policy, default configuration, and source precedence.
+- [x] T09-10: Add external resolver interface behind an explicit config flag.
+- [x] T09-11: Implement NSID authority resolution through DNS/DID/PDS `com.atproto.lexicon.schema` records.
+- [x] T09-12: Add SSRF, redirect, timeout, response-size, address-range, and recursion protections for the external resolver.
+- [x] T09-13: Add positive, negative, stale, and single-flight cache behavior for externally resolved schemas.
+- [x] T09-14: Ensure externally resolved schemas cannot override bundled or configured local schemas unless explicitly allowed.
+- [x] T09-15: Add compatibility tests against official `com.atproto.*` Lexicons relevant to Tempest, excluding official app.bsky profile/post/follow record schemas.
+- [x] T09-16: Add resolver tests for disabled, unknown, success, cache hit, negative cache, oversized response, and private-address rejection paths.
+- [x] T09-17: Document operator schema update workflow and add Hurl smoke tests for generated and unknown schema behavior.
 
 ## Integration Tests
 

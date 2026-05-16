@@ -9,6 +9,7 @@ defmodule Tempest.Application do
   def start(_type, _args) do
     config = Tempest.Config.load!()
     Tempest.Storage.bootstrap!(config)
+    Tempest.Lexicon.Registry.validate_startup!()
 
     children = [
       TempestWeb.Telemetry,

@@ -55,4 +55,61 @@ defmodule Tempest.Lexicon.ValidatorTest do
     assert {:error, :unknown_lexicon} =
              Validator.validate_record("example.app.record", "abc", record, require_schema?: true)
   end
+
+  test "preserves record write validation modes" do
+    assert {:ok, :valid} =
+             Validator.validate_record("app.bsky.actor.profile", "self", %{
+               "$type" => "app.bsky.actor.profile",
+               "displayName" => "Alice"
+             })
+
+    assert {:ok, :unknown} =
+             Validator.validate_record("example.app.record", "abc", %{"$type" => "example.app.record"})
+
+    assert {:error, :unknown_lexicon} =
+             Validator.validate_record("example.app.record", "abc", %{"$type" => "example.app.record"},
+               require_schema?: true
+             )
+
+    assert {:ok, :unknown} =
+             Validator.validate_record(
+               "app.bsky.actor.profile",
+               "not-self",
+               %{"$type" => "app.bsky.actor.profile", "displayName" => 123},
+               validate_schema?: false
+             )
+  end
+
+  test "external resolver failures preserve optimistic unknown and strict unknown failure" do
+    previous_config = Application.get_env(:tempest, Tempest.Lexicon.Registry, [])
+
+    Application.put_env(:tempest, Tempest.Lexicon.Registry,
+      bundled?: false,
+      paths: [],
+      external_resolver: [
+        enabled?: true,
+        resolver: Tempest.Lexicon.ValidatorTest.FailingResolver
+      ]
+    )
+
+    on_exit(fn ->
+      Application.put_env(:tempest, Tempest.Lexicon.Registry, previous_config)
+    end)
+
+    record = %{"$type" => "example.app.record"}
+
+    assert {:ok, :unknown} = Validator.validate_record("example.app.record", "abc", record)
+
+    assert {:error, :unknown_lexicon} =
+             Validator.validate_record("example.app.record", "abc", record, require_schema?: true)
+  end
+end
+
+defmodule Tempest.Lexicon.ValidatorTest.FailingResolver do
+  @moduledoc false
+
+  @behaviour Tempest.Lexicon.ExternalResolver
+
+  @impl true
+  def resolve(_id, _opts), do: {:error, :private_ip}
 end

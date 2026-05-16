@@ -15,25 +15,25 @@ defmodule Tempest.Lexicon.Validator do
     require_schema? = Keyword.get(opts, :require_schema?, false)
 
     with :ok <- validate_record_type(collection, record) do
-      case Registry.fetch_record(collection) do
-        {:ok, document, definition} ->
-          with :ok <- validate_record_key(Map.get(definition, "key"), rkey) do
-            if validate_schema? do
+      if validate_schema? do
+        case Registry.fetch_record(collection) do
+          {:ok, document, definition} ->
+            with :ok <- validate_record_key(Map.get(definition, "key"), rkey) do
               schema = Map.fetch!(definition, "record")
 
               with :ok <- validate_value(record, schema, document, collection, 0) do
                 {:ok, :valid}
               end
-            else
-              {:ok, :unknown}
             end
-          end
 
-        {:error, :unknown_lexicon} when not require_schema? ->
-          {:ok, :unknown}
+          {:error, :unknown_lexicon} when not require_schema? ->
+            {:ok, :unknown}
 
-        {:error, reason} ->
-          {:error, reason}
+          {:error, reason} ->
+            {:error, reason}
+        end
+      else
+        {:ok, :unknown}
       end
     end
   end
@@ -47,6 +47,10 @@ defmodule Tempest.Lexicon.Validator do
   defp validate_record_key("literal:" <> literal, literal), do: :ok
   defp validate_record_key("literal:" <> literal, _rkey), do: {:error, {:invalid_record_key, "literal:" <> literal}}
   defp validate_record_key("tid", rkey), do: if(Tid.valid?(rkey), do: :ok, else: {:error, {:invalid_record_key, "tid"}})
+
+  defp validate_record_key("nsid", rkey),
+    do: if(match?({:ok, _nsid}, Nsid.parse(rkey)), do: :ok, else: {:error, {:invalid_record_key, "nsid"}})
+
   defp validate_record_key("any", _rkey), do: :ok
   defp validate_record_key(nil, _rkey), do: :ok
   defp validate_record_key(key_type, _rkey), do: {:error, {:unsupported_record_key_type, key_type}}

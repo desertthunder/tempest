@@ -1,10 +1,10 @@
+# General application configuration
+#
 # This file is responsible for configuring your application
 # and its dependencies with the aid of the Config module.
 #
-# This configuration file is loaded before any dependency and
-# is restricted to this project.
-
-# General application configuration
+# It is loaded before any dependency and is restricted to
+# this project.
 import Config
 
 config :tempest,
@@ -25,9 +25,8 @@ config :tempest, Tempest.Repo,
   default_transaction_mode: :immediate,
   pool_size: 5
 
-config :tempest, Tempest.Lexicon.Registry, paths: [Path.expand("../priv/lexicons/smoke", __DIR__)]
+config :tempest, Tempest.Lexicon.Registry, bundled?: true, paths: []
 
-# Configure the endpoint
 config :tempest, TempestWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
@@ -38,16 +37,14 @@ config :tempest, TempestWeb.Endpoint,
   pubsub_server: Tempest.PubSub,
   live_view: [signing_salt: "jgb6xV9v"]
 
-# Configure the mailer
-#
-# By default it uses the "Local" adapter which stores the emails
+# By default the mailer uses the "Local" adapter which stores the emails
 # locally. You can see the emails in your browser, at "/dev/mailbox".
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
 config :tempest, Tempest.Mailer, adapter: Swoosh.Adapters.Local
 
-# Configure esbuild (the version is required)
+# Note version is required for esbuild
 config :esbuild,
   version: "0.25.4",
   tempest: [
@@ -57,7 +54,7 @@ config :esbuild,
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]
 
-# Configure tailwind (the version is required)
+# Note version is required for tailwind
 config :tailwind,
   version: "4.1.12",
   tempest: [
@@ -68,12 +65,10 @@ config :tailwind,
     cd: Path.expand("..", __DIR__)
   ]
 
-# Configure Elixir's Logger
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
 # Import environment specific config. This must remain at the bottom
