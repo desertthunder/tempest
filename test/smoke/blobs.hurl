@@ -19,10 +19,10 @@ Content-Type: text/plain
 `hello blob`
 HTTP 200
 [Captures]
-blob_cid: jsonpath "$.blob.ref.$link"
+blob_cid: jsonpath "$.blob.ref['$link']"
 [Asserts]
 header "content-type" contains "application/json"
-jsonpath "$.blob.$type" == "blob"
+jsonpath "$.blob['$type']" == "blob"
 jsonpath "$.blob.mimeType" == "text/plain"
 jsonpath "$.blob.size" == 10
 
