@@ -54,6 +54,13 @@ defmodule Tempest.Xrpc.Repo do
     end
   end
 
+  def apply_writes(conn, params, _method) do
+    case Records.apply_writes(conn.assigns.auth_context, params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
   def get_record(_conn, params, _method) do
     case Records.get_record(params) do
       {:ok, response} -> {:ok, response}
@@ -119,6 +126,12 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:invalid_swap_record), do: {:error, 400, "InvalidRequest", "swapRecord is invalid"}
   defp repo_error(:invalid_swap_commit), do: {:error, 400, "InvalidRequest", "swapCommit is invalid"}
   defp repo_error(:invalid_validate), do: {:error, 400, "InvalidRequest", "validate must be a boolean"}
+  defp repo_error(:invalid_writes), do: {:error, 400, "InvalidRequest", "writes must contain 1 to 200 operations"}
+  defp repo_error(:invalid_write), do: {:error, 400, "InvalidRequest", "write operation is invalid"}
+
+  defp repo_error(:duplicate_write),
+    do: {:error, 400, "InvalidRequest", "create writes must not target the same collection and rkey more than once"}
+
   defp repo_error(:invalid_request_body), do: {:error, 400, "InvalidRequest", "request body is invalid"}
   defp repo_error(:invalid_content_length), do: {:error, 400, "InvalidRequest", "Content-Length is invalid"}
 

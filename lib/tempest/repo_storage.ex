@@ -211,6 +211,37 @@ defmodule Tempest.RepoStorage do
   end
 
   @doc """
+  Applies a batch of record writes atomically and advances the repository head once.
+  """
+  def apply_writes(%Account{} = account, %SigningKey{} = signing_key, attrs, %Config{} = config \\ Config.load!())
+      when is_map(attrs) do
+    with {:ok, private_key} <- KeyStore.decrypt_private_key(signing_key),
+         {:ok, conn, _path} <- open_repo(config, account.did) do
+      transact(conn, fn ->
+        with {:ok, current} <- current_repo(conn),
+             :ok <- ensure_swap_commit(current, attrs.swap_commit),
+             {:ok, repo} <- build_apply_writes_repo(conn, account.did, private_key, current, attrs.writes),
+             :ok <- insert_blocks(conn, repo.blocks, repo.inserted_at),
+             :ok <- apply_write_rows(conn, repo),
+             :ok <- insert_commit(conn, repo),
+             :ok <- update_metadata(conn, repo) do
+          {:ok,
+           %{
+             commit_cid: repo.commit_cid,
+             rev: repo.rev,
+             prev_rev: current.rev,
+             prev_data: current.root_cid,
+             results: repo.results,
+             paths: repo.paths,
+             ops: repo.ops
+           }}
+        end
+      end)
+      |> close_and_return(conn)
+    end
+  end
+
+  @doc """
   Fetches the current record by collection and record key.
   """
   def get_record(did, collection, rkey, opts \\ [])
@@ -867,6 +898,137 @@ defmodule Tempest.RepoStorage do
     end
   end
 
+  defp build_apply_writes_repo(conn, did, private_key, current, writes) do
+    with {:ok, prepared} <- prepare_apply_writes(conn, did, current, writes),
+         entries <- prepared.entries |> Map.to_list() |> Enum.sort_by(fn {path, _cid} -> path end),
+         {:ok, mst} <- Mst.from_entries(entries),
+         {:ok, %{root: root, blocks: mst_blocks}} <- Mst.serialize(mst),
+         {:ok, commit} <- signed_commit(did, private_key, root, current.prev_cid, current.rev),
+         {:ok, commit_bytes} <- Commit.encode(commit),
+         {:ok, commit_cid} <- Commit.cid(commit) do
+      inserted_at = Timestamp.iso8601_utc()
+
+      {:ok,
+       %{
+         rev: commit.rev,
+         prev_cid: current.commit_cid,
+         root_cid: Cid.to_string(root),
+         commit_cid: Cid.to_string(commit_cid),
+         commit_bytes: commit_bytes,
+         inserted_at: inserted_at,
+         row_ops: prepared.row_ops,
+         results: Enum.reverse(prepared.results),
+         paths: Enum.reverse(prepared.paths),
+         ops: Enum.reverse(prepared.ops),
+         blocks: Enum.reverse(prepared.blocks) ++ mst_blocks ++ [{commit_cid, commit_bytes}]
+       }}
+    end
+  end
+
+  defp prepare_apply_writes(conn, did, current, writes) do
+    entries = Map.new(current.entries, fn {path, cid} -> {path, cid} end)
+
+    initial = %{
+      entries: entries,
+      row_ops: [],
+      results: [],
+      paths: [],
+      ops: [],
+      blocks: []
+    }
+
+    writes
+    |> Enum.reduce_while({:ok, initial}, fn write, {:ok, acc} ->
+      case prepare_apply_write(conn, did, write, acc) do
+        {:ok, acc} -> {:cont, {:ok, acc}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp prepare_apply_write(_conn, did, %{action: :create} = write, acc) do
+    path = write.collection <> "/" <> write.rkey
+
+    if Map.has_key?(acc.entries, path) do
+      {:error, :duplicate_record}
+    else
+      with {:ok, record_cid, record_bytes} <- encode_record(write.record) do
+        uri = "at://" <> did <> "/" <> path
+        record_cid_string = Cid.to_string(record_cid)
+
+        {:ok,
+         %{
+           acc
+           | entries: Map.put(acc.entries, path, record_cid),
+             row_ops: [{:upsert, write, path, record_cid_string} | acc.row_ops],
+             results: [
+               %{action: :create, uri: uri, cid: record_cid_string, validationStatus: write.validation_status}
+               | acc.results
+             ],
+             paths: [path | acc.paths],
+             ops: [%{"action" => "create", "path" => path, "cid" => record_cid_string} | acc.ops],
+             blocks: [{record_cid, record_bytes} | acc.blocks]
+         }}
+      end
+    end
+  end
+
+  defp prepare_apply_write(conn, did, %{action: :update} = write, acc) do
+    path = write.collection <> "/" <> write.rkey
+
+    if Map.has_key?(acc.entries, path) do
+      with {:ok, existing_record} <- current_record(conn, write.collection, write.rkey),
+           {:ok, record_cid, record_bytes} <- encode_record(write.record) do
+        uri = "at://" <> did <> "/" <> path
+        record_cid_string = Cid.to_string(record_cid)
+        op = %{"action" => "update", "path" => path, "cid" => record_cid_string}
+        op = if existing_record, do: Map.put(op, "prev", existing_record.cid), else: op
+
+        {:ok,
+         %{
+           acc
+           | entries: Map.put(acc.entries, path, record_cid),
+             row_ops: [{:upsert, write, path, record_cid_string} | acc.row_ops],
+             results: [
+               %{action: :update, uri: uri, cid: record_cid_string, validationStatus: write.validation_status}
+               | acc.results
+             ],
+             paths: [path | acc.paths],
+             ops: [op | acc.ops],
+             blocks: [{record_cid, record_bytes} | acc.blocks]
+         }}
+      end
+    else
+      {:error, :record_not_found}
+    end
+  end
+
+  defp prepare_apply_write(_conn, _did, %{action: :delete} = write, acc) do
+    path = write.collection <> "/" <> write.rkey
+
+    if Map.has_key?(acc.entries, path) do
+      previous_cid = acc.entries |> Map.fetch!(path) |> Cid.to_string()
+
+      {:ok,
+       %{
+         acc
+         | entries: Map.delete(acc.entries, path),
+           row_ops: [{:delete, write} | acc.row_ops],
+           results: [%{action: :delete} | acc.results],
+           paths: [path | acc.paths],
+           ops: [%{"action" => "delete", "path" => path, "cid" => nil, "prev" => previous_cid} | acc.ops]
+       }}
+    else
+      {:ok, %{acc | results: [%{action: :delete} | acc.results]}}
+    end
+  end
+
+  defp encode_record(record) do
+    with {:ok, record_bytes} <- Drisl.encode(record) do
+      {:ok, Cid.for_drisl(record_bytes), record_bytes}
+    end
+  end
+
   defp build_record_commit(did, private_key, current, attrs, path, entries, record_cid, record_bytes) do
     with {:ok, mst} <- Mst.from_entries(entries),
          {:ok, %{root: root, blocks: mst_blocks}} <- Mst.serialize(mst),
@@ -956,6 +1118,33 @@ defmodule Tempest.RepoStorage do
         repo.inserted_at
       ]
     )
+  end
+
+  defp apply_write_rows(conn, repo) do
+    repo.row_ops
+    |> Enum.reverse()
+    |> Enum.reduce_while(:ok, fn
+      {:upsert, write, path, record_cid}, :ok ->
+        row = %{
+          collection: write.collection,
+          rkey: write.rkey,
+          path: path,
+          record_cid: record_cid,
+          record: write.record,
+          inserted_at: repo.inserted_at
+        }
+
+        case upsert_record(conn, row) do
+          :ok -> {:cont, :ok}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+
+      {:delete, write}, :ok ->
+        case delete_record_row(conn, write.collection, write.rkey) do
+          :ok -> {:cont, :ok}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+    end)
   end
 
   defp delete_record_row(conn, collection, rkey) do

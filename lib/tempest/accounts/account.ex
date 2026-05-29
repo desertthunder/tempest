@@ -18,6 +18,7 @@ defmodule Tempest.Accounts.Account do
     field :password_hash, :string
     field :active, :boolean, default: true
     field :status, :string, default: "active"
+    field :preferences_json, :string, default: "[]"
 
     has_many :sessions, Tempest.Accounts.Session
     has_many :signing_keys, Tempest.Identity.SigningKey
@@ -27,7 +28,7 @@ defmodule Tempest.Accounts.Account do
 
   def create_changeset(account, attrs) do
     account
-    |> cast(attrs, [:did, :handle, :email, :password_hash, :active, :status])
+    |> cast(attrs, [:did, :handle, :email, :password_hash, :active, :status, :preferences_json])
     |> update_change(:handle, &normalize_handle/1)
     |> update_change(:email, &normalize_email/1)
     |> validate_required([:did, :handle, :email, :password_hash, :active, :status])

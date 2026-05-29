@@ -110,6 +110,15 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["InvalidSwap"]
     },
     %Method{
+      nsid: "com.atproto.repo.applyWrites",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Repo, :apply_writes},
+      errors: ["InvalidSwap"]
+    },
+    %Method{
       nsid: "com.atproto.repo.getRecord",
       kind: :query,
       auth: :none,
@@ -233,6 +242,24 @@ defmodule Tempest.Xrpc.Registry do
       input: nil,
       output: "application/vnd.atproto.eventstream",
       handler: {TempestWeb.FirehoseController, :subscribe_repos},
+      errors: []
+    },
+    %Method{
+      nsid: "app.bsky.actor.getPreferences",
+      kind: :query,
+      auth: :bearer,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Actor, :get_preferences},
+      errors: []
+    },
+    %Method{
+      nsid: "app.bsky.actor.putPreferences",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Actor, :put_preferences},
       errors: []
     }
   ]

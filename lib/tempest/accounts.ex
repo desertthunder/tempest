@@ -141,6 +141,32 @@ defmodule Tempest.Accounts do
     {:ok, account_response(account)}
   end
 
+  def get_preferences(%AuthContext{token_type: :access, account: account}) do
+    case Jason.decode(account.preferences_json || "[]") do
+      {:ok, preferences} when is_list(preferences) -> {:ok, %{preferences: preferences}}
+      {:ok, _value} -> {:ok, %{preferences: []}}
+      {:error, _reason} -> {:ok, %{preferences: []}}
+    end
+  end
+
+  def put_preferences(%AuthContext{token_type: :access, account: account}, params) when is_map(params) do
+    case Map.get(params, "preferences") do
+      preferences when is_list(preferences) ->
+        with {:ok, encoded} <- Jason.encode(preferences),
+             {:ok, _account} <-
+               account
+               |> Ecto.Changeset.change(%{preferences_json: encoded})
+               |> Repo.update() do
+          {:ok, %{}}
+        end
+
+      _value ->
+        {:error, :invalid_preferences}
+    end
+  end
+
+  def put_preferences(%AuthContext{token_type: :access}, _params), do: {:error, :invalid_preferences}
+
   def authenticate_access(token) do
     with {:ok, %{"typ" => "access", "account_id" => account_id, "session_id" => session_id} = claims} <-
            Tokens.verify_access_token(token),

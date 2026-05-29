@@ -8,19 +8,19 @@ Goal: close protocol gaps and verify behavior against external clients, fixtures
 
 ## Tasks
 
-- [ ] T10-01: Sync local Lexicons from the official atproto repository.
-- [ ] T10-02: Add Lexicon manifest with source commit or CID metadata.
-- [ ] T10-03: Add generated or interpreted validation for all implemented endpoints.
-- [ ] T10-04: Add `com.atproto.repo.applyWrites`, including same-rkey duplicate semantics.
-- [ ] T10-05: Add `com.atproto.sync.getBlocks`.
-- [ ] T10-06: Add `com.atproto.sync.requestCrawl`.
-- [ ] T10-07: Add `app.bsky.actor.getPreferences` and `app.bsky.actor.putPreferences` for private preference migration compatibility.
-- [ ] T10-08: Add XRPC proxy fallback rules for service endpoints that should be proxied, not locally implemented.
-- [ ] T10-09: Add interop fixture test suite.
-- [ ] T10-10: Add Hurl compatibility smoke tests.
-- [ ] T10-11: Add migration/import tests that hand off to Milestone 12.
-- [ ] T10-12: Add abuse cases for oversized records, deep CBOR, invalid CIDs, malformed CAR, and invalid firehose frames.
-- [ ] T10-13: Add external relay/AppView verification notes.
+- [x] T10-01: Sync local Lexicons from the official atproto repository.
+- [x] T10-02: Add Lexicon manifest with source commit or CID metadata.
+- [x] T10-03: Add generated or interpreted validation for all implemented endpoints.
+- [x] T10-04: Add `com.atproto.repo.applyWrites`, including same-rkey duplicate semantics.
+- [x] T10-05: Add `com.atproto.sync.getBlocks`.
+- [x] T10-06: Add `com.atproto.sync.requestCrawl`.
+- [x] T10-07: Add `app.bsky.actor.getPreferences` and `app.bsky.actor.putPreferences` for private preference migration compatibility.
+- [x] T10-08: Add XRPC proxy fallback rules for service endpoints that should be proxied, not locally implemented.
+- [x] T10-09: Add interop fixture test suite.
+- [x] T10-10: Add Hurl compatibility smoke tests.
+- [x] T10-11: Add migration/import tests that hand off to Milestone 12.
+- [x] T10-12: Add abuse cases for oversized records, deep CBOR, invalid CIDs, malformed CAR, and invalid firehose frames.
+- [x] T10-13: Add external relay/AppView verification notes.
 
 ## Integration Tests
 

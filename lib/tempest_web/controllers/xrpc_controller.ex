@@ -1,7 +1,7 @@
 defmodule TempestWeb.XrpcController do
   use TempestWeb, :controller
 
-  alias Tempest.Xrpc.Registry
+  alias Tempest.Xrpc.{Proxy, Registry}
   alias TempestWeb.XrpcErrorJSON
 
   @json "application/json"
@@ -11,13 +11,18 @@ defmodule TempestWeb.XrpcController do
   end
 
   def handle(conn, %{"method" => method_nsid} = params) do
-    with {:ok, method} <- fetch_method(method_nsid),
-         :ok <- validate_verb(conn, method),
-         :ok <- validate_content_type(conn, method) do
-      dispatch(conn, params, method)
-    else
-      {:error, status, error, message} ->
-        XrpcErrorJSON.render(conn, status, error, message)
+    case fetch_method(method_nsid) do
+      {:ok, method} ->
+        with :ok <- validate_verb(conn, method),
+             :ok <- validate_content_type(conn, method) do
+          dispatch(conn, params, method)
+        else
+          {:error, status, error, message} ->
+            XrpcErrorJSON.render(conn, status, error, message)
+        end
+
+      {:proxy, ^method_nsid} ->
+        proxy_or_unknown(conn, params, method_nsid)
     end
   end
 
@@ -27,7 +32,7 @@ defmodule TempestWeb.XrpcController do
         {:ok, method}
 
       {:error, :not_found} ->
-        {:error, 404, "UnknownMethod", "#{method_nsid} is not a supported XRPC method"}
+        {:proxy, method_nsid}
     end
   end
 
@@ -86,6 +91,19 @@ defmodule TempestWeb.XrpcController do
     end)
   end
 
+  defp proxy_or_unknown(conn, params, method_nsid) do
+    case Proxy.request(conn, method_nsid, params) do
+      {:ok, response} ->
+        proxy_response(conn, response)
+
+      :not_configured ->
+        XrpcErrorJSON.render(conn, 404, "UnknownMethod", "#{method_nsid} is not a supported XRPC method")
+
+      {:error, _reason} ->
+        XrpcErrorJSON.render(conn, 502, "UpstreamFailure", "proxied XRPC request failed")
+    end
+  end
+
   defp dispatch(conn, params, method) do
     {module, function} = method.handler
 
@@ -97,6 +115,18 @@ defmodule TempestWeb.XrpcController do
         XrpcErrorJSON.render(conn, status, error, message)
     end
   end
+
+  defp proxy_response(conn, response) do
+    content_type = response.headers |> Map.get("content-type", [@json]) |> List.first()
+
+    conn
+    |> put_resp_content_type(content_type)
+    |> send_resp(response.status, proxy_body(response.body))
+  end
+
+  defp proxy_body(nil), do: ""
+  defp proxy_body(body) when is_binary(body), do: body
+  defp proxy_body(body), do: Jason.encode!(body)
 
   defp respond(conn, %{output: @json}, body), do: json(conn, body)
 

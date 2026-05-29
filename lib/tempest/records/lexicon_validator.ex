@@ -78,6 +78,18 @@ defmodule Tempest.Records.LexiconValidator do
 
   def validate_delete_record_input(_params), do: {:error, :invalid_request_body}
 
+  def validate_apply_writes_input(params) when is_map(params) do
+    with {:ok, repo} <- fetch_string(params, "repo"),
+         {:ok, validate} <- validate_optional_boolean(Map.get(params, "validate")),
+         {:ok, swap_commit} <- validate_optional_cid(Map.get(params, "swapCommit"), :invalid_swap_commit),
+         {:ok, writes} <- validate_writes(Map.get(params, "writes")),
+         :ok <- validate_no_duplicate_creates(writes) do
+      {:ok, %{repo: repo, validate: validate, swap_commit: swap_commit, writes: writes}}
+    end
+  end
+
+  def validate_apply_writes_input(_params), do: {:error, :invalid_request_body}
+
   def validate_get_record_input(params) when is_map(params) do
     with {:ok, repo} <- fetch_string(params, "repo"),
          {:ok, collection} <- validate_collection(Map.get(params, "collection")),
@@ -158,6 +170,67 @@ defmodule Tempest.Records.LexiconValidator do
       record when is_map(record) -> {:ok, record}
       _value -> {:error, {:missing_field, "record"}}
     end
+  end
+
+  defp validate_writes(writes) when is_list(writes) and length(writes) in 1..200 do
+    writes
+    |> Enum.reduce_while({:ok, []}, fn write, {:ok, acc} ->
+      case validate_write(write) do
+        {:ok, normalized} -> {:cont, {:ok, [normalized | acc]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, writes} -> {:ok, Enum.reverse(writes)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp validate_writes(_writes), do: {:error, :invalid_writes}
+
+  defp validate_write(%{"$type" => "com.atproto.repo.applyWrites#create"} = write), do: validate_create_write(write)
+  defp validate_write(%{"$type" => "com.atproto.repo.applyWrites#update"} = write), do: validate_update_write(write)
+  defp validate_write(%{"$type" => "com.atproto.repo.applyWrites#delete"} = write), do: validate_delete_write(write)
+  defp validate_write(%{"type" => "create"} = write), do: validate_create_write(write)
+  defp validate_write(%{"type" => "update"} = write), do: validate_update_write(write)
+  defp validate_write(%{"type" => "delete"} = write), do: validate_delete_write(write)
+  defp validate_write(_write), do: {:error, :invalid_write}
+
+  defp validate_create_write(write) do
+    with {:ok, collection} <- validate_collection(Map.get(write, "collection")),
+         {:ok, rkey} <- validate_optional_rkey(Map.get(write, "rkey")),
+         {:ok, value} <- fetch_value(write) do
+      {:ok, %{action: :create, collection: collection, rkey: rkey, value: value}}
+    end
+  end
+
+  defp validate_update_write(write) do
+    with {:ok, collection} <- validate_collection(Map.get(write, "collection")),
+         {:ok, rkey} <- validate_required_rkey(Map.get(write, "rkey")),
+         {:ok, value} <- fetch_value(write) do
+      {:ok, %{action: :update, collection: collection, rkey: rkey, value: value}}
+    end
+  end
+
+  defp validate_delete_write(write) do
+    with {:ok, collection} <- validate_collection(Map.get(write, "collection")),
+         {:ok, rkey} <- validate_required_rkey(Map.get(write, "rkey")) do
+      {:ok, %{action: :delete, collection: collection, rkey: rkey}}
+    end
+  end
+
+  defp fetch_value(params) do
+    case Map.get(params, "value") do
+      value when is_map(value) -> {:ok, value}
+      _value -> {:error, {:missing_field, "value"}}
+    end
+  end
+
+  defp validate_no_duplicate_creates(writes) do
+    writes
+    |> Enum.filter(&(&1.action == :create and is_binary(&1.rkey)))
+    |> Enum.map(&{&1.collection, &1.rkey})
+    |> then(fn paths -> if length(paths) == length(Enum.uniq(paths)), do: :ok, else: {:error, :duplicate_write} end)
   end
 
   defp validate_optional_cid(nil, _error_reason), do: {:ok, nil}

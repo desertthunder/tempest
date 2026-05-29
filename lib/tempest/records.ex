@@ -111,6 +111,30 @@ defmodule Tempest.Records do
     end
   end
 
+  def apply_writes(%AuthContext{account: account}, params) do
+    with {:ok, input} <- LexiconValidator.validate_apply_writes_input(params),
+         :ok <- ensure_repo_owner(account, input.repo),
+         {:ok, prepared_writes} <- prepare_apply_writes(account, input.writes, input.validate),
+         new_blob_cids = apply_writes_new_blob_cids(prepared_writes),
+         :ok <- Blobs.ensure_present(account.did, new_blob_cids),
+         {:ok, old_blob_cids} <- apply_writes_old_blob_cids(account.did, prepared_writes),
+         {:ok, signing_key} <- active_signing_key(account),
+         {:ok, stored} <-
+           RepoStorage.apply_writes(account, signing_key, %{
+             swap_commit: input.swap_commit,
+             writes: prepared_writes
+           }),
+         :ok <- promote_blobs(account.did, new_blob_cids),
+         :ok <- delete_unreferenced_blobs(account.did, old_blob_cids),
+         {:ok, _event} <- insert_apply_writes_event(account.did, stored) do
+      {:ok,
+       %{
+         commit: %{cid: stored.commit_cid, rev: stored.rev},
+         results: Enum.map(stored.results, &apply_write_result/1)
+       }}
+    end
+  end
+
   def get_record(params) do
     with {:ok, input} <- LexiconValidator.validate_get_record_input(params),
          {:ok, account} <- resolve_hosted_account(input.repo),
@@ -147,6 +171,82 @@ defmodule Tempest.Records do
          handleIsCorrect: handle_correct?(account, did_doc)
        }}
     end
+  end
+
+  defp prepare_apply_writes(account, writes, validate) do
+    writes
+    |> Enum.reduce_while({:ok, []}, fn write, {:ok, acc} ->
+      case prepare_apply_write(account, write, validate) do
+        {:ok, prepared} -> {:cont, {:ok, [prepared | acc]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, writes} -> {:ok, Enum.reverse(writes)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp prepare_apply_write(_account, %{action: :delete} = write, _validate), do: {:ok, write}
+
+  defp prepare_apply_write(_account, write, validate) do
+    rkey = write.rkey || generated_record_key()
+
+    with {:ok, validation_status} <- LexiconValidator.validate_record(write.collection, rkey, write.value, validate) do
+      {:ok,
+       write
+       |> Map.put(:rkey, rkey)
+       |> Map.put(:record, write.value)
+       |> Map.put(:validation_status, validation_status)}
+    end
+  end
+
+  defp generated_record_key do
+    Tid.new!(Tid.now_unix_microseconds(), Clock.random_clock_id()).value
+  end
+
+  defp apply_writes_new_blob_cids(writes) do
+    writes
+    |> Enum.filter(&(&1.action in [:create, :update]))
+    |> Enum.flat_map(&Blobs.referenced_cids(&1.record))
+    |> Enum.uniq()
+  end
+
+  defp apply_writes_old_blob_cids(did, writes) do
+    writes
+    |> Enum.filter(&(&1.action in [:update, :delete]))
+    |> Enum.reduce_while({:ok, []}, fn write, {:ok, acc} ->
+      case current_record_blob_cids(did, write.collection, write.rkey) do
+        {:ok, cids} -> {:cont, {:ok, acc ++ cids}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, cids} -> {:ok, Enum.uniq(cids)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp apply_write_result(%{action: :create} = result) do
+    %{
+      "$type" => "com.atproto.repo.applyWrites#createResult",
+      uri: result.uri,
+      cid: result.cid,
+      validationStatus: result.validationStatus
+    }
+  end
+
+  defp apply_write_result(%{action: :update} = result) do
+    %{
+      "$type" => "com.atproto.repo.applyWrites#updateResult",
+      uri: result.uri,
+      cid: result.cid,
+      validationStatus: result.validationStatus
+    }
+  end
+
+  defp apply_write_result(%{action: :delete}) do
+    %{"$type" => "com.atproto.repo.applyWrites#deleteResult"}
   end
 
   defp ensure_repo_owner(account, repo) do
@@ -273,6 +373,12 @@ defmodule Tempest.Records do
 
     with {:ok, payload} <- commit_payload(did, stored, [path], [op]) do
       Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, payload)
+    end
+  end
+
+  defp insert_apply_writes_event(did, stored) do
+    with {:ok, payload} <- commit_payload(did, stored, stored.paths, stored.ops) do
+      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "applyWrites", payload)
     end
   end
 

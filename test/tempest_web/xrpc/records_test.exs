@@ -134,6 +134,20 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert response["message"] =~ "displayName"
   end
 
+  test "createRecord rejects oversized schema-constrained records", %{conn: conn} do
+    account = create_account!(conn, "records-oversized.test", "records-oversized@example.com")
+
+    rejected_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", profile_params(account["did"], String.duplicate("A", 641)))
+
+    response = json_response(rejected_conn, 400)
+    assert response["error"] == "InvalidRequest"
+    assert response["message"] =~ "displayName"
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 0
+  end
+
   test "createRecord rejects writes to another repo", %{conn: conn} do
     account = create_account!(conn, "records-dana.test", "records-dana@example.com")
 
@@ -199,6 +213,142 @@ defmodule TempestWeb.Xrpc.RecordsTest do
 
     assert json_response(get_conn, 200)["value"]["displayName"] == "Erin Updated"
     assert sequencer_event_count(account["did"], "#commit", "update") == 1
+  end
+
+  test "applyWrites batches creates updates and deletes with commit metadata", %{conn: conn} do
+    account = create_account!(conn, "records-apply.test", "records-apply@example.com")
+
+    created =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.applyWrites", %{
+        "repo" => account["did"],
+        "validate" => false,
+        "writes" => [
+          %{
+            "$type" => "com.atproto.repo.applyWrites#create",
+            "collection" => "app.tempest.note",
+            "rkey" => "one",
+            "value" => %{"$type" => "app.tempest.note", "text" => "first"}
+          },
+          %{
+            "$type" => "com.atproto.repo.applyWrites#create",
+            "collection" => "app.tempest.note",
+            "rkey" => "two",
+            "value" => %{"$type" => "app.tempest.note", "text" => "second"}
+          }
+        ]
+      })
+      |> json_response(200)
+
+    assert %{"cid" => first_commit} = created["commit"]
+
+    assert Enum.map(created["results"], & &1["uri"]) == [
+             "at://#{account["did"]}/app.tempest.note/one",
+             "at://#{account["did"]}/app.tempest.note/two"
+           ]
+
+    updated =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.applyWrites", %{
+        "repo" => account["did"],
+        "swapCommit" => first_commit,
+        "validate" => false,
+        "writes" => [
+          %{
+            "$type" => "com.atproto.repo.applyWrites#update",
+            "collection" => "app.tempest.note",
+            "rkey" => "one",
+            "value" => %{"$type" => "app.tempest.note", "text" => "updated"}
+          },
+          %{
+            "$type" => "com.atproto.repo.applyWrites#delete",
+            "collection" => "app.tempest.note",
+            "rkey" => "two"
+          }
+        ]
+      })
+      |> json_response(200)
+
+    assert updated["commit"]["cid"] != first_commit
+
+    assert Enum.map(updated["results"], & &1["$type"]) == [
+             "com.atproto.repo.applyWrites#updateResult",
+             "com.atproto.repo.applyWrites#deleteResult"
+           ]
+
+    list_conn =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.listRecords", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.note"
+      })
+
+    assert [%{"value" => %{"text" => "updated"}}] = json_response(list_conn, 200)["records"]
+  end
+
+  test "applyWrites rejects duplicate create writes for the same collection and rkey before mutating", %{conn: conn} do
+    account = create_account!(conn, "records-apply-dupe.test", "records-apply-dupe@example.com")
+
+    rejected_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.applyWrites", %{
+        "repo" => account["did"],
+        "validate" => false,
+        "writes" => [
+          %{
+            "$type" => "com.atproto.repo.applyWrites#create",
+            "collection" => "app.tempest.note",
+            "rkey" => "same",
+            "value" => %{"$type" => "app.tempest.note", "text" => "a"}
+          },
+          %{
+            "$type" => "com.atproto.repo.applyWrites#create",
+            "collection" => "app.tempest.note",
+            "rkey" => "same",
+            "value" => %{"$type" => "app.tempest.note", "text" => "b"}
+          }
+        ]
+      })
+
+    response = json_response(rejected_conn, 400)
+    assert response["error"] == "InvalidRequest"
+    assert response["message"] =~ "same collection and rkey"
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 0
+  end
+
+  test "applyWrites rolls back the whole batch when a later operation fails", %{conn: conn} do
+    account = create_account!(conn, "records-apply-atomic.test", "records-apply-atomic@example.com")
+
+    rejected_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.applyWrites", %{
+        "repo" => account["did"],
+        "validate" => false,
+        "writes" => [
+          %{
+            "$type" => "com.atproto.repo.applyWrites#create",
+            "collection" => "app.tempest.note",
+            "rkey" => "created-before-failure",
+            "value" => %{"$type" => "app.tempest.note", "text" => "must rollback"}
+          },
+          %{
+            "$type" => "com.atproto.repo.applyWrites#update",
+            "collection" => "app.tempest.note",
+            "rkey" => "missing-record",
+            "value" => %{"$type" => "app.tempest.note", "text" => "cannot update"}
+          }
+        ]
+      })
+
+    assert %{"error" => "RecordNotFound"} = json_response(rejected_conn, 400)
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 0
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM commits") == 1
+    assert sequencer_event_count(account["did"], "#commit", "applyWrites") == 0
   end
 
   test "deleteRecord removes current record from getRecord and listRecords", %{conn: conn} do

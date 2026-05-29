@@ -22,15 +22,15 @@ defmodule Tempest.Lexicon.RegistryTest do
     assert document["id"] == "app.bsky.actor.profile"
 
     assert {:ok, [manifest]} = Registry.manifest()
-    assert manifest["source_commit"] == "smoke-fixture"
-    assert manifest["document_count"] == 4
+    assert manifest["source_repo"] == "https://github.com/bluesky-social/atproto"
+    assert manifest["source_commit"] =~ ~r/^[0-9a-f]{40}$/
+    assert manifest["document_count"] == length(manifest["document_ids"])
 
-    assert manifest["document_ids"] == [
-             "app.bsky.actor.profile",
-             "com.atproto.label.defs",
-             "com.atproto.lexicon.schema",
-             "com.atproto.repo.strongRef"
-           ]
+    assert "app.bsky.actor.profile" in manifest["document_ids"]
+    assert "com.atproto.label.defs" in manifest["document_ids"]
+    assert "com.atproto.lexicon.schema" in manifest["document_ids"]
+    assert "com.atproto.repo.applyWrites" in manifest["document_ids"]
+    assert "com.atproto.repo.strongRef" in manifest["document_ids"]
   end
 
   test "loads Lexicon documents from configured fixture paths" do
