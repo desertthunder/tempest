@@ -1,244 +1,140 @@
-<main
-  id="tempest-home"
-  class="tempest-home relative min-h-screen overflow-hidden px-4 py-8 font-['Monaspace_Neon',ui-monospace,monospace] leading-[1.55] text-[#d2dee5] sm:px-6 sm:py-12"
->
-  <div class="mx-auto max-w-[760px]">
-    <section class="tempest-enter flex items-start justify-between gap-5">
-      <div>
-        <pre
-          class="max-w-full overflow-hidden whitespace-pre text-[11px] leading-[1.2] text-[#6e8796] max-[420px]:text-[9px]"
-          aria-hidden="true"
-        >
- _____ _____ __  __ ____  _____ ____ _____
-|_   _| ____|  \/  |  _ \| ____/ ___|_   _|
-  | | |  _| | |\/| | |_) |  _| \___ \ | |
-  | | | |___| |  | |  __/| |___ ___) || |
-  |_| |_____|_|  |_|_|   |_____|____/ |_|</pre>
+<main id="tempest-home" class="tempest-home">
+  <div class="tempest-home__desktop" aria-label="Tempest desktop">
+    <section class="win-window win-window--hero" aria-labelledby="tempest-title">
+      <header class="win-window__titlebar">
+        <span class="win-window__title">Tempest PDS</span>
+        <span class="win-window__controls" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </header>
 
-        <div class="mt-3 flex items-center gap-3">
-          <span class="tempest-status-dot tempest-status-dot--green" aria-hidden="true"></span>
-          <h1 class="text-lg font-semibold leading-tight sm:text-2xl">
-            Personal Data Server
-          </h1>
+      <div class="win-window__body tempest-home__hero">
+        <div>
+          <p class="tempest-home__brand" aria-hidden="true">Tempest PDS</p>
+          <h1 id="tempest-title" class="tempest-home__title">Personal Data Server</h1>
+          <p class="tempest-home__subtitle">AT Protocol node running at <strong>{@host}</strong></p>
         </div>
 
-        <p class="mt-1 text-xs text-[#6e8796]">
-          AT Protocol / {@host}
-        </p>
-      </div>
-
-      <div class="mt-11 shrink-0 text-right text-[10px] leading-6 text-[#6e8796] max-sm:hidden">
-        <p class="tempest-cursor">{@rendered_at}</p>
-        <p>v{@app_version}</p>
+        <aside class="tempest-home__stamp" aria-label="Build information">
+          <span>{@rendered_at}</span>
+          <span>v{@app_version}</span>
+        </aside>
       </div>
     </section>
 
-    <div class="tempest-rule tempest-enter tempest-delay-1"></div>
+    <div class="tempest-home__grid">
+      <section class="win-window" aria-labelledby="status-title">
+        <header class="win-window__titlebar">
+          <span id="status-title" class="win-window__title">System Status</span>
+        </header>
+        <div class="win-window__body">
+          <div class="status-grid">
+            <article id="xrpc-status" class="status-card">
+              <h2 class="status-card__label">XRPC</h2>
+              <p class="status-card__state"><span class="status-light status-light--ok"></span>Online</p>
+              <p>Server, identity, account, and repo routes are registered.</p>
+            </article>
 
-    <section class="tempest-enter tempest-delay-2">
-      <div class="mb-3.5 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">
-        System Status
-      </div>
+            <article id="repo-records-status" class="status-card">
+              <h2 class="status-card__label">Repo Records</h2>
+              <p class="status-card__state"><span class="status-light status-light--ready"></span>Available</p>
+              <p>Create, put, delete, get, list, and describe records.</p>
+            </article>
 
-      <div class="grid gap-2 sm:grid-cols-2">
-        <article
-          id="xrpc-status"
-          class="min-h-[118px] rounded-lg border border-[#2f414e] bg-[#1b232b] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)] transition hover:-translate-y-px hover:border-[#4c6472] hover:bg-[#202a33]"
-        >
-          <p class="mb-1 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">XRPC</p>
-          <p class="flex items-center gap-2 text-[0.95rem] text-[#d2dee5]">
-            <span class="tempest-status-dot tempest-status-dot--green" aria-hidden="true"></span> Online
-          </p>
-          <p class="mt-1 text-xs text-[#6e8796]">
-            Server, identity, account, and repo routes are registered.
-          </p>
-        </article>
+            <article id="sync-status" class="status-card">
+              <h2 class="status-card__label">Sync</h2>
+              <p class="status-card__state"><span class="status-light"></span>Coming soon</p>
+              <p>CAR sync and firehose endpoints are registered placeholders.</p>
+            </article>
 
-        <article
-          id="repo-records-status"
-          class="min-h-[118px] rounded-lg border border-[#2f414e] bg-[#1b232b] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)] transition hover:-translate-y-px hover:border-[#4c6472] hover:bg-[#202a33]"
-        >
-          <p class="mb-1 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">
-            Repo Records
-          </p>
-          <p class="flex items-center gap-2 text-[0.95rem] text-[#d2dee5]">
-            <span class="tempest-status-dot tempest-status-dot--cyan" aria-hidden="true"></span> Available
-          </p>
-          <p class="mt-1 text-xs text-[#6e8796]">Create, put, delete, get, list, and describe records.</p>
-        </article>
+            <article id="blob-status" class="status-card">
+              <h2 class="status-card__label">Blob Store</h2>
+              <p class="status-card__state"><span class="status-light"></span>Coming soon</p>
+              <p>Upload and serving flows are not implemented yet.</p>
+            </article>
+          </div>
+        </div>
+      </section>
 
-        <article
-          id="sync-status"
-          class="min-h-[118px] rounded-lg border border-[#2f414e] bg-[#1b232b] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)] transition hover:-translate-y-px hover:border-[#4c6472] hover:bg-[#202a33]"
-        >
-          <p class="mb-1 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">Sync</p>
-          <p class="flex items-center gap-2 text-[0.95rem] text-[#d2dee5]">
-            <span class="tempest-status-dot tempest-status-dot--dim" aria-hidden="true"></span> Coming soon
-          </p>
-          <p class="mt-1 text-xs text-[#6e8796]">
-            CAR sync and firehose endpoints are registered placeholders.
-          </p>
-        </article>
+      <section class="win-window" aria-labelledby="facts-title">
+        <header class="win-window__titlebar">
+          <span id="facts-title" class="win-window__title">SERVER.INI</span>
+        </header>
+        <div id="server-facts" class="win-window__body">
+          <dl class="facts-list">
+            <dt>type</dt>
+            <dd>AT Protocol PDS</dd>
+            <dt>host</dt>
+            <dd>{@host}</dd>
+            <dt>routes</dt>
+            <dd>/xrpc/* / .well-known/*</dd>
+            <dt>identity</dt>
+            <dd>did:plc and did:web resolution</dd>
+            <dt>accounts</dt>
+            <dd>create/session/refresh/delete APIs</dd>
+            <dt>rendered</dt>
+            <dd>{@rendered_at}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
 
-        <article
-          id="blob-status"
-          class="min-h-[118px] rounded-lg border border-[#2f414e] bg-[#1b232b] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)] transition hover:-translate-y-px hover:border-[#4c6472] hover:bg-[#202a33]"
-        >
-          <p class="mb-1 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">
-            Blob Store
-          </p>
-          <p class="flex items-center gap-2 text-[0.95rem] text-[#d2dee5]">
-            <span class="tempest-status-dot tempest-status-dot--dim" aria-hidden="true"></span> Coming soon
-          </p>
-          <p class="mt-1 text-xs text-[#6e8796]">Upload and serving flows are not implemented yet.</p>
-        </article>
-      </div>
-    </section>
-
-    <div class="tempest-rule tempest-enter tempest-delay-3"></div>
-
-    <section class="tempest-enter tempest-delay-3">
-      <div class="mb-3.5 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">
-        About This Server
-      </div>
-
-      <div
-        id="server-facts"
-        class="rounded-lg border border-[#2f414e] bg-[#161c22]/80 p-4 shadow-[0_18px_48px_rgba(0,0,0,0.22)]"
-      >
-        <dl class="grid grid-cols-[9rem_1fr] gap-x-5 gap-y-3 text-sm max-sm:grid-cols-1 max-sm:gap-y-1 [&_dd]:text-[#d2dee5] [&_dt]:text-[0.82rem] [&_dt]:text-[#6e8796]">
-          <dt>type</dt>
-          <dd>AT Protocol PDS</dd>
-          <dt>host</dt>
-          <dd>{@host}</dd>
-          <dt>routes</dt>
-          <dd>/xrpc/* / .well-known/*</dd>
-          <dt>identity</dt>
-          <dd>did:plc and did:web resolution</dd>
-          <dt>accounts</dt>
-          <dd>create/session/refresh/delete APIs</dd>
-          <dt>rendered</dt>
-          <dd>{@rendered_at}</dd>
-        </dl>
-      </div>
-    </section>
-
-    <section class="tempest-enter tempest-delay-4 mt-8">
-      <div class="mb-3.5 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">
-        API Endpoints
-      </div>
-
-      <div
-        id="api-endpoints"
-        class="overflow-hidden rounded-lg border border-[#2f414e] bg-[#1b232b] shadow-[0_18px_48px_rgba(0,0,0,0.22)]"
-      >
-        <a
-          href={~p"/xrpc/com.atproto.server.describeServer"}
-          class="flex min-h-12 items-center gap-3 border-b border-[#2f414e] px-3.5 py-2.5 text-[0.82rem] text-[#d2dee5] no-underline transition hover:bg-[#202a33] hover:text-[#29c7d8] last:border-b-0 max-[420px]:items-start max-[420px]:gap-2 max-[420px]:text-xs"
-        >
-          <span class="min-w-[4.4ch] rounded border border-[#29c7d8]/25 bg-[#263540] text-center text-[0.62rem] leading-5 text-[#29c7d8]">
-            GET
-          </span>
-          <span><span class="text-[#6e8796]">com.atproto.server.</span>describeServer</span>
-          <span class="badge badge-success badge-sm ml-auto">Ready</span>
+    <section class="win-window" aria-labelledby="api-title">
+      <header class="win-window__titlebar">
+        <span id="api-title" class="win-window__title">API Endpoints</span>
+      </header>
+      <div id="api-endpoints" class="win-window__body endpoint-list">
+        <a href={~p"/xrpc/com.atproto.server.describeServer"} class="endpoint-list__row">
+          <span class="endpoint-list__method">GET</span>
+          <span><span class="endpoint-list__namespace">com.atproto.server.</span>describeServer</span>
+          <span class="badge badge-success badge-sm endpoint-list__badge">Ready</span>
         </a>
 
-        <a
-          href={~p"/xrpc/com.atproto.identity.resolveHandle?handle=#{@host}"}
-          class="flex min-h-12 items-center gap-3 border-b border-[#2f414e] px-3.5 py-2.5 text-[0.82rem] text-[#d2dee5] no-underline transition hover:bg-[#202a33] hover:text-[#29c7d8] last:border-b-0 max-[420px]:items-start max-[420px]:gap-2 max-[420px]:text-xs"
-        >
-          <span class="min-w-[4.4ch] rounded border border-[#29c7d8]/25 bg-[#263540] text-center text-[0.62rem] leading-5 text-[#29c7d8]">
-            GET
-          </span>
-          <span><span class="text-[#6e8796]">com.atproto.identity.</span>resolveHandle</span>
-          <span class="badge badge-success badge-sm ml-auto">Ready</span>
+        <a href={~p"/xrpc/com.atproto.identity.resolveHandle?handle=#{@host}"} class="endpoint-list__row">
+          <span class="endpoint-list__method">GET</span>
+          <span><span class="endpoint-list__namespace">com.atproto.identity.</span>resolveHandle</span>
+          <span class="badge badge-success badge-sm endpoint-list__badge">Ready</span>
         </a>
 
-        <div
-          class="flex min-h-12 items-center gap-3 border-b border-[#2f414e] px-3.5 py-2.5 text-[0.82rem] text-[#d2dee5] last:border-b-0 max-[420px]:items-start max-[420px]:gap-2 max-[420px]:text-xs"
-          aria-disabled="true"
-        >
-          <span class="min-w-[4.4ch] rounded border border-[#29c7d8]/25 bg-[#263540] text-center text-[0.62rem] leading-5 text-[#29c7d8]">
-            POST
-          </span>
-          <span><span class="text-[#6e8796]">com.atproto.repo.</span>createRecord</span>
-          <span class="badge badge-info badge-sm ml-auto">Auth</span>
+        <div class="endpoint-list__row" aria-disabled="true">
+          <span class="endpoint-list__method">POST</span>
+          <span><span class="endpoint-list__namespace">com.atproto.repo.</span>createRecord</span>
+          <span class="badge badge-info badge-sm endpoint-list__badge">Auth</span>
         </div>
 
-        <div
-          class="flex min-h-12 items-center gap-3 border-b border-[#2f414e] px-3.5 py-2.5 text-[0.82rem] text-[#d2dee5] last:border-b-0 max-[420px]:items-start max-[420px]:gap-2 max-[420px]:text-xs"
-          aria-disabled="true"
-        >
-          <span class="min-w-[4.4ch] rounded border border-[#29c7d8]/25 bg-[#263540] text-center text-[0.62rem] leading-5 text-[#29c7d8]">
-            GET
-          </span>
-          <span><span class="text-[#6e8796]">com.atproto.repo.</span>listRecords</span>
-          <span class="badge badge-success badge-sm ml-auto">Ready</span>
+        <div class="endpoint-list__row" aria-disabled="true">
+          <span class="endpoint-list__method">GET</span>
+          <span><span class="endpoint-list__namespace">com.atproto.repo.</span>listRecords</span>
+          <span class="badge badge-success badge-sm endpoint-list__badge">Ready</span>
         </div>
 
-        <div
-          class="flex min-h-12 items-center gap-3 border-b border-[#2f414e] px-3.5 py-2.5 text-[0.82rem] text-[#8fa7b4] last:border-b-0 max-[420px]:items-start max-[420px]:gap-2 max-[420px]:text-xs"
-          aria-disabled="true"
-        >
-          <span class="min-w-[4.4ch] rounded border border-[#29c7d8]/25 bg-[#263540] text-center text-[0.62rem] leading-5 text-[#29c7d8]">
-            GET
-          </span>
-          <span><span class="text-[#6e8796]">com.atproto.sync.</span>getRepo</span>
-          <span class="badge badge-ghost badge-sm ml-auto">Coming soon</span>
+        <div class="endpoint-list__row endpoint-list__row--muted" aria-disabled="true">
+          <span class="endpoint-list__method">GET</span>
+          <span><span class="endpoint-list__namespace">com.atproto.sync.</span>getRepo</span>
+          <span class="badge badge-ghost badge-sm endpoint-list__badge">Soon</span>
         </div>
 
-        <div
-          class="flex min-h-12 items-center gap-3 border-b border-[#2f414e] px-3.5 py-2.5 text-[0.82rem] text-[#8fa7b4] last:border-b-0 max-[420px]:items-start max-[420px]:gap-2 max-[420px]:text-xs"
-          aria-disabled="true"
-        >
-          <span class="min-w-[4.4ch] rounded border border-[#29c7d8]/25 bg-[#263540] text-center text-[0.62rem] leading-5 text-[#29c7d8]">
-            POST
-          </span>
-          <span><span class="text-[#6e8796]">com.atproto.repo.</span>uploadBlob</span>
-          <span class="badge badge-ghost badge-sm ml-auto">Coming soon</span>
+        <div class="endpoint-list__row endpoint-list__row--muted" aria-disabled="true">
+          <span class="endpoint-list__method">POST</span>
+          <span><span class="endpoint-list__namespace">com.atproto.repo.</span>uploadBlob</span>
+          <span class="badge badge-ghost badge-sm endpoint-list__badge">Soon</span>
         </div>
       </div>
     </section>
 
-    <div class="tempest-rule tempest-enter tempest-delay-5"></div>
-
-    <section class="tempest-enter tempest-delay-5">
-      <div class="mb-3.5 text-[10px] font-semibold tracking-normal text-[#6e8796] uppercase">
-        Resources
-      </div>
-
-      <nav id="resource-links" class="flex flex-wrap gap-x-5 gap-y-2" aria-label="AT Protocol resources">
-        <a
-          href="https://atproto.com"
-          class="text-[0.82rem] text-[#8fa7b4] no-underline transition before:mr-1 before:text-[#d7a84f] before:content-['>'] hover:text-[#29c7d8]"
-        >
-          AT Protocol
-        </a>
-        <a
-          href="https://atproto.com/guides/self-hosting"
-          class="text-[0.82rem] text-[#8fa7b4] no-underline transition before:mr-1 before:text-[#d7a84f] before:content-['>'] hover:text-[#29c7d8]"
-        >
-          Self-hosting Guide
-        </a>
-        <a
-          href="https://github.com/bluesky-social/atproto"
-          class="text-[0.82rem] text-[#8fa7b4] no-underline transition before:mr-1 before:text-[#d7a84f] before:content-['>'] hover:text-[#29c7d8]"
-        >
-          ATProto Source
-        </a>
-        <a
-          href="https://bsky.app"
-          class="text-[0.82rem] text-[#8fa7b4] no-underline transition before:mr-1 before:text-[#d7a84f] before:content-['>'] hover:text-[#29c7d8]"
-        >
-          Bluesky
-        </a>
+    <section class="resource-strip" aria-labelledby="resources-title">
+      <h2 id="resources-title" class="resource-strip__title">Internet Shortcuts</h2>
+      <nav id="resource-links" class="resource-strip__links" aria-label="AT Protocol resources">
+        <a href="https://atproto.com">AT Protocol</a>
+        <a href="https://atproto.com/guides/self-hosting">Self-hosting Guide</a>
+        <a href="https://github.com/bluesky-social/atproto">ATProto Source</a>
+        <a href="https://bsky.app">Bluesky</a>
       </nav>
     </section>
 
-    <footer class="tempest-enter tempest-delay-6 mt-10 border-t border-[#2f414e] pt-4">
-      <p class="text-xs text-[#6e8796] before:text-[#3ddc84] before:content-['$_']">
-        tempest pds / {@host}
-      </p>
+    <footer class="taskbar">
+      <span class="taskbar__start">Start</span>
+      <span class="taskbar__app">tempest pds / {@host}</span>
     </footer>
   </div>
 </main>
