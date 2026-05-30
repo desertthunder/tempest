@@ -18,6 +18,10 @@ defmodule TempestWeb.Router do
     plug :accepts, ["text"]
   end
 
+  pipeline :oauth_metadata do
+    plug :accepts, ["json"]
+  end
+
   pipeline :xrpc do
     plug :accepts, ["json"]
     plug :put_xrpc_cors_headers
@@ -28,6 +32,14 @@ defmodule TempestWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+  end
+
+  scope "/", TempestWeb do
+    pipe_through :oauth_metadata
+
+    get "/.well-known/oauth-protected-resource", OAuthMetadataController, :protected_resource
+    get "/.well-known/oauth-authorization-server", OAuthMetadataController, :authorization_server
+    get "/oauth/jwks", OAuthMetadataController, :jwks
   end
 
   scope "/", TempestWeb do
