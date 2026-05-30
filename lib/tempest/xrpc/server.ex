@@ -68,6 +68,25 @@ defmodule Tempest.Xrpc.Server do
     Accounts.get_session(conn.assigns.auth_context)
   end
 
+  def list_app_passwords(conn, _params, _method) do
+    Accounts.list_app_passwords(conn.assigns.auth_context)
+  end
+
+  def create_app_password(conn, params, _method) do
+    case Accounts.create_app_password(conn.assigns.auth_context, params) do
+      {:ok, response} -> {:ok, response}
+      {:error, :invalid_scope} -> {:error, 400, "InvalidRequest", "invalid app password scope"}
+      {:error, :validation, changeset} -> {:error, 400, "InvalidRequest", format_changeset_errors(changeset)}
+    end
+  end
+
+  def revoke_app_password(conn, params, _method) do
+    case Accounts.revoke_app_password(conn.assigns.auth_context, params) do
+      :ok -> {:ok, %{}}
+      {:error, :not_found} -> {:error, 404, "NotFound", "app password not found"}
+    end
+  end
+
   defp available_user_domain("." <> _domain = hostname), do: hostname
   defp available_user_domain(hostname), do: "." <> hostname
 

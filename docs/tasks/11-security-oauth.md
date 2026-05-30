@@ -9,16 +9,16 @@ Goal: make Tempest usable by modern atproto clients without weakening account se
 
 ## Tasks
 
-- [ ] T11-01: Add OAuth metadata endpoints for protected resource and authorization server.
-- [ ] T11-02: Add OAuth JWKS management and key rotation plan.
-- [ ] T11-03: Add hardened external metadata fetcher with SSRF protections, body limits, and timeouts.
-- [ ] T11-04: Implement DPoP nonce generation and verification.
-- [ ] T11-05: Implement PAR storage and validation.
-- [ ] T11-06: Implement authorization UI with conservative unknown-client display.
-- [ ] T11-07: Implement token endpoint with PKCE, DPoP binding, refresh, and revocation.
-- [ ] T11-08: Add centralized permission engine used by OAuth, app passwords, and delegated access.
-- [ ] T11-09: Implement current transition scopes and `blob:*/*`/`rpc:*` enforcement.
-- [ ] T11-10: Implement app password create/list/revoke endpoints with scoped permissions.
+- [x] T11-01: Add OAuth metadata endpoints for protected resource and authorization server.
+- [x] T11-02: Add OAuth JWKS management and key rotation plan.
+- [x] T11-03: Add hardened external metadata fetcher with SSRF protections, body limits, and timeouts.
+- [x] T11-04: Implement DPoP nonce generation and verification.
+- [x] T11-05: Implement PAR storage and validation.
+- [x] T11-06: Implement authorization UI with conservative unknown-client display.
+- [x] T11-07: Implement token endpoint with PKCE, DPoP binding, refresh, and revocation.
+- [x] T11-08: Add centralized permission engine used by OAuth, app passwords, and delegated access.
+- [x] T11-09: Implement current transition scopes and `blob:*/*`/`rpc:*` enforcement.
+- [x] T11-10: Implement app password create/list/revoke endpoints with scoped permissions.
 - [ ] T11-11: Add email confirmation/update and password reset security log events.
 - [ ] T11-12: Add MFA schema for TOTP, passkeys/WebAuthn, backup codes, and trusted devices.
 - [ ] T11-13: Implement TOTP and backup-code flows.

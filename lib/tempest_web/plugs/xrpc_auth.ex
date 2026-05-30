@@ -5,7 +5,8 @@ defmodule TempestWeb.Plugs.XrpcAuth do
 
   import Plug.Conn
 
-  alias Tempest.Accounts
+  alias Tempest.{Accounts, Permissions}
+  alias Tempest.OAuth.Dpop
   alias Tempest.Xrpc.Registry
   alias TempestWeb.XrpcErrorJSON
 
@@ -26,7 +27,9 @@ defmodule TempestWeb.Plugs.XrpcAuth do
 
   defp authenticate(conn, method_nsid) do
     with {:ok, token} <- bearer_token(conn),
-         {:ok, auth_context} <- verify_token(method_nsid, token) do
+         {:ok, auth_context} <- verify_token(method_nsid, token),
+         :ok <- verify_dpop_bound_request(conn, auth_context),
+         :ok <- authorize(auth_context, method_nsid, conn.params) do
       assign(conn, :auth_context, auth_context)
     else
       {:error, :missing_token} ->
@@ -37,6 +40,17 @@ defmodule TempestWeb.Plugs.XrpcAuth do
 
       {:error, :inactive_account} ->
         reject(conn, 403, "AccountTakedown", "Account is not active")
+
+      {:error, :permission_denied} ->
+        reject(conn, 403, "AuthScopeInsufficient", "Bearer token scope is insufficient")
+
+      {:error, :missing_dpop} ->
+        reject(conn, 401, "InvalidToken", "DPoP proof is required")
+
+      {:error, :invalid_dpop_nonce} ->
+        conn
+        |> put_resp_header("dpop-nonce", Dpop.issue_nonce())
+        |> reject(401, "UseDpopNonce", "DPoP nonce is required or has expired")
 
       {:error, _reason} ->
         reject(conn, 401, "InvalidToken", "Bearer token is invalid")
@@ -62,6 +76,25 @@ defmodule TempestWeb.Plugs.XrpcAuth do
   end
 
   defp verify_token(_method_nsid, token), do: Accounts.authenticate_access(token)
+
+  defp verify_dpop_bound_request(conn, %{token_type: :oauth_access, access_claims: %{"cnf" => %{"jkt" => jkt}}}) do
+    dpop = conn |> get_req_header("dpop") |> List.first()
+    Dpop.verify_proof(dpop, conn.method, current_request_url(conn), bound_jkt: jkt) |> ok_only()
+  end
+
+  defp verify_dpop_bound_request(_conn, _auth_context), do: :ok
+
+  defp authorize(auth_context, method_nsid, params) do
+    if Permissions.allowed?(auth_context, method_nsid, params), do: :ok, else: {:error, :permission_denied}
+  end
+
+  defp ok_only({:ok, _value}), do: :ok
+  defp ok_only({:error, reason}), do: {:error, reason}
+
+  defp current_request_url(conn) do
+    query = if conn.query_string == "", do: "", else: "?" <> conn.query_string
+    Phoenix.Controller.endpoint_module(conn).url() <> conn.request_path <> query
+  end
 
   defp reject(conn, status, error, message) do
     conn

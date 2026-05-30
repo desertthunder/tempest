@@ -10,7 +10,7 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 33,
+    "document_count" => 36,
     "document_ids" => [
       "app.bsky.actor.getPreferences",
       "app.bsky.actor.profile",
@@ -35,6 +35,9 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.server.describeServer",
       "com.atproto.server.getSession",
       "com.atproto.server.refreshSession",
+      "com.atproto.server.listAppPasswords",
+      "com.atproto.server.createAppPassword",
+      "com.atproto.server.revokeAppPassword",
       "com.atproto.sync.getBlob",
       "com.atproto.sync.getBlocks",
       "com.atproto.sync.getLatestCommit",
@@ -1778,6 +1781,77 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.sync.subscribeRepos",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "List app passwords for the authenticated account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"passwords" => %{"items" => %{"type" => "unknown"}, "type" => "array"}},
+              "required" => ["passwords"],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.server.listAppPasswords",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Create an app password. The secret is returned once.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"name" => %{"type" => "string"}, "scope" => %{"type" => "string"}},
+              "required" => ["name"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "createdAt" => %{"format" => "datetime", "type" => "string"},
+                "id" => %{"type" => "integer"},
+                "lastUsedAt" => %{"format" => "datetime", "type" => "string"},
+                "name" => %{"type" => "string"},
+                "password" => %{"type" => "string"},
+                "revoked" => %{"type" => "boolean"},
+                "scope" => %{"type" => "string"}
+              },
+              "required" => ["id", "name", "scope", "createdAt", "revoked", "password"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.createAppPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Revoke an app password by id.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"id" => %{"type" => "integer"}},
+              "required" => ["id"],
+              "type" => "object"
+            }
+          },
+          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.revokeAppPassword",
       "lexicon" => 1
     }
   ]

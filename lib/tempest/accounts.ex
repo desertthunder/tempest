@@ -5,7 +5,7 @@ defmodule Tempest.Accounts do
 
   import Ecto.Query
 
-  alias Tempest.Accounts.{Account, AuthContext, Password, Session, Tokens}
+  alias Tempest.Accounts.{Account, AppPasswords, AuthContext, Password, Session, Tokens}
   alias Tempest.Identity
   alias Tempest.RepoCore.{CarVerifier, Drisl}
   alias Tempest.{Repo, RepoStorage, Sequencer}
@@ -168,16 +168,15 @@ defmodule Tempest.Accounts do
   def put_preferences(%AuthContext{token_type: :access}, _params), do: {:error, :invalid_preferences}
 
   def authenticate_access(token) do
-    with {:ok, %{"typ" => "access", "account_id" => account_id, "session_id" => session_id} = claims} <-
-           Tokens.verify_access_token(token),
-         %Account{} = account <- Repo.get(Account, account_id),
-         %Session{} = session <- Repo.get(Session, session_id),
-         :ok <- ensure_access_session(account, session) do
-      {:ok, %AuthContext{account: account, session: session, token_type: :access, access_claims: claims}}
-    else
-      {:error, reason} -> {:error, reason}
-      nil -> {:error, :invalid_token}
-      _other -> {:error, :invalid_token}
+    case authenticate_session_access(token) do
+      {:ok, auth_context} ->
+        {:ok, auth_context}
+
+      {:error, :expired_token} ->
+        {:error, :expired_token}
+
+      {:error, _reason} ->
+        authenticate_non_session_access(token)
     end
   end
 
@@ -212,6 +211,33 @@ defmodule Tempest.Accounts do
 
   def authenticate_refresh(_token), do: {:error, :invalid_token}
 
+  def list_app_passwords(%AuthContext{token_type: :access, account: account}) do
+    {:ok, %{"passwords" => AppPasswords.list(account)}}
+  end
+
+  def create_app_password(%AuthContext{token_type: :access, account: account}, params) do
+    case AppPasswords.create(account, params) do
+      {:ok, app_password} -> {:ok, app_password}
+      {:error, %Ecto.Changeset{} = changeset} -> {:error, :validation, changeset}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def revoke_app_password(%AuthContext{token_type: :access, account: account}, params) do
+    case Map.get(params, "id") do
+      id when is_integer(id) ->
+        AppPasswords.revoke(account, id)
+
+      id when is_binary(id) ->
+        with {int_id, ""} <- Integer.parse(id),
+             do: AppPasswords.revoke(account, int_id),
+             else: (_ -> {:error, :not_found})
+
+      _other ->
+        {:error, :not_found}
+    end
+  end
+
   def account_response(%Account{} = account) do
     account
     |> Map.take(@public_fields)
@@ -224,6 +250,51 @@ defmodule Tempest.Accounts do
         opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
       end)
     end)
+  end
+
+  defp authenticate_session_access(token) do
+    with {:ok, %{"typ" => "access", "account_id" => account_id, "session_id" => session_id} = claims} <-
+           Tokens.verify_access_token(token),
+         %Account{} = account <- Repo.get(Account, account_id),
+         %Session{} = session <- Repo.get(Session, session_id),
+         :ok <- ensure_access_session(account, session) do
+      {:ok, %AuthContext{account: account, session: session, token_type: :access, access_claims: claims}}
+    else
+      {:error, reason} -> {:error, reason}
+      nil -> {:error, :invalid_token}
+      _other -> {:error, :invalid_token}
+    end
+  end
+
+  defp authenticate_non_session_access(token) do
+    case Tempest.OAuth.verify_access_token(token) do
+      {:ok, account, oauth_token, claims} ->
+        {:ok,
+         %AuthContext{
+           account: account,
+           token_type: :oauth_access,
+           credential: oauth_token,
+           access_claims: claims
+         }}
+
+      {:error, :expired_token} ->
+        {:error, :expired_token}
+
+      {:error, _reason} ->
+        case AppPasswords.authenticate(token) do
+          {:ok, account, app_password} ->
+            {:ok,
+             %AuthContext{
+               account: account,
+               token_type: :app_password,
+               credential: app_password,
+               access_claims: %{"scope" => app_password.scope}
+             }}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+    end
   end
 
   defp create_session_for_account(%Account{} = account) do

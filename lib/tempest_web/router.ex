@@ -22,6 +22,15 @@ defmodule TempestWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :oauth do
+    plug :accepts, ["html", "json", "urlencoded"]
+    plug :fetch_session
+  end
+
+  pipeline :oauth_api do
+    plug :accepts, ["json", "urlencoded"]
+  end
+
   pipeline :xrpc do
     plug :accepts, ["json"]
     plug :put_xrpc_cors_headers
@@ -46,6 +55,21 @@ defmodule TempestWeb.Router do
     pipe_through :well_known
 
     get "/.well-known/atproto-did", WellKnownController, :atproto_did
+  end
+
+  scope "/oauth", TempestWeb do
+    pipe_through :oauth
+
+    get "/authorize", OAuthController, :authorize
+    post "/authorize", OAuthController, :approve
+  end
+
+  scope "/oauth", TempestWeb do
+    pipe_through :oauth_api
+
+    post "/par", OAuthController, :par
+    post "/token", OAuthController, :token
+    post "/revoke", OAuthController, :revoke
   end
 
   scope "/xrpc", TempestWeb do

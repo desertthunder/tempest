@@ -3,6 +3,6 @@ defmodule Tempest.Accounts.AuthContext do
   Authentication context assigned to XRPC connections.
   """
 
-  @enforce_keys [:account, :token_type, :session]
-  defstruct [:account, :token_type, :session, :access_claims]
+  @enforce_keys [:account, :token_type]
+  defstruct [:account, :token_type, :session, :access_claims, :credential]
 end
