@@ -1,0 +1,27 @@
+{
+  "lexicon": 1,
+  "id": "com.atproto.server.checkAccountStatus",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Get status information about the authenticated account.",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["did", "active"],
+          "properties": {
+            "did": { "type": "string", "format": "did" },
+            "active": { "type": "boolean" },
+            "status": { "type": "string" },
+            "repoCount": { "type": "integer" },
+            "recordCount": { "type": "integer" },
+            "blobCount": { "type": "integer" },
+            "missingBlobCount": { "type": "integer" },
+            "migrationReady": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

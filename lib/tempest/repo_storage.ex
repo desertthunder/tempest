@@ -340,6 +340,23 @@ defmodule Tempest.RepoStorage do
   end
 
   @doc """
+  Returns repository, record, and referenced-blob counts for status checks.
+  """
+  def status_counts(did, %Config{} = config \\ Config.load!()) when is_binary(did) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, records} <- scalar_count(conn, "SELECT COUNT(*) FROM records", []),
+             {:ok, commits} <- scalar_count(conn, "SELECT COUNT(*) FROM commits", []),
+             {:ok, referenced} <- referenced_blob_count(conn) do
+          {:ok,
+           %{repo_count: if(commits > 0, do: 1, else: 0), record_count: records, referenced_blob_count: referenced}}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
   Lists blob CIDs referenced by current records.
   """
   def list_referenced_blobs(did, opts \\ []) when is_binary(did) do
@@ -565,6 +582,26 @@ defmodule Tempest.RepoStorage do
     end)
     |> case do
       {:ok, blocks} -> {:ok, Enum.reverse(blocks)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp referenced_blob_count(conn) do
+    with {:ok, rows} <- fetch_all(conn, "SELECT record_json FROM records", []) do
+      count =
+        rows
+        |> Enum.flat_map(fn [record_json] -> referenced_blob_cids(record_json) end)
+        |> Enum.uniq()
+        |> length()
+
+      {:ok, count}
+    end
+  end
+
+  defp scalar_count(conn, sql, params) do
+    case fetch_all(conn, sql, params) do
+      {:ok, [[count]]} when is_integer(count) -> {:ok, count}
+      {:ok, _rows} -> {:error, :unexpected_count_result}
       {:error, reason} -> {:error, reason}
     end
   end

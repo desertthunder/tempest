@@ -65,6 +65,33 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["ExpiredToken", "InvalidToken"]
     },
     %Method{
+      nsid: "com.atproto.server.checkAccountStatus",
+      kind: :query,
+      auth: :bearer,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :check_account_status},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
+      nsid: "com.atproto.server.getServiceAuth",
+      kind: :query,
+      auth: :bearer,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :get_service_auth},
+      errors: ["ExpiredToken", "InvalidToken", "InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.server.reserveSigningKey",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :reserve_signing_key},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
       nsid: "com.atproto.server.listAppPasswords",
       kind: :query,
       auth: :bearer,

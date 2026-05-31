@@ -7,6 +7,7 @@ defmodule Tempest.Accounts do
 
   alias Tempest.Accounts.{Account, AppPasswords, AuthContext, Password, Session, Tokens}
   alias Tempest.Identity
+  alias Tempest.Identity.KeyStore
   alias Tempest.RepoCore.{CarVerifier, Drisl}
   alias Tempest.{Repo, RepoStorage, Security, Sequencer}
 
@@ -17,44 +18,49 @@ defmodule Tempest.Accounts do
          :ok <- Password.validate(password) do
       password_hash = Password.hash(password)
       did = Map.get(attrs, "did") || Identity.generate_hosted_did()
+      migrated? = Map.has_key?(attrs, "did")
 
-      account_attrs =
-        attrs
-        |> Map.take(["handle", "email"])
-        |> Map.put("did", did)
-        |> Map.put("password_hash", password_hash)
-        |> Map.put("active", true)
-        |> Map.put("status", "active")
+      with :ok <- validate_create_account_did(attrs, did) do
+        account_attrs =
+          attrs
+          |> Map.take(["handle", "email"])
+          |> Map.put("did", did)
+          |> Map.put("password_hash", password_hash)
+          |> Map.put("active", not migrated?)
+          |> Map.put("status", if(migrated?, do: "deactivated", else: "active"))
 
-      refresh_token = Tokens.new_refresh_token()
+        refresh_token = Tokens.new_refresh_token()
 
-      Repo.transaction(fn ->
-        with {:ok, account} <- Repo.insert(Account.create_changeset(%Account{}, account_attrs)),
-             {:ok, signing_key} <- Identity.create_initial_signing_key(account),
-             {:ok, _repo_path} <- RepoStorage.initialize_empty_repo(account, signing_key),
-             {:ok, session} <-
-               Repo.insert(new_session_changeset(account, refresh_token, Ecto.UUID.generate())) do
-          {account, session}
-        else
-          {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback({:validation, changeset})
-          {:error, reason} -> Repo.rollback({:repo_initialization, reason})
-        end
-      end)
-      |> case do
-        {:ok, {account, session}} ->
-          with :ok <- maybe_publish_plc_operation(account),
-               {:ok, _events} <- emit_account_creation_events(account) do
-            {:ok, session_response(account, session, refresh_token)}
+        Repo.transaction(fn ->
+          with {:ok, account} <- Repo.insert(Account.create_changeset(%Account{}, account_attrs)),
+               {:ok, signing_key} <- Identity.create_initial_signing_key(account),
+               {:ok, _repo_path} <- RepoStorage.initialize_empty_repo(account, signing_key),
+               {:ok, session} <-
+                 Repo.insert(new_session_changeset(account, refresh_token, Ecto.UUID.generate())) do
+            {account, session}
+          else
+            {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback({:validation, changeset})
+            {:error, reason} -> Repo.rollback({:repo_initialization, reason})
           end
+        end)
+        |> case do
+          {:ok, {account, session}} ->
+            with :ok <- maybe_publish_plc_operation(account),
+                 {:ok, _events} <- emit_account_creation_events(account) do
+              {:ok, session_response(account, session, refresh_token)}
+            end
 
-        {:error, {:validation, changeset}} ->
-          {:error, :validation, changeset}
+          {:error, {:validation, changeset}} ->
+            {:error, :validation, changeset}
 
-        {:error, {:repo_initialization, reason}} ->
-          {:error, :repo_initialization, reason}
+          {:error, {:repo_initialization, reason}} ->
+            {:error, :repo_initialization, reason}
 
-        {:error, reason} ->
-          {:error, :identity_publish, reason}
+          {:error, reason} ->
+            {:error, :identity_publish, reason}
+        end
+      else
+        {:error, reason} -> {:error, :validation, reason}
       end
     else
       {:error, reason} -> {:error, :validation, reason}
@@ -149,6 +155,42 @@ defmodule Tempest.Accounts do
 
   def get_session(%AuthContext{token_type: :access, account: account}) do
     {:ok, account_response(account)}
+  end
+
+  def check_account_status(%AuthContext{account: account}) do
+    with {:ok, repo_counts} <- RepoStorage.status_counts(account.did),
+         {:ok, blob_counts} <- Tempest.Blobs.status_counts(account.did, repo_counts.referenced_blob_count) do
+      {:ok,
+       %{
+         "did" => account.did,
+         "active" => account.active and account.status == "active",
+         "status" => account.status,
+         "repoCount" => repo_counts.repo_count,
+         "recordCount" => repo_counts.record_count,
+         "blobCount" => blob_counts.blob_count,
+         "missingBlobCount" => blob_counts.missing_blob_count,
+         "migrationReady" => blob_counts.missing_blob_count == 0
+       }}
+    end
+  end
+
+  def get_service_auth(%AuthContext{account: account}, params) when is_map(params) do
+    audience = Map.get(params, "aud") || Map.get(params, "audience")
+    method_nsid = Map.get(params, "lxm") || Map.get(params, "method")
+
+    with :ok <- validate_service_auth_request(audience, method_nsid) do
+      {:ok, %{"token" => Tokens.sign_service_auth(account, audience, method_nsid)}}
+    end
+  end
+
+  def reserve_signing_key(%AuthContext{account: account}) do
+    case KeyStore.active_key_for_account(account) do
+      nil ->
+        with {:ok, key} <- Identity.create_initial_signing_key(account), do: {:ok, signing_key_response(account, key)}
+
+      key ->
+        {:ok, signing_key_response(account, key)}
+    end
   end
 
   def get_preferences(%AuthContext{token_type: :access, account: account}) do
@@ -266,12 +308,22 @@ defmodule Tempest.Accounts do
     end)
   end
 
-  defp authenticate_session_access(token) do
+  def authenticate_access_allow_inactive(token) do
+    case authenticate_session_access(token, allow_inactive?: true) do
+      {:ok, auth_context} -> {:ok, auth_context}
+      {:error, :expired_token} -> {:error, :expired_token}
+      {:error, _reason} -> authenticate_non_session_access(token)
+    end
+  end
+
+  defp authenticate_session_access(token), do: authenticate_session_access(token, allow_inactive?: false)
+
+  defp authenticate_session_access(token, opts) do
     with {:ok, %{"typ" => "access", "account_id" => account_id, "session_id" => session_id} = claims} <-
            Tokens.verify_access_token(token),
          %Account{} = account <- Repo.get(Account, account_id),
          %Session{} = session <- Repo.get(Session, session_id),
-         :ok <- ensure_access_session(account, session) do
+         :ok <- ensure_access_session(account, session, opts) do
       {:ok, %AuthContext{account: account, session: session, token_type: :access, access_claims: claims}}
     else
       {:error, reason} -> {:error, reason}
@@ -333,6 +385,20 @@ defmodule Tempest.Accounts do
       Identity.publish_plc_operation(account)
     else
       :ok
+    end
+  end
+
+  defp emit_account_creation_events(%Account{active: false} = account) do
+    with {:ok, identity_event} <-
+           Sequencer.insert_identity_event(account.did, "create", %{
+             "handle" => account.handle
+           }),
+         {:ok, account_event} <-
+           Sequencer.insert_account_event(account.did, "create", %{
+             "active" => false,
+             "status" => account.status
+           }) do
+      {:ok, [identity_event, account_event]}
     end
   end
 
@@ -403,7 +469,7 @@ defmodule Tempest.Accounts do
     |> Repo.update_all(set: attrs)
   end
 
-  defp ensure_access_session(%Account{} = account, %Session{} = session) do
+  defp ensure_access_session(%Account{} = account, %Session{} = session, opts) do
     now = now()
 
     cond do
@@ -416,12 +482,68 @@ defmodule Tempest.Accounts do
       DateTime.compare(session.expires_at, now) != :gt ->
         {:error, :expired_token}
 
-      not account.active or account.status != "active" ->
+      (not account.active or account.status != "active") and not Keyword.get(opts, :allow_inactive?, false) ->
         {:error, :inactive_account}
 
       true ->
         :ok
     end
+  end
+
+  defp validate_create_account_did(attrs, did) do
+    if Map.has_key?(attrs, "did") do
+      token = Map.get(attrs, "serviceAuth") || Map.get(attrs, "serviceAuthToken")
+
+      with token when is_binary(token) and token != "" <- token,
+           {:ok, %{"iss" => ^did, "sub" => ^did, "aud" => aud, "lxm" => "com.atproto.server.createAccount"}} <-
+             Tokens.verify_service_auth(token),
+           :ok <- validate_service_audience(aud) do
+        :ok
+      else
+        nil -> {:error, "serviceAuth is required when did is supplied"}
+        "" -> {:error, "serviceAuth is required when did is supplied"}
+        {:error, _reason} -> {:error, "serviceAuth is invalid"}
+        _other -> {:error, "serviceAuth is invalid"}
+      end
+    else
+      :ok
+    end
+  end
+
+  defp validate_service_auth_request(audience, method_nsid) do
+    with :ok <- validate_service_audience(audience),
+         :ok <- validate_service_method(method_nsid) do
+      :ok
+    end
+  end
+
+  defp validate_service_audience(audience) when is_binary(audience) and audience != "" do
+    cond do
+      audience == Tempest.Config.load!().public_url -> :ok
+      match?(:ok, Identity.validate_did_syntax(audience)) -> :ok
+      true -> {:error, :invalid_audience}
+    end
+  end
+
+  defp validate_service_audience(_audience), do: {:error, :invalid_audience}
+
+  defp validate_service_method(method_nsid) when is_binary(method_nsid) do
+    allowed? =
+      method_nsid == "com.atproto.repo.importRepo" or
+        method_nsid == "com.atproto.server.createAccount" or
+        match?({:ok, _method}, Tempest.Xrpc.Registry.fetch(method_nsid))
+
+    if allowed?, do: :ok, else: {:error, :invalid_method}
+  end
+
+  defp validate_service_method(_method_nsid), do: {:error, :invalid_method}
+
+  defp signing_key_response(account, key) do
+    %{
+      "did" => account.did,
+      "signingKey" => key.public_key_multibase,
+      "verificationMethod" => account.did <> key.kid
+    }
   end
 
   defp fetch_string(attrs, key) do

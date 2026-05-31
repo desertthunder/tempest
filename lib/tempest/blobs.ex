@@ -152,6 +152,22 @@ defmodule Tempest.Blobs do
   end
 
   @doc """
+  Returns public and missing referenced blob counts for an account.
+  """
+  def status_counts(did, referenced_count \\ 0) when is_binary(did) and is_integer(referenced_count) do
+    case Repo.query("SELECT COUNT(*) FROM blob_metadata WHERE did = ?1 AND state = 'public'", [did]) do
+      {:ok, %{rows: [[public_count]]}} when is_integer(public_count) ->
+        {:ok, %{blob_count: public_count, missing_blob_count: max(referenced_count - public_count, 0)}}
+
+      {:ok, _result} ->
+        {:error, :unexpected_count_result}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
   Fetches public metadata only. Temp uploads are deliberately invisible.
   """
   @spec get_public_metadata(String.t(), String.t()) :: {:ok, map()} | {:error, :blob_not_found | term()}

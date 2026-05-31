@@ -75,6 +75,9 @@ defmodule TempestWeb.Plugs.XrpcAuth do
     Accounts.authenticate_refresh(token)
   end
 
+  defp verify_token("com.atproto.server.checkAccountStatus", token),
+    do: Accounts.authenticate_access_allow_inactive(token)
+
   defp verify_token(_method_nsid, token), do: Accounts.authenticate_access(token)
 
   defp verify_dpop_bound_request(conn, %{token_type: :oauth_access, access_claims: %{"cnf" => %{"jkt" => jkt}}}) do

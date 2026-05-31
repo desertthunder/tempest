@@ -10,7 +10,7 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 36,
+    "document_count" => 39,
     "document_ids" => [
       "app.bsky.actor.getPreferences",
       "app.bsky.actor.profile",
@@ -29,12 +29,15 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.repo.putRecord",
       "com.atproto.repo.strongRef",
       "com.atproto.repo.uploadBlob",
+      "com.atproto.server.checkAccountStatus",
       "com.atproto.server.createAccount",
       "com.atproto.server.createSession",
       "com.atproto.server.deleteSession",
       "com.atproto.server.describeServer",
+      "com.atproto.server.getServiceAuth",
       "com.atproto.server.getSession",
       "com.atproto.server.refreshSession",
+      "com.atproto.server.reserveSigningKey",
       "com.atproto.server.listAppPasswords",
       "com.atproto.server.createAppPassword",
       "com.atproto.server.revokeAppPassword",
@@ -1833,6 +1836,89 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.server.createAppPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get status information about the authenticated account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "active" => %{"type" => "boolean"},
+                "blobCount" => %{"type" => "integer"},
+                "did" => %{"format" => "did", "type" => "string"},
+                "migrationReady" => %{"type" => "boolean"},
+                "missingBlobCount" => %{"type" => "integer"},
+                "recordCount" => %{"type" => "integer"},
+                "repoCount" => %{"type" => "integer"},
+                "status" => %{"type" => "string"}
+              },
+              "required" => ["did", "active"],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.server.checkAccountStatus",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a short-lived service-auth token for a constrained audience and Lexicon method.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"token" => %{"type" => "string"}},
+              "required" => ["token"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "aud" => %{"description" => "Token audience.", "type" => "string"},
+              "lxm" => %{
+                "description" => "Lexicon method this token may be used with.",
+                "format" => "nsid",
+                "type" => "string"
+              }
+            },
+            "required" => ["aud", "lxm"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.server.getServiceAuth",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Reserve or return stable signing-key material for the authenticated account.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "signingKey" => %{"type" => "string"},
+                "verificationMethod" => %{"type" => "string"}
+              },
+              "required" => ["did", "signingKey", "verificationMethod"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.reserveSigningKey",
       "lexicon" => 1
     },
     %{

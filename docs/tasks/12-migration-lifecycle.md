@@ -10,11 +10,11 @@ Goal: support safe account migration, recovery, and lifecycle state propagation.
 
 ## Tasks
 
-- [ ] T12-01: Implement `checkAccountStatus` with repo, record, blob, and missing-blob counts.
-- [ ] T12-02: Implement `getServiceAuth` with audience and Lexicon method constraints.
-- [ ] T12-03: Implement `reserveSigningKey`.
-- [ ] T12-04: Extend `createAccount` to accept existing DID plus service-auth proof.
-- [ ] T12-05: Ensure migrated accounts start as `deactivated`.
+- [x] T12-01: Implement `checkAccountStatus` with repo, record, blob, and missing-blob counts.
+- [x] T12-02: Implement `getServiceAuth` with audience and Lexicon method constraints.
+- [x] T12-03: Implement `reserveSigningKey`.
+- [x] T12-04: Extend `createAccount` to accept existing DID plus service-auth proof.
+- [x] T12-05: Ensure migrated accounts start as `deactivated`.
 - [ ] T12-06: Harden `importRepo` with CAR, DID, commit signature, and atomicity checks.
 - [ ] T12-07: Ensure post-import revisions remain monotonic.
 - [ ] T12-08: Implement `listMissingBlobs` from indexed imported records.

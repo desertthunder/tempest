@@ -8,6 +8,8 @@ defmodule Tempest.Accounts.Tokens do
 
   @access_salt "tempest access token v1"
   @access_max_age_seconds 15 * 60
+  @service_auth_salt "tempest service auth token v1"
+  @service_auth_max_age_seconds 10 * 60
   @refresh_lifetime_seconds 60 * 60 * 24 * 30
   @refresh_prefix "tempest-refresh-v1."
 
@@ -25,6 +27,23 @@ defmodule Tempest.Accounts.Tokens do
   end
 
   def verify_access_token(_token), do: {:error, :invalid}
+
+  def sign_service_auth(%Account{} = account, audience, method_nsid)
+      when is_binary(audience) and is_binary(method_nsid) do
+    Phoenix.Token.sign(Endpoint, @service_auth_salt, %{
+      "typ" => "service-auth",
+      "iss" => account.did,
+      "sub" => account.did,
+      "aud" => audience,
+      "lxm" => method_nsid
+    })
+  end
+
+  def verify_service_auth(token) when is_binary(token) do
+    Phoenix.Token.verify(Endpoint, @service_auth_salt, token, max_age: @service_auth_max_age_seconds)
+  end
+
+  def verify_service_auth(_token), do: {:error, :invalid}
 
   def new_refresh_token do
     @refresh_prefix <> random_url_token(48)

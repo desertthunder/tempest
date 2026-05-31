@@ -74,6 +74,22 @@ defmodule Tempest.Xrpc.Server do
     Accounts.get_session(conn.assigns.auth_context)
   end
 
+  def check_account_status(conn, _params, _method) do
+    Accounts.check_account_status(conn.assigns.auth_context)
+  end
+
+  def get_service_auth(conn, params, _method) do
+    case Accounts.get_service_auth(conn.assigns.auth_context, params) do
+      {:ok, response} -> {:ok, response}
+      {:error, :invalid_audience} -> {:error, 400, "InvalidRequest", "audience is invalid"}
+      {:error, :invalid_method} -> {:error, 400, "InvalidRequest", "lxm is invalid"}
+    end
+  end
+
+  def reserve_signing_key(conn, _params, _method) do
+    Accounts.reserve_signing_key(conn.assigns.auth_context)
+  end
+
   def list_app_passwords(conn, _params, _method) do
     Accounts.list_app_passwords(conn.assigns.auth_context)
   end

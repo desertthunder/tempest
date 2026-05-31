@@ -1,0 +1,23 @@
+{
+  "lexicon": 1,
+  "id": "com.atproto.server.reserveSigningKey",
+  "defs": {
+    "main": {
+      "type": "procedure",
+      "description": "Reserve or return stable signing-key material for the authenticated account.",
+      "input": { "encoding": "application/json", "schema": { "type": "object", "properties": {} } },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["did", "signingKey", "verificationMethod"],
+          "properties": {
+            "did": { "type": "string", "format": "did" },
+            "signingKey": { "type": "string" },
+            "verificationMethod": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

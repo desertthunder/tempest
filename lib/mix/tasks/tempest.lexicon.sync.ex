@@ -64,12 +64,15 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     com/atproto/repo/putRecord.json
     com/atproto/repo/strongRef.json
     com/atproto/repo/uploadBlob.json
+    com/atproto/server/checkAccountStatus.json
     com/atproto/server/createAccount.json
     com/atproto/server/createSession.json
     com/atproto/server/deleteSession.json
     com/atproto/server/describeServer.json
+    com/atproto/server/getServiceAuth.json
     com/atproto/server/getSession.json
     com/atproto/server/refreshSession.json
+    com/atproto/server/reserveSigningKey.json
     com/atproto/sync/getBlob.json
     com/atproto/sync/getBlocks.json
     com/atproto/sync/getLatestCommit.json

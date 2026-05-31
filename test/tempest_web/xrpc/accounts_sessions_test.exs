@@ -1,7 +1,7 @@
 defmodule TempestWeb.Xrpc.AccountsSessionsTest do
   use TempestWeb.ConnCase, async: false
 
-  alias Tempest.Accounts.{Session, Tokens}
+  alias Tempest.Accounts.{Account, Session, Tokens}
   alias Tempest.Identity.SigningKey
   alias Tempest.Repo
 
@@ -99,6 +99,129 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     response = json_response(refresh_conn, 401)
 
     assert response["error"] == "InvalidToken"
+  end
+
+  test "checkAccountStatus reports repo and blob counts", %{conn: conn} do
+    account = conn |> create_account("status.test", "status@example.com") |> json_response(200)
+
+    status_conn =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.server.checkAccountStatus")
+
+    assert %{
+             "did" => did,
+             "active" => true,
+             "status" => "active",
+             "repoCount" => 1,
+             "recordCount" => 0,
+             "blobCount" => 0,
+             "missingBlobCount" => 0,
+             "migrationReady" => true
+           } = json_response(status_conn, 200)
+
+    assert did == account["did"]
+  end
+
+  test "getServiceAuth validates audience and method and returns a verifiable proof", %{conn: conn} do
+    account = conn |> create_account("service.test", "service@example.com") |> json_response(200)
+
+    auth_conn =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.server.getServiceAuth", %{
+        "aud" => "did:web:tempest.test",
+        "lxm" => "com.atproto.repo.importRepo"
+      })
+
+    assert %{"token" => token} = json_response(auth_conn, 200)
+    assert {:ok, claims} = Tokens.verify_service_auth(token)
+    assert claims["iss"] == account["did"]
+    assert claims["aud"] == "did:web:tempest.test"
+    assert claims["lxm"] == "com.atproto.repo.importRepo"
+
+    invalid_conn =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.server.getServiceAuth", %{
+        "aud" => "not a did",
+        "lxm" => "com.atproto.repo.importRepo"
+      })
+
+    assert %{"error" => "InvalidRequest"} = json_response(invalid_conn, 400)
+  end
+
+  test "reserveSigningKey returns stable account signing key", %{conn: conn} do
+    account = conn |> create_account("key.test", "key@example.com") |> json_response(200)
+
+    first =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.reserveSigningKey", %{})
+      |> json_response(200)
+
+    second =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.reserveSigningKey", %{})
+      |> json_response(200)
+
+    assert first["did"] == account["did"]
+    assert first["verificationMethod"] == account["did"] <> "#atproto"
+    assert first["signingKey"] == second["signingKey"]
+  end
+
+  test "createAccount with an existing DID requires service auth and starts deactivated", %{conn: conn} do
+    did = "did:plc:" <> (:crypto.strong_rand_bytes(16) |> Base.encode32(case: :lower, padding: false))
+
+    missing_proof_conn =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.createAccount", %{
+        "did" => did,
+        "handle" => "migrating.test",
+        "email" => "migrating@example.com",
+        "password" => @password
+      })
+
+    assert %{"error" => "InvalidRequest"} = json_response(missing_proof_conn, 400)
+
+    service_auth =
+      Tokens.sign_service_auth(
+        %Account{did: did},
+        Tempest.Config.load!().public_url,
+        "com.atproto.server.createAccount"
+      )
+
+    migrated =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.createAccount", %{
+        "did" => did,
+        "handle" => "migrating.test",
+        "email" => "migrating@example.com",
+        "password" => @password,
+        "serviceAuth" => service_auth
+      })
+      |> json_response(200)
+
+    assert migrated["did"] == did
+    assert migrated["active"] == false
+    assert migrated["status"] == "deactivated"
+
+    status =
+      conn
+      |> put_req_header("authorization", "Bearer #{migrated["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.server.checkAccountStatus")
+      |> json_response(200)
+
+    assert status["active"] == false
+    assert status["status"] == "deactivated"
+
+    login_conn = create_session(conn, "migrating.test", @password)
+    assert %{"error" => "AccountTakedown"} = json_response(login_conn, 403)
   end
 
   test "protected endpoint rejects missing bearer token", %{conn: conn} do
