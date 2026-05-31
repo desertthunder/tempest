@@ -373,9 +373,14 @@ defmodule Tempest.RepoStorage do
       result =
         with {:ok, records} <- scalar_count(conn, "SELECT COUNT(*) FROM records", []),
              {:ok, commits} <- scalar_count(conn, "SELECT COUNT(*) FROM commits", []),
-             {:ok, referenced} <- referenced_blob_count(conn) do
+             {:ok, referenced_cids} <- referenced_blob_cids_from_db(conn) do
           {:ok,
-           %{repo_count: if(commits > 0, do: 1, else: 0), record_count: records, referenced_blob_count: referenced}}
+           %{
+             repo_count: if(commits > 0, do: 1, else: 0),
+             record_count: records,
+             referenced_blob_count: length(referenced_cids),
+             referenced_blob_cids: referenced_cids
+           }}
         end
 
       close_and_return(result, conn)
@@ -702,15 +707,15 @@ defmodule Tempest.RepoStorage do
     end
   end
 
-  defp referenced_blob_count(conn) do
+  defp referenced_blob_cids_from_db(conn) do
     with {:ok, rows} <- fetch_all(conn, "SELECT record_json FROM records", []) do
-      count =
+      cids =
         rows
         |> Enum.flat_map(fn [record_json] -> referenced_blob_cids(record_json) end)
         |> Enum.uniq()
-        |> length()
+        |> Enum.sort()
 
-      {:ok, count}
+      {:ok, cids}
     end
   end
 

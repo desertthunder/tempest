@@ -90,6 +90,34 @@ defmodule Tempest.Xrpc.Server do
     Accounts.reserve_signing_key(conn.assigns.auth_context)
   end
 
+  def activate_account(conn, _params, _method) do
+    case Accounts.activate_account(conn.assigns.auth_context) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> lifecycle_error(reason)
+    end
+  end
+
+  def deactivate_account(conn, _params, _method) do
+    case Accounts.deactivate_account(conn.assigns.auth_context) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> lifecycle_error(reason)
+    end
+  end
+
+  def request_account_delete(conn, _params, _method) do
+    case Accounts.request_account_delete(conn.assigns.auth_context) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> lifecycle_error(reason)
+    end
+  end
+
+  def delete_account(conn, _params, _method) do
+    case Accounts.delete_account(conn.assigns.auth_context) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> lifecycle_error(reason)
+    end
+  end
+
   def list_app_passwords(conn, _params, _method) do
     Accounts.list_app_passwords(conn.assigns.auth_context)
   end
@@ -113,6 +141,17 @@ defmodule Tempest.Xrpc.Server do
 
   defp available_user_domain("." <> _domain = hostname), do: hostname
   defp available_user_domain(hostname), do: "." <> hostname
+
+  defp lifecycle_error(:pds_service_mismatch),
+    do: {:error, 400, "InvalidRequest", "DID document does not point at this PDS"}
+
+  defp lifecycle_error(:did_document_mismatch),
+    do: {:error, 400, "InvalidRequest", "DID document does not match account"}
+
+  defp lifecycle_error(:handle_claim_missing), do: {:error, 400, "InvalidRequest", "DID document does not claim handle"}
+
+  defp lifecycle_error(reason),
+    do: {:error, 500, "InternalServerError", "account lifecycle update failed: #{inspect(reason)}"}
 
   defp format_changeset_errors(changeset) do
     changeset

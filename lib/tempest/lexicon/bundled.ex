@@ -10,7 +10,7 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 40,
+    "document_count" => 45,
     "document_ids" => [
       "app.bsky.actor.getPreferences",
       "app.bsky.actor.profile",
@@ -26,18 +26,23 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.repo.describeRepo",
       "com.atproto.repo.getRecord",
       "com.atproto.repo.importRepo",
+      "com.atproto.repo.listMissingBlobs",
       "com.atproto.repo.listRecords",
       "com.atproto.repo.putRecord",
       "com.atproto.repo.strongRef",
       "com.atproto.repo.uploadBlob",
+      "com.atproto.server.activateAccount",
       "com.atproto.server.checkAccountStatus",
       "com.atproto.server.createAccount",
       "com.atproto.server.createSession",
+      "com.atproto.server.deactivateAccount",
+      "com.atproto.server.deleteAccount",
       "com.atproto.server.deleteSession",
       "com.atproto.server.describeServer",
       "com.atproto.server.getServiceAuth",
       "com.atproto.server.getSession",
       "com.atproto.server.refreshSession",
+      "com.atproto.server.requestAccountDelete",
       "com.atproto.server.reserveSigningKey",
       "com.atproto.server.listAppPasswords",
       "com.atproto.server.createAppPassword",
@@ -1861,6 +1866,90 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.repo.importRepo",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "List blob CIDs referenced by the authenticated repo but missing from local storage.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "blobs" => %{
+                  "items" => %{
+                    "properties" => %{"cid" => %{"format" => "cid", "type" => "string"}},
+                    "required" => ["cid"],
+                    "type" => "object"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"}
+              },
+              "required" => ["blobs"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{"maximum" => 1000, "minimum" => 1, "type" => "integer"}
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.repo.listMissingBlobs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Activate the authenticated account after migration checks pass.",
+          "errors" => [%{"name" => "InvalidRequest"}],
+          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.activateAccount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Deactivate the authenticated account and suppress public repo/blob serving.",
+          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.deactivateAccount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Mark the authenticated account deleted and revoke active sessions.",
+          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.deleteAccount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Record an authenticated account deletion request.",
+          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestAccountDelete",
       "lexicon" => 1
     },
     %{

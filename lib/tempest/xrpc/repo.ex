@@ -88,6 +88,13 @@ defmodule Tempest.Xrpc.Repo do
     end
   end
 
+  def list_missing_blobs(conn, params, _method) do
+    case Records.list_missing_blobs(conn.assigns.auth_context, params) do
+      {:ok, response} -> {:ok, response}
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
   def describe_repo(_conn, params, _method) do
     case Records.describe_repo(params) do
       {:ok, response} -> {:ok, response}
@@ -134,7 +141,8 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:invalid_collection), do: {:error, 400, "InvalidRequest", "collection is invalid"}
   defp repo_error(:invalid_rkey), do: {:error, 400, "InvalidRequest", "rkey is invalid"}
   defp repo_error(:invalid_cid), do: {:error, 400, "InvalidRequest", "cid is invalid"}
-  defp repo_error(:invalid_limit), do: {:error, 400, "InvalidRequest", "limit must be between 1 and 100"}
+  defp repo_error(:invalid_limit), do: {:error, 400, "InvalidRequest", "limit is invalid"}
+  defp repo_error(:invalid_cursor), do: {:error, 400, "InvalidRequest", "cursor is invalid"}
   defp repo_error(:invalid_reverse), do: {:error, 400, "InvalidRequest", "reverse must be a boolean"}
   defp repo_error(:invalid_swap_record), do: {:error, 400, "InvalidRequest", "swapRecord is invalid"}
   defp repo_error(:invalid_swap_commit), do: {:error, 400, "InvalidRequest", "swapCommit is invalid"}

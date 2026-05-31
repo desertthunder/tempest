@@ -159,7 +159,7 @@ defmodule Tempest.Accounts do
 
   def check_account_status(%AuthContext{account: account}) do
     with {:ok, repo_counts} <- RepoStorage.status_counts(account.did),
-         {:ok, blob_counts} <- Tempest.Blobs.status_counts(account.did, repo_counts.referenced_blob_count) do
+         {:ok, blob_counts} <- Tempest.Blobs.status_counts(account.did, repo_counts.referenced_blob_cids) do
       {:ok,
        %{
          "did" => account.did,
@@ -190,6 +190,42 @@ defmodule Tempest.Accounts do
 
       key ->
         {:ok, signing_key_response(account, key)}
+    end
+  end
+
+  def activate_account(%AuthContext{account: account}) do
+    with :ok <- Identity.Correctness.check_local(account),
+         {:ok, account} <- update_account_status(account, true, "active"),
+         {:ok, _event} <-
+           Sequencer.insert_account_event(account.did, "activate", %{"active" => true, "status" => "active"}) do
+      {:ok, %{}}
+    end
+  end
+
+  def deactivate_account(%AuthContext{account: account}) do
+    with {:ok, account} <- update_account_status(account, false, "deactivated"),
+         {:ok, _event} <-
+           Sequencer.insert_account_event(account.did, "deactivate", %{"active" => false, "status" => "deactivated"}) do
+      {:ok, %{}}
+    end
+  end
+
+  def request_account_delete(%AuthContext{account: account}) do
+    with {:ok, _event} <-
+           Sequencer.insert_account_event(account.did, "delete.request", %{
+             "active" => account.active,
+             "status" => account.status
+           }) do
+      {:ok, %{}}
+    end
+  end
+
+  def delete_account(%AuthContext{account: account}) do
+    with {:ok, account} <- update_account_status(account, false, "deleted"),
+         :ok <- revoke_account_sessions(account.id),
+         {:ok, _event} <-
+           Sequencer.insert_account_event(account.did, "delete", %{"active" => false, "status" => "deleted"}) do
+      {:ok, %{}}
     end
   end
 
@@ -488,6 +524,22 @@ defmodule Tempest.Accounts do
       true ->
         :ok
     end
+  end
+
+  defp update_account_status(%Account{} = account, active, status) do
+    account
+    |> Ecto.Changeset.change(%{active: active, status: status})
+    |> Repo.update()
+  end
+
+  defp revoke_account_sessions(account_id) do
+    now = now()
+
+    Session
+    |> where([s], s.account_id == ^account_id and is_nil(s.revoked_at))
+    |> Repo.update_all(set: [revoked_at: now])
+
+    :ok
   end
 
   defp validate_create_account_did(attrs, did) do

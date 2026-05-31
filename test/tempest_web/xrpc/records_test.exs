@@ -568,6 +568,39 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert Tid.parse!(after_import["commit"]["rev"]).integer > Tid.parse!(imported["rev"]).integer
   end
 
+  test "listMissingBlobs reports referenced blobs absent from local metadata", %{conn: conn} do
+    account = create_account!(conn, "records-list-missing-blobs.test", "records-list-missing-blobs@example.com")
+    blob = upload_blob!(conn, account, "blob bytes", "text/plain")["blob"]
+    cid = blob["ref"]["$link"]
+
+    _created =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", blob_record_params(account["did"], "missing", blob))
+      |> json_response(200)
+
+    :ok = Tempest.Blobs.delete_metadata(account["did"], [cid])
+
+    response =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.repo.listMissingBlobs")
+      |> json_response(200)
+
+    assert response == %{"blobs" => [%{"cid" => cid}]}
+
+    status =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.server.checkAccountStatus")
+      |> json_response(200)
+
+    assert status["missingBlobCount"] == 1
+    assert status["migrationReady"] == false
+  end
+
   test "record writes reject missing blob references", %{conn: conn} do
     account = create_account!(conn, "records-missing-blob.test", "records-missing-blob@example.com")
     cid = Tempest.Blobs.cid_for("not uploaded")

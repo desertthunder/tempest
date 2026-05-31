@@ -76,7 +76,15 @@ defmodule TempestWeb.Plugs.XrpcAuth do
   end
 
   defp verify_token(method_nsid, token)
-       when method_nsid in ["com.atproto.server.checkAccountStatus", "com.atproto.repo.importRepo"],
+       when method_nsid in [
+              "com.atproto.server.checkAccountStatus",
+              "com.atproto.repo.importRepo",
+              "com.atproto.repo.listMissingBlobs",
+              "com.atproto.server.activateAccount",
+              "com.atproto.server.deactivateAccount",
+              "com.atproto.server.requestAccountDelete",
+              "com.atproto.server.deleteAccount"
+            ],
        do: Accounts.authenticate_access_allow_inactive(token)
 
   defp verify_token(_method_nsid, token), do: Accounts.authenticate_access(token)

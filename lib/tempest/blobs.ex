@@ -152,18 +152,41 @@ defmodule Tempest.Blobs do
   end
 
   @doc """
-  Returns public and missing referenced blob counts for an account.
+  Returns referenced blob CIDs that are absent from local metadata.
   """
-  def status_counts(did, referenced_count \\ 0) when is_binary(did) and is_integer(referenced_count) do
-    case Repo.query("SELECT COUNT(*) FROM blob_metadata WHERE did = ?1 AND state = 'public'", [did]) do
-      {:ok, %{rows: [[public_count]]}} when is_integer(public_count) ->
-        {:ok, %{blob_count: public_count, missing_blob_count: max(referenced_count - public_count, 0)}}
+  def missing_cids(_did, []), do: {:ok, []}
 
-      {:ok, _result} ->
-        {:error, :unexpected_count_result}
+  def missing_cids(did, cids) when is_binary(did) and is_list(cids) do
+    cids = cids |> Enum.uniq() |> Enum.sort()
+
+    placeholders = Enum.map_join(cids, ",", fn _cid -> "?" end)
+    sql = "SELECT cid FROM blob_metadata WHERE did = ?1 AND cid IN (#{placeholders})"
+
+    case Repo.query(sql, [did | cids]) do
+      {:ok, %{rows: rows}} ->
+        present = rows |> Enum.map(fn [cid] -> cid end) |> MapSet.new()
+        {:ok, Enum.reject(cids, &MapSet.member?(present, &1))}
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  @doc """
+  Returns public and missing referenced blob counts for an account.
+  """
+  def status_counts(did, referenced_cids \\ []) when is_binary(did) and is_list(referenced_cids) do
+    with {:ok, public_count} <- public_count(did),
+         {:ok, missing} <- missing_cids(did, referenced_cids) do
+      {:ok, %{blob_count: public_count, missing_blob_count: length(missing)}}
+    end
+  end
+
+  defp public_count(did) do
+    case Repo.query("SELECT COUNT(*) FROM blob_metadata WHERE did = ?1 AND state = 'public'", [did]) do
+      {:ok, %{rows: [[count]]}} when is_integer(count) -> {:ok, count}
+      {:ok, _result} -> {:error, :unexpected_count_result}
+      {:error, reason} -> {:error, reason}
     end
   end
 

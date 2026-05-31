@@ -92,6 +92,42 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["ExpiredToken", "InvalidToken"]
     },
     %Method{
+      nsid: "com.atproto.server.activateAccount",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :activate_account},
+      errors: ["ExpiredToken", "InvalidToken", "InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.server.deactivateAccount",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :deactivate_account},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
+      nsid: "com.atproto.server.requestAccountDelete",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :request_account_delete},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
+      nsid: "com.atproto.server.deleteAccount",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :delete_account},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
       nsid: "com.atproto.server.listAppPasswords",
       kind: :query,
       auth: :bearer,
@@ -189,6 +225,15 @@ defmodule Tempest.Xrpc.Registry do
       output: @json,
       handler: {Tempest.Xrpc.Repo, :list_records},
       errors: []
+    },
+    %Method{
+      nsid: "com.atproto.repo.listMissingBlobs",
+      kind: :query,
+      auth: :bearer,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Repo, :list_missing_blobs},
+      errors: ["ExpiredToken", "InvalidToken"]
     },
     %Method{
       nsid: "com.atproto.repo.describeRepo",

@@ -30,6 +30,26 @@ defmodule Tempest.Records do
 
   def import_repo(%AuthContext{}, _car_bytes), do: {:error, :invalid_request_body}
 
+  def list_missing_blobs(%AuthContext{account: account}, params) when is_map(params) do
+    with {:ok, limit} <- validate_limit(Map.get(params, "limit"), 500, 1000),
+         {:ok, cursor} <- validate_optional_cursor(Map.get(params, "cursor")),
+         {:ok, referenced} <- all_referenced_blob_cids(account.did),
+         {:ok, missing} <- Blobs.missing_cids(account.did, referenced) do
+      page = missing |> Enum.drop_while(fn cid -> cursor && cid <= cursor end) |> Enum.take(limit + 1)
+      visible = Enum.take(page, limit)
+      blobs = Enum.map(visible, &%{"cid" => &1})
+      response = %{"blobs" => blobs}
+
+      if length(page) > limit do
+        {:ok, Map.put(response, "cursor", List.last(visible))}
+      else
+        {:ok, response}
+      end
+    end
+  end
+
+  def list_missing_blobs(%AuthContext{}, _params), do: {:error, :invalid_request_body}
+
   def create_record(%AuthContext{account: account}, params) do
     with {:ok, input} <- LexiconValidator.validate_create_record_input(params),
          :ok <- ensure_repo_owner(account, input.repo),
@@ -305,6 +325,23 @@ defmodule Tempest.Records do
 
   defp record_key(rkey), do: {:ok, rkey}
 
+  defp validate_limit(nil, default, _max), do: {:ok, default}
+
+  defp validate_limit(value, _default, max) when is_integer(value) and value >= 1 and value <= max, do: {:ok, value}
+
+  defp validate_limit(value, _default, max) when is_binary(value) do
+    case Integer.parse(value) do
+      {limit, ""} when limit >= 1 and limit <= max -> {:ok, limit}
+      _other -> {:error, :invalid_limit}
+    end
+  end
+
+  defp validate_limit(_value, _default, _max), do: {:error, :invalid_limit}
+
+  defp validate_optional_cursor(nil), do: {:ok, nil}
+  defp validate_optional_cursor(cursor) when is_binary(cursor), do: {:ok, cursor}
+  defp validate_optional_cursor(_cursor), do: {:error, :invalid_cursor}
+
   defp verify_import_signature(commit, did_document) do
     case Commit.verify_with_did_document(commit, did_document) do
       {:ok, true} -> :ok
@@ -365,6 +402,17 @@ defmodule Tempest.Records do
           {:error, reason} -> {:halt, {:error, reason}}
         end
       end)
+    end
+  end
+
+  defp all_referenced_blob_cids(did, cursor \\ nil, acc \\ []) do
+    with {:ok, page} <- RepoStorage.list_referenced_blobs(did, limit: 1000, cursor: cursor) do
+      cids = acc ++ Map.get(page, :cids, [])
+
+      case Map.get(page, :cursor) do
+        nil -> {:ok, cids}
+        cursor -> all_referenced_blob_cids(did, cursor, cids)
+      end
     end
   end
 

@@ -224,6 +224,65 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     assert %{"error" => "AccountTakedown"} = json_response(login_conn, 403)
   end
 
+  test "activate, deactivate, request delete, and delete account lifecycle", %{conn: conn} do
+    account = conn |> create_account("lifecycle.test", "lifecycle@example.com") |> json_response(200)
+
+    deactivate =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.deactivateAccount", %{})
+
+    assert json_response(deactivate, 200) == %{}
+
+    status =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.server.checkAccountStatus")
+      |> json_response(200)
+
+    assert status["active"] == false
+    assert status["status"] == "deactivated"
+
+    activate =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.activateAccount", %{})
+
+    assert json_response(activate, 200) == %{}
+
+    request_delete =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.requestAccountDelete", %{})
+
+    assert json_response(request_delete, 200) == %{}
+
+    delete =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.deleteAccount", %{})
+
+    assert json_response(delete, 200) == %{}
+
+    deleted_status =
+      conn
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.server.checkAccountStatus")
+      |> json_response(401)
+
+    assert deleted_status["error"] == "InvalidToken"
+
+    assert [_, _, _, deactivate_event, activate_event, request_event, delete_event] = sequencer_events(account["did"])
+    assert deactivate_event.payload["active"] == false
+    assert activate_event.payload["active"] == true
+    assert request_event.payload["action"] == "delete.request"
+    assert delete_event.payload["status"] == "deleted"
+  end
+
   test "protected endpoint rejects missing bearer token", %{conn: conn} do
     conn = get(conn, ~p"/xrpc/com.atproto.server.getSession")
     response = json_response(conn, 401)

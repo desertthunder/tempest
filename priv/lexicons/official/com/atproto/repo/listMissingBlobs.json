@@ -1,0 +1,35 @@
+{
+  "lexicon": 1,
+  "id": "com.atproto.repo.listMissingBlobs",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "List blob CIDs referenced by the authenticated repo but missing from local storage.",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": { "type": "integer", "minimum": 1, "maximum": 1000 },
+          "cursor": { "type": "string" }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["blobs"],
+          "properties": {
+            "blobs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["cid"],
+                "properties": { "cid": { "type": "string", "format": "cid" } }
+              }
+            },
+            "cursor": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
