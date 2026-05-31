@@ -154,6 +154,7 @@ defmodule Tempest.OAuth do
            Phoenix.Token.verify(Endpoint, @access_salt, token, max_age: @access_lifetime_seconds),
          %Token{} = oauth_token <- Repo.get(Token, token_id),
          %Account{} = account <- Repo.get(Account, account_id),
+         :ok <- Tempest.Identity.Correctness.check_local(account),
          :ok <- ensure_token_valid(oauth_token, account, token) do
       {:ok, account, oauth_token, claims}
     else

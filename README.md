@@ -29,6 +29,7 @@ TEMPEST_HOSTNAME=localhost
 TEMPEST_PUBLIC_URL=http://localhost:4000
 TEMPEST_DATA_DIR=/absolute/path/to/tempest/priv/tempest_dev
 TEMPEST_BLOB_MAX_BYTES=10000000
+TEMPEST_HOSTED_DID_METHOD=plc
 ```
 
 Server boot creates `account.sqlite`, `sequencer.sqlite`, and local storage directories inside `TEMPEST_DATA_DIR`.

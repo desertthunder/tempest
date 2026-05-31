@@ -3,14 +3,15 @@ defmodule Tempest.Config do
   Runtime configuration boundary for Tempest-specific settings.
   """
 
-  @enforce_keys [:hostname, :public_url, :data_dir, :blob_max_bytes]
-  defstruct [:hostname, :public_url, :data_dir, :blob_max_bytes]
+  @enforce_keys [:hostname, :public_url, :data_dir, :blob_max_bytes, :hosted_did_method]
+  defstruct [:hostname, :public_url, :data_dir, :blob_max_bytes, :hosted_did_method]
 
   @type t :: %__MODULE__{
           hostname: String.t(),
           public_url: String.t(),
           data_dir: String.t(),
-          blob_max_bytes: pos_integer()
+          blob_max_bytes: pos_integer(),
+          hosted_did_method: :plc | :web
         }
 
   @default_secret_key_bases [
@@ -52,7 +53,8 @@ defmodule Tempest.Config do
         hostname: Keyword.get(config, :hostname),
         public_url: Keyword.get(config, :public_url),
         data_dir: Keyword.get(config, :data_dir),
-        blob_max_bytes: Keyword.get(config, :blob_max_bytes)
+        blob_max_bytes: Keyword.get(config, :blob_max_bytes),
+        hosted_did_method: Keyword.get(config, :hosted_did_method, :plc)
       }
 
     env = Keyword.get(opts, :env, Application.get_env(:tempest, :env, :prod))
@@ -62,6 +64,7 @@ defmodule Tempest.Config do
          :ok <- validate_public_url(config.public_url, config.hostname),
          :ok <- validate_data_dir(config.data_dir),
          :ok <- validate_blob_max_bytes(config.blob_max_bytes),
+         :ok <- validate_hosted_did_method(config.hosted_did_method),
          :ok <- validate_prod_secret(env, endpoint_config) do
       config
     else
@@ -139,6 +142,11 @@ defmodule Tempest.Config do
 
   defp validate_blob_max_bytes(_blob_max_bytes),
     do: {:error, "blob_max_bytes must be a positive integer"}
+
+  defp validate_hosted_did_method(method) when method in [:plc, :web], do: :ok
+  defp validate_hosted_did_method("plc"), do: :ok
+  defp validate_hosted_did_method("web"), do: :ok
+  defp validate_hosted_did_method(_method), do: {:error, "hosted_did_method must be plc or web"}
 
   defp validate_prod_secret(:prod, endpoint_config) do
     secret_key_base = Keyword.get(endpoint_config, :secret_key_base)

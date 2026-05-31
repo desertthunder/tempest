@@ -20,6 +20,7 @@ Graduated reference docs:
 
 Additional reference notes:
 
+- [Identity Troubleshooting](identity-troubleshooting.md)
 - [Sync and Firehose](sync-firehose.md)
 
 When a spec graduates, `docs/specs/<topic>.md` becomes a short pointer to the

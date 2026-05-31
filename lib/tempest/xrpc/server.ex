@@ -32,6 +32,9 @@ defmodule Tempest.Xrpc.Server do
 
       {:error, :repo_initialization, reason} ->
         {:error, 500, "InternalServerError", "failed to initialize account repository: #{inspect(reason)}"}
+
+      {:error, :identity_publish, reason} ->
+        {:error, 502, "UpstreamFailure", "failed to publish account identity: #{inspect(reason)}"}
     end
   end
 

@@ -16,7 +16,8 @@ config :tempest, Tempest.Config,
   hostname: "localhost",
   public_url: "http://localhost:4000",
   data_dir: Path.expand("../priv/tempest_dev", __DIR__),
-  blob_max_bytes: 10_000_000
+  blob_max_bytes: 10_000_000,
+  hosted_did_method: :plc
 
 config :tempest, Tempest.Repo,
   database: Path.expand("../priv/tempest_dev/account.sqlite", __DIR__),

@@ -42,7 +42,8 @@ defmodule Tempest.Accounts do
       end)
       |> case do
         {:ok, {account, session}} ->
-          with {:ok, _events} <- emit_account_creation_events(account) do
+          with :ok <- maybe_publish_plc_operation(account),
+               {:ok, _events} <- emit_account_creation_events(account) do
             {:ok, session_response(account, session, refresh_token)}
           end
 
@@ -51,6 +52,9 @@ defmodule Tempest.Accounts do
 
         {:error, {:repo_initialization, reason}} ->
           {:error, :repo_initialization, reason}
+
+        {:error, reason} ->
+          {:error, :identity_publish, reason}
       end
     else
       {:error, reason} -> {:error, :validation, reason}
@@ -316,6 +320,19 @@ defmodule Tempest.Accounts do
     |> case do
       {:ok, session} -> {:ok, session_response(account, session, refresh_token)}
       {:error, changeset} -> {:error, :validation, changeset}
+    end
+  end
+
+  defp maybe_publish_plc_operation(%Account{} = account) do
+    publish? =
+      :tempest
+      |> Application.get_env(Tempest.Identity, [])
+      |> Keyword.get(:plc_publish_enabled, false)
+
+    if publish? and String.starts_with?(account.did, "did:plc:") do
+      Identity.publish_plc_operation(account)
+    else
+      :ok
     end
   end
 

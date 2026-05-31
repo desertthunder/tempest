@@ -38,6 +38,10 @@ if blob_max_bytes = System.get_env("TEMPEST_BLOB_MAX_BYTES") do
   config :tempest, Tempest.Config, blob_max_bytes: String.to_integer(blob_max_bytes)
 end
 
+if hosted_did_method = System.get_env("TEMPEST_HOSTED_DID_METHOD") do
+  config :tempest, Tempest.Config, hosted_did_method: String.to_existing_atom(hosted_did_method)
+end
+
 if blob_cdn_base_url = System.get_env("TEMPEST_BLOB_CDN_BASE_URL") do
   config :tempest, Tempest.Blobs, cdn_base_url: blob_cdn_base_url
 end

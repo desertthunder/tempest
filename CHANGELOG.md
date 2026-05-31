@@ -8,6 +8,8 @@
   preference endpoints, and unknown AppView fallback.
 - Added account security foundations for email tokens, security events, TOTP MFA,
   backup codes, delegated-access grants, session revocation, and auth rate limits.
+- Added hosted DID mode configuration, PLC publish boundary, and identity correctness
+  smoke coverage.
 
 ### 2026-05-08
 

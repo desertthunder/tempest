@@ -6,22 +6,38 @@ defmodule Tempest.Identity do
   import Ecto.Query
 
   alias Tempest.Accounts.{Account, AuthContext}
-  alias Tempest.Identity.{DidDocument, HandleResolver, KeyStore, Validators}
+  alias Tempest.Identity.{Correctness, DidDocument, HandleResolver, KeyStore, PlcClient, PlcOperation, Validators}
   alias Tempest.{Repo, Sequencer}
 
   def validate_did_syntax(did), do: Validators.validate_did(did)
   def validate_handle_syntax(handle), do: Validators.validate_handle(handle)
 
   def generate_hosted_did do
-    suffix =
-      16
-      |> :crypto.strong_rand_bytes()
-      |> Base.encode32(case: :lower, padding: false)
+    case Tempest.Config.load!().hosted_did_method do
+      method when method in [:web, "web"] ->
+        "did:web:" <> Tempest.Config.load!().hostname
 
-    "did:plc:" <> suffix
+      _plc ->
+        "did:plc:" <>
+          (16
+           |> :crypto.strong_rand_bytes()
+           |> Base.encode32(case: :lower, padding: false))
+    end
   end
 
   def create_initial_signing_key(%Account{} = account), do: KeyStore.create_initial_key(account)
+
+  def publish_plc_operation(%Account{} = account) do
+    with true <- String.starts_with?(account.did, "did:plc:"),
+         :ok <- Correctness.check_local(account),
+         operation = PlcOperation.for_account(account),
+         :ok <- PlcClient.publish_operation(account.did, operation) do
+      :ok
+    else
+      false -> {:error, :unsupported_did_method}
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
   def did_document_for_account(%Account{} = account), do: DidDocument.build(account)
 
