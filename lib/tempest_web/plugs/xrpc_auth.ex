@@ -75,8 +75,9 @@ defmodule TempestWeb.Plugs.XrpcAuth do
     Accounts.authenticate_refresh(token)
   end
 
-  defp verify_token("com.atproto.server.checkAccountStatus", token),
-    do: Accounts.authenticate_access_allow_inactive(token)
+  defp verify_token(method_nsid, token)
+       when method_nsid in ["com.atproto.server.checkAccountStatus", "com.atproto.repo.importRepo"],
+       do: Accounts.authenticate_access_allow_inactive(token)
 
   defp verify_token(_method_nsid, token), do: Accounts.authenticate_access(token)
 

@@ -60,6 +60,7 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     com/atproto/repo/deleteRecord.json
     com/atproto/repo/describeRepo.json
     com/atproto/repo/getRecord.json
+    com/atproto/repo/importRepo.json
     com/atproto/repo/listRecords.json
     com/atproto/repo/putRecord.json
     com/atproto/repo/strongRef.json

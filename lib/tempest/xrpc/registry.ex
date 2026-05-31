@@ -209,6 +209,15 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["BlobTooLarge"]
     },
     %Method{
+      nsid: "com.atproto.repo.importRepo",
+      kind: :procedure,
+      auth: :bearer,
+      input: @car,
+      output: @json,
+      handler: {Tempest.Xrpc.Repo, :import_repo},
+      errors: ["InvalidRequest"]
+    },
+    %Method{
       nsid: "com.atproto.sync.getRepo",
       kind: :query,
       auth: :none,

@@ -10,7 +10,7 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 39,
+    "document_count" => 40,
     "document_ids" => [
       "app.bsky.actor.getPreferences",
       "app.bsky.actor.profile",
@@ -25,6 +25,7 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.repo.deleteRecord",
       "com.atproto.repo.describeRepo",
       "com.atproto.repo.getRecord",
+      "com.atproto.repo.importRepo",
       "com.atproto.repo.listRecords",
       "com.atproto.repo.putRecord",
       "com.atproto.repo.strongRef",
@@ -1836,6 +1837,30 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.server.createAppPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Import a repository CAR for the authenticated account.",
+          "errors" => [%{"name" => "InvalidRequest"}],
+          "input" => %{"encoding" => "application/vnd.ipld.car"},
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cid" => %{"format" => "cid", "type" => "string"},
+                "recordCount" => %{"type" => "integer"},
+                "rev" => %{"format" => "tid", "type" => "string"}
+              },
+              "required" => ["cid", "rev"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.repo.importRepo",
       "lexicon" => 1
     },
     %{

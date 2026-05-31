@@ -15,9 +15,20 @@ defmodule Tempest.Records do
   alias Tempest.Records.LexiconValidator
   alias Tempest.Repo
   alias Tempest.RepoStorage
-  alias Tempest.RepoCore.{CarVerifier, Drisl}
+  alias Tempest.RepoCore.{CarVerifier, Commit, Drisl}
   alias Tempest.RepoCore.Tid
   alias Tempest.RepoCore.Tid.Clock
+
+  def import_repo(%AuthContext{account: account}, car_bytes) when is_binary(car_bytes) do
+    with {:ok, did_document} <- Identity.did_document_for_did(account.did),
+         {:ok, verified} <- CarVerifier.verify_repo_car(car_bytes, did: account.did),
+         :ok <- verify_import_signature(verified.commit, did_document),
+         {:ok, imported} <- RepoStorage.import_verified_car(account, verified) do
+      {:ok, %{"cid" => imported.cid, "rev" => imported.rev, "recordCount" => imported.record_count}}
+    end
+  end
+
+  def import_repo(%AuthContext{}, _car_bytes), do: {:error, :invalid_request_body}
 
   def create_record(%AuthContext{account: account}, params) do
     with {:ok, input} <- LexiconValidator.validate_create_record_input(params),
@@ -293,6 +304,14 @@ defmodule Tempest.Records do
   end
 
   defp record_key(rkey), do: {:ok, rkey}
+
+  defp verify_import_signature(commit, did_document) do
+    case Commit.verify_with_did_document(commit, did_document) do
+      {:ok, true} -> :ok
+      {:ok, false} -> {:error, :invalid_commit_signature}
+      {:error, reason} -> {:error, {:commit_error, reason}}
+    end
+  end
 
   defp active_signing_key(account) do
     case KeyStore.active_key_for_account(account) do

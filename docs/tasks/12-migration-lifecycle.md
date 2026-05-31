@@ -15,8 +15,8 @@ Goal: support safe account migration, recovery, and lifecycle state propagation.
 - [x] T12-03: Implement `reserveSigningKey`.
 - [x] T12-04: Extend `createAccount` to accept existing DID plus service-auth proof.
 - [x] T12-05: Ensure migrated accounts start as `deactivated`.
-- [ ] T12-06: Harden `importRepo` with CAR, DID, commit signature, and atomicity checks.
-- [ ] T12-07: Ensure post-import revisions remain monotonic.
+- [x] T12-06: Harden `importRepo` with CAR, DID, commit signature, and atomicity checks.
+- [x] T12-07: Ensure post-import revisions remain monotonic.
 - [ ] T12-08: Implement `listMissingBlobs` from indexed imported records.
 - [ ] T12-09: Implement `activateAccount` with DID-document/PDS-location verification.
 - [ ] T12-10: Implement `deactivateAccount`.

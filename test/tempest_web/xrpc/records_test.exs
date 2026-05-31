@@ -1,7 +1,7 @@
 defmodule TempestWeb.Xrpc.RecordsTest do
   use TempestWeb.ConnCase, async: false
 
-  alias Tempest.RepoCore.{Car, CarVerifier, Drisl}
+  alias Tempest.RepoCore.{Car, CarVerifier, Drisl, Tid}
 
   @password "correct horse battery staple"
 
@@ -512,6 +512,60 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert created["uri"] == "at://#{account["did"]}/app.tempest.blob/avatar"
     assert blob_metadata(account["did"], cid).state == "public"
     assert File.exists?(Path.join([Tempest.Config.load!().data_dir, "blobs", path_did(account["did"]), cid]))
+  end
+
+  test "importRepo verifies CARs atomically and keeps post-import revisions monotonic", %{conn: conn} do
+    account = create_account!(conn, "records-import.test", "records-import@example.com")
+    profile = create_profile!(conn, account, "Imported")
+
+    car_bytes =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.sync.getRepo", %{"did" => account["did"]})
+      |> response(200)
+
+    _extra = create_note!(conn, account, "extra", "not in imported car")
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 2
+
+    imported =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/vnd.ipld.car")
+      |> post(~p"/xrpc/com.atproto.repo.importRepo", car_bytes)
+      |> json_response(200)
+
+    assert imported["cid"] == profile["commit"]["cid"]
+    assert imported["rev"] == profile["commit"]["rev"]
+    assert imported["recordCount"] == 1
+    assert metadata(repo_db(account["did"]))["current_rev"] == imported["rev"]
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 1
+
+    missing_note =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.note",
+        "rkey" => "extra"
+      })
+
+    assert %{"error" => "RecordNotFound"} = json_response(missing_note, 400)
+
+    bad_import =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/vnd.ipld.car")
+      |> post(~p"/xrpc/com.atproto.repo.importRepo", <<0, 1, 2, 3>>)
+
+    assert %{"error" => "InvalidRequest"} = json_response(bad_import, 400)
+    assert metadata(repo_db(account["did"]))["current_rev"] == imported["rev"]
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 1
+
+    after_import = create_note!(conn, account, "after", "after import")
+
+    assert Tid.parse!(after_import["commit"]["rev"]).integer > Tid.parse!(imported["rev"]).integer
   end
 
   test "record writes reject missing blob references", %{conn: conn} do

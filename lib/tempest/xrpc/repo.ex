@@ -9,6 +9,19 @@ defmodule Tempest.Xrpc.Repo do
   alias Tempest.Config
   alias Tempest.Records
 
+  @import_repo_max_bytes 100 * 1_024 * 1_024
+
+  def import_repo(conn, _params, _method) do
+    with {:ok, bytes, _conn} <- read_upload_body(conn, @import_repo_max_bytes) do
+      case Records.import_repo(conn.assigns.auth_context, bytes) do
+        {:ok, response} -> {:ok, response}
+        {:error, reason} -> repo_error(reason)
+      end
+    else
+      {:error, reason} -> repo_error(reason)
+    end
+  end
+
   def upload_blob(conn, _params, _method) do
     config = Config.load!()
 
@@ -127,6 +140,18 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:invalid_swap_commit), do: {:error, 400, "InvalidRequest", "swapCommit is invalid"}
   defp repo_error(:invalid_validate), do: {:error, 400, "InvalidRequest", "validate must be a boolean"}
   defp repo_error(:invalid_writes), do: {:error, 400, "InvalidRequest", "writes must contain 1 to 200 operations"}
+  defp repo_error(:did_mismatch), do: {:error, 400, "InvalidRequest", "import CAR DID does not match account"}
+  defp repo_error(:missing_commit_root), do: {:error, 400, "InvalidRequest", "import CAR is missing a commit root"}
+  defp repo_error(:commit_block_missing), do: {:error, 400, "InvalidRequest", "import CAR is missing the commit block"}
+
+  defp repo_error(:commit_cid_mismatch),
+    do: {:error, 400, "InvalidRequest", "import commit CID does not match its bytes"}
+
+  defp repo_error(:invalid_commit_signature), do: {:error, 400, "InvalidRequest", "import commit signature is invalid"}
+
+  defp repo_error(:invalid_import_path),
+    do: {:error, 400, "InvalidRequest", "import CAR contains an invalid record path"}
+
   defp repo_error(:invalid_write), do: {:error, 400, "InvalidRequest", "write operation is invalid"}
 
   defp repo_error(:duplicate_write),
@@ -149,6 +174,14 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:missing_signing_key), do: {:error, 500, "InternalServerError", "account has no active signing key"}
   defp repo_error({:field_too_small, field}), do: {:error, 400, "InvalidRequest", "#{field} is too small"}
   defp repo_error({:field_too_large, field}), do: {:error, 400, "InvalidRequest", "#{field} is too large"}
+  defp repo_error({:car_error, _reason}), do: {:error, 400, "InvalidRequest", "import CAR is invalid"}
+  defp repo_error({:commit_error, _reason}), do: {:error, 400, "InvalidRequest", "import commit is invalid"}
+
+  defp repo_error({:missing_block, _cid}),
+    do: {:error, 400, "InvalidRequest", "import CAR is missing a referenced block"}
+
+  defp repo_error({:invalid_import_record, _reason}),
+    do: {:error, 400, "InvalidRequest", "import CAR contains an invalid record block"}
 
   defp repo_error({:invalid_record_key, key_type}),
     do: {:error, 400, "InvalidRequest", "record key does not match Lexicon key type #{key_type}"}

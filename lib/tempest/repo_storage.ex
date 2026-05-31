@@ -99,6 +99,32 @@ defmodule Tempest.RepoStorage do
   end
 
   @doc """
+  Atomically replaces a repository with a verified import CAR.
+  """
+  def import_verified_car(%Account{} = account, verified, %Config{} = config \\ Config.load!()) when is_map(verified) do
+    with {:ok, conn, _path} <- open_repo(config, account.did) do
+      result =
+        transact(conn, fn ->
+          with :ok <- clear_repo(conn),
+               {:ok, imported} <- imported_repo(account.did, verified),
+               :ok <- insert_blocks(conn, imported.blocks, imported.inserted_at),
+               :ok <- insert_imported_records(conn, imported.records, imported.inserted_at),
+               :ok <- insert_commit(conn, imported),
+               :ok <- insert_metadata(conn, imported) do
+            {:ok,
+             %{
+               cid: imported.commit_cid,
+               rev: imported.rev,
+               record_count: length(imported.records)
+             }}
+          end
+        end)
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
   Creates a record and advances the repository head commit.
   """
   def create_record(%Account{} = account, %SigningKey{} = signing_key, attrs, %Config{} = config \\ Config.load!())
@@ -517,6 +543,96 @@ defmodule Tempest.RepoStorage do
       {:ok, {:error, reason}} -> {:error, reason}
       {{:error, reason}, {:error, _close_reason}} -> {:error, reason}
     end
+  end
+
+  defp imported_repo(did, %{car: car, commit: commit, commit_cid: commit_cid, entries: entries}) do
+    inserted_at = Timestamp.iso8601_utc()
+    blocks = Enum.map(car.blocks, fn %{cid: cid, data: bytes} -> {cid, bytes} end)
+    blocks_by_cid = Map.new(blocks, fn {cid, bytes} -> {Cid.to_string(cid), bytes} end)
+
+    with {:ok, records} <- imported_records(entries, blocks_by_cid) do
+      {:ok,
+       %{
+         did: did,
+         rev: commit.rev,
+         prev_cid: commit.prev && Cid.to_string(commit.prev),
+         root_cid: Cid.to_string(commit.data),
+         commit_cid: Cid.to_string(commit_cid),
+         commit_bytes: Map.fetch!(blocks_by_cid, Cid.to_string(commit_cid)),
+         inserted_at: inserted_at,
+         blocks: blocks,
+         records: records
+       }}
+    end
+  end
+
+  defp imported_records(entries, blocks_by_cid) do
+    entries
+    |> Enum.sort_by(fn {path, _cid} -> path end)
+    |> Enum.reduce_while({:ok, []}, fn {path, cid}, {:ok, records} ->
+      with {:ok, collection, rkey} <- split_repo_path(path),
+           {:ok, record} <- imported_record(path, cid, collection, rkey, blocks_by_cid) do
+        {:cont, {:ok, [record | records]}}
+      else
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, records} -> {:ok, Enum.reverse(records)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp split_repo_path(path) when is_binary(path) do
+    case String.split(path, "/", parts: 2) do
+      [collection, rkey] when collection != "" and rkey != "" -> {:ok, collection, rkey}
+      _parts -> {:error, :invalid_import_path}
+    end
+  end
+
+  defp split_repo_path(_path), do: {:error, :invalid_import_path}
+
+  defp imported_record(path, cid, collection, rkey, blocks_by_cid) do
+    cid_value = Cid.to_string(cid)
+
+    with {:ok, bytes} <- Map.fetch(blocks_by_cid, cid_value),
+         {:ok, record} <- Drisl.decode(bytes) do
+      {:ok,
+       %{
+         collection: collection,
+         rkey: rkey,
+         path: path,
+         record_cid: cid_value,
+         record: record
+       }}
+    else
+      :error -> {:error, {:missing_block, cid_value}}
+      {:error, reason} -> {:error, {:invalid_import_record, reason}}
+    end
+  end
+
+  defp clear_repo(conn) do
+    [
+      "DELETE FROM records",
+      "DELETE FROM commits",
+      "DELETE FROM repo_metadata",
+      "DELETE FROM blocks"
+    ]
+    |> Enum.reduce_while(:ok, fn sql, :ok ->
+      case execute(conn, sql, []) do
+        :ok -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp insert_imported_records(conn, records, inserted_at) do
+    Enum.reduce_while(records, :ok, fn record, :ok ->
+      case insert_record(conn, Map.put(record, :inserted_at, inserted_at)) do
+        :ok -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
   end
 
   defp ensure_uninitialized(conn) do
