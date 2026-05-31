@@ -15,6 +15,7 @@ Graduated reference docs:
 - [Repository Core](repo-core.md)
 - [Record APIs](record-apis.md)
 - [Blobs](blobs.md)
+- [Migration and Account Lifecycle](migration-lifecycle.md)
 - [Lexicon Schemas](lexicon-schemas.md)
 - [Interop and Integration Testing](interop-testing.md)
 

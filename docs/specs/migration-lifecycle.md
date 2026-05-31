@@ -1,9 +1,12 @@
 ---
 title: Migration and Account Lifecycle
-updated: 2026-05-08
+updated: 2026-05-31
+status: implemented
 ---
 
 # Migration and Account Lifecycle
+
+Reference documentation: ../reference/migration-lifecycle.md
 
 Account portability is a core atproto property. Tempest must support both normal account hosting and migration flows without relying on a cooperative old PDS forever.
 

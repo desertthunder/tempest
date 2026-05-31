@@ -196,8 +196,7 @@ defmodule Tempest.Accounts do
   def activate_account(%AuthContext{account: account}) do
     with :ok <- Identity.Correctness.check_local(account),
          {:ok, account} <- update_account_status(account, true, "active"),
-         {:ok, _event} <-
-           Sequencer.insert_account_event(account.did, "activate", %{"active" => true, "status" => "active"}) do
+         {:ok, _events} <- emit_account_activation_events(account) do
       {:ok, %{}}
     end
   end
@@ -459,6 +458,21 @@ defmodule Tempest.Accounts do
          :ok <- verify_initial_commit_payload(commit_payload, account.did, latest),
          {:ok, commit_event} <-
            Sequencer.insert_repo_commit(account.did, latest.rev, latest.cid, "repo.init", commit_payload) do
+      {:ok, [identity_event, account_event, commit_event]}
+    end
+  end
+
+  defp emit_account_activation_events(%Account{} = account) do
+    with {:ok, latest} <- RepoStorage.latest_commit(account.did),
+         {:ok, car_slice} <- RepoStorage.export_commit_car_slice(account.did, latest.cid),
+         {:ok, identity_event} <-
+           Sequencer.insert_identity_event(account.did, "activate", %{"handle" => account.handle}),
+         {:ok, account_event} <-
+           Sequencer.insert_account_event(account.did, "activate", %{"active" => true, "status" => "active"}),
+         commit_payload = %{"blocks" => Drisl.bytes(car_slice.bytes), "ops" => [], "blobs" => [], "tooBig" => false},
+         :ok <- verify_initial_commit_payload(commit_payload, account.did, latest),
+         {:ok, commit_event} <-
+           Sequencer.insert_repo_commit(account.did, latest.rev, latest.cid, "repo.activate", commit_payload) do
       {:ok, [identity_event, account_event, commit_event]}
     end
   end

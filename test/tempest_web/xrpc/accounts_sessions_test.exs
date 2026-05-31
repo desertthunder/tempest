@@ -224,6 +224,78 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     assert %{"error" => "AccountTakedown"} = json_response(login_conn, 403)
   end
 
+  test "migrated did:web account stays private until activation emits ordered events", %{conn: conn} do
+    did = "did:web:migrated-#{System.unique_integer([:positive])}.example.com"
+
+    service_auth =
+      Tokens.sign_service_auth(
+        %Account{did: did},
+        Tempest.Config.load!().public_url,
+        "com.atproto.server.createAccount"
+      )
+
+    migrated =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.createAccount", %{
+        "did" => did,
+        "handle" => "migrated-web.test",
+        "email" => "migrated-web@example.com",
+        "password" => @password,
+        "serviceAuth" => service_auth
+      })
+      |> json_response(200)
+
+    assert migrated["active"] == false
+
+    inactive_repo =
+      conn
+      |> get(~p"/xrpc/com.atproto.sync.getRepo", %{"did" => did})
+
+    assert %{"error" => "RepoDeactivated"} = json_response(inactive_repo, 400)
+
+    activate =
+      conn
+      |> put_req_header("authorization", "Bearer #{migrated["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.activateAccount", %{})
+
+    assert json_response(activate, 200) == %{}
+
+    active_repo =
+      conn
+      |> get(~p"/xrpc/com.atproto.sync.getRepo", %{"did" => did})
+
+    assert response(active_repo, 200) =~ "roots"
+
+    assert [create_identity, create_account, activate_identity, activate_account, activate_commit] =
+             sequencer_events(did)
+
+    assert create_identity.event_type == "#identity"
+    assert create_account.payload["active"] == false
+    assert activate_identity.event_type == "#identity"
+    assert activate_account.payload["active"] == true
+    assert activate_commit.event_type == "#commit"
+    assert activate_commit.payload["action"] == "repo.activate"
+  end
+
+  test "unavailable old PDS path fails closed without service auth", %{conn: conn} do
+    did = "did:web:unavailable-#{System.unique_integer([:positive])}.example.com"
+
+    rejected =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.createAccount", %{
+        "did" => did,
+        "handle" => "unavailable-old-pds.test",
+        "email" => "unavailable-old-pds@example.com",
+        "password" => @password
+      })
+
+    assert %{"error" => "InvalidRequest"} = json_response(rejected, 400)
+    refute Repo.exists?(from a in Account, where: a.did == ^did)
+  end
+
   test "activate, deactivate, request delete, and delete account lifecycle", %{conn: conn} do
     account = conn |> create_account("lifecycle.test", "lifecycle@example.com") |> json_response(200)
 
@@ -276,11 +348,25 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
 
     assert deleted_status["error"] == "InvalidToken"
 
-    assert [_, _, _, deactivate_event, activate_event, request_event, delete_event] = sequencer_events(account["did"])
-    assert deactivate_event.payload["active"] == false
-    assert activate_event.payload["active"] == true
-    assert request_event.payload["action"] == "delete.request"
-    assert delete_event.payload["status"] == "deleted"
+    events = sequencer_events(account["did"])
+
+    assert Enum.map(events, & &1.event_type) == [
+             "#identity",
+             "#account",
+             "#commit",
+             "#account",
+             "#identity",
+             "#account",
+             "#commit",
+             "#account",
+             "#account"
+           ]
+
+    assert Enum.at(events, 3).payload["active"] == false
+    assert Enum.at(events, 5).payload["active"] == true
+    assert Enum.at(events, 6).payload["action"] == "repo.activate"
+    assert Enum.at(events, 7).payload["action"] == "delete.request"
+    assert Enum.at(events, 8).payload["status"] == "deleted"
   end
 
   test "protected endpoint rejects missing bearer token", %{conn: conn} do

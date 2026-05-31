@@ -10,6 +10,9 @@
   backup codes, delegated-access grants, session revocation, and auth rate limits.
 - Added hosted DID mode configuration, PLC publish boundary, and identity correctness
   smoke coverage.
+- Added migration lifecycle support for service auth, imported DID account creation,
+  repo CAR import, missing-blob listing, activation/deactivation, account deletion,
+  migration-safe event ordering, and smoke coverage.
 
 ### 2026-05-08
 
