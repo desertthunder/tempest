@@ -8,7 +8,7 @@ defmodule Tempest.Accounts do
   alias Tempest.Accounts.{Account, AppPasswords, AuthContext, Password, Session, Tokens}
   alias Tempest.Identity
   alias Tempest.RepoCore.{CarVerifier, Drisl}
-  alias Tempest.{Repo, RepoStorage, Sequencer}
+  alias Tempest.{Repo, RepoStorage, Security, Sequencer}
 
   @public_fields [:did, :handle, :email, :active, :status]
 
@@ -60,6 +60,14 @@ defmodule Tempest.Accounts do
   def create_session(identifier, password) when is_binary(identifier) and is_binary(password) do
     identifier = normalize_identifier(identifier)
 
+    with :ok <- Security.RateLimiter.check(:login, identifier) do
+      create_session_after_rate_limit(identifier, password)
+    end
+  end
+
+  def create_session(_identifier, _password), do: {:error, :invalid_credentials}
+
+  defp create_session_after_rate_limit(identifier, password) do
     account =
       Account
       |> where([a], a.handle == ^identifier or a.email == ^identifier or a.did == ^identifier)
@@ -83,8 +91,6 @@ defmodule Tempest.Accounts do
         {:error, :invalid_credentials}
     end
   end
-
-  def create_session(_identifier, _password), do: {:error, :invalid_credentials}
 
   def refresh_session(%AuthContext{token_type: :refresh, account: account, session: session}) do
     now = now()
@@ -216,25 +222,29 @@ defmodule Tempest.Accounts do
   end
 
   def create_app_password(%AuthContext{token_type: :access, account: account}, params) do
-    case AppPasswords.create(account, params) do
-      {:ok, app_password} -> {:ok, app_password}
-      {:error, %Ecto.Changeset{} = changeset} -> {:error, :validation, changeset}
-      {:error, reason} -> {:error, reason}
+    with :ok <- Security.RateLimiter.check(:app_password, account.did) do
+      case AppPasswords.create(account, params) do
+        {:ok, app_password} -> {:ok, app_password}
+        {:error, %Ecto.Changeset{} = changeset} -> {:error, :validation, changeset}
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 
   def revoke_app_password(%AuthContext{token_type: :access, account: account}, params) do
-    case Map.get(params, "id") do
-      id when is_integer(id) ->
-        AppPasswords.revoke(account, id)
+    with :ok <- Security.RateLimiter.check(:app_password, account.did) do
+      case Map.get(params, "id") do
+        id when is_integer(id) ->
+          AppPasswords.revoke(account, id)
 
-      id when is_binary(id) ->
-        with {int_id, ""} <- Integer.parse(id),
-             do: AppPasswords.revoke(account, int_id),
-             else: (_ -> {:error, :not_found})
+        id when is_binary(id) ->
+          with {int_id, ""} <- Integer.parse(id),
+               do: AppPasswords.revoke(account, int_id),
+               else: (_ -> {:error, :not_found})
 
-      _other ->
-        {:error, :not_found}
+        _other ->
+          {:error, :not_found}
+      end
     end
   end
 

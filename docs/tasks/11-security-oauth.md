@@ -20,13 +20,13 @@ Goal: make Tempest usable by modern atproto clients without weakening account se
 - [x] T11-08: Add centralized permission engine used by OAuth, app passwords, and delegated access.
 - [x] T11-09: Implement current transition scopes and `blob:*/*`/`rpc:*` enforcement.
 - [x] T11-10: Implement app password create/list/revoke endpoints with scoped permissions.
-- [ ] T11-11: Add email confirmation/update and password reset security log events.
-- [ ] T11-12: Add MFA schema for TOTP, passkeys/WebAuthn, backup codes, and trusted devices.
-- [ ] T11-13: Implement TOTP and backup-code flows.
-- [ ] T11-14: Add session inventory and remote revoke.
-- [ ] T11-15: Add delegated-access schema and revoke flow.
-- [ ] T11-16: Add auth, reset, OAuth, and app-password rate limits.
-- [ ] T11-17: Add Hurl smoke tests for OAuth metadata, PAR nonce, token issue, scope enforcement, and revoke.
+- [x] T11-11: Add email confirmation/update and password reset security log events.
+- [x] T11-12: Add MFA schema for TOTP, passkeys/WebAuthn, backup codes, and trusted devices.
+- [x] T11-13: Implement TOTP and backup-code flows.
+- [x] T11-14: Add session inventory and remote revoke.
+- [x] T11-15: Add delegated-access schema and revoke flow.
+- [x] T11-16: Add auth, reset, OAuth, and app-password rate limits.
+- [x] T11-17: Add Hurl smoke tests for OAuth metadata, PAR nonce, token issue, scope enforcement, and revoke.
 - [ ] T11-18: Add hosted DID mode configuration (`did:plc` vs `did:web`) and refuse unsupported combinations.
 - [ ] T11-19: Implement PLC operation publish flow for `did:plc` hosted accounts (create/update).
 - [ ] T11-20: Add identity correctness checks used by OAuth flows (DID resolution + `#atproto_pds` service endpoint match).

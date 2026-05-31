@@ -33,6 +33,17 @@ TEMPEST_BLOB_MAX_BYTES=10000000
 
 Server boot creates `account.sqlite`, `sequencer.sqlite`, and local storage directories inside `TEMPEST_DATA_DIR`.
 
+## Development Tools
+
+Generate a TOTP code for a base32 secret:
+
+```bash
+mix tempest.totp.code <base32-secret>
+```
+
+Development email previews are available at `http://localhost:4000/dev/mailbox`
+when the server is running.
+
 ## Endpoints
 
 Available as of [2026-05-08](./CHANGELOG.md#2026-05-08)

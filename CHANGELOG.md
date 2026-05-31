@@ -6,6 +6,8 @@
 
 - Added compatibility smoke coverage for `applyWrites`, `getBlocks`, `requestCrawl`,
   preference endpoints, and unknown AppView fallback.
+- Added account security foundations for email tokens, security events, TOTP MFA,
+  backup codes, delegated-access grants, session revocation, and auth rate limits.
 
 ### 2026-05-08
 

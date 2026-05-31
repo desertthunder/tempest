@@ -48,6 +48,9 @@ defmodule Tempest.Xrpc.Server do
 
       {:error, :invalid_credentials} ->
         {:error, 401, "AuthenticationRequired", "Invalid identifier or password"}
+
+      {:error, :rate_limited} ->
+        {:error, 429, "RateLimitExceeded", "Too many authentication attempts"}
     end
   end
 
@@ -76,6 +79,7 @@ defmodule Tempest.Xrpc.Server do
     case Accounts.create_app_password(conn.assigns.auth_context, params) do
       {:ok, response} -> {:ok, response}
       {:error, :invalid_scope} -> {:error, 400, "InvalidRequest", "invalid app password scope"}
+      {:error, :rate_limited} -> {:error, 429, "RateLimitExceeded", "Too many app password requests"}
       {:error, :validation, changeset} -> {:error, 400, "InvalidRequest", format_changeset_errors(changeset)}
     end
   end
@@ -83,6 +87,7 @@ defmodule Tempest.Xrpc.Server do
   def revoke_app_password(conn, params, _method) do
     case Accounts.revoke_app_password(conn.assigns.auth_context, params) do
       :ok -> {:ok, %{}}
+      {:error, :rate_limited} -> {:error, 429, "RateLimitExceeded", "Too many app password requests"}
       {:error, :not_found} -> {:error, 404, "NotFound", "app password not found"}
     end
   end

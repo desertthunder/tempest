@@ -3,12 +3,14 @@ defmodule TempestWeb.OAuthController do
 
   alias Tempest.OAuth
   alias Tempest.OAuth.Dpop
+  alias Tempest.Security.RateLimiter
 
   def par(conn, params) do
     public_url = Tempest.Config.load!().public_url
     dpop = conn |> get_req_header("dpop") |> List.first()
 
-    case OAuth.create_par(params, dpop, public_url) do
+    case with :ok <- RateLimiter.check(:oauth, Map.get(params, "client_id", "unknown")),
+              do: OAuth.create_par(params, dpop, public_url) do
       {:ok, par} ->
         conn
         |> put_resp_header("dpop-nonce", Dpop.issue_nonce())
@@ -28,6 +30,9 @@ defmodule TempestWeb.OAuthController do
 
       {:error, :invalid_scope} ->
         conn |> put_status(400) |> json(%{"error" => "invalid_scope"})
+
+      {:error, :rate_limited} ->
+        conn |> put_status(429) |> json(%{"error" => "RateLimitExceeded"})
 
       {:error, _reason} ->
         conn |> put_status(400) |> json(%{"error" => "invalid_request"})
@@ -68,10 +73,12 @@ defmodule TempestWeb.OAuthController do
     dpop = conn |> get_req_header("dpop") |> List.first()
 
     result =
-      case Map.get(params, "grant_type") do
-        "authorization_code" -> OAuth.exchange_authorization_code(params, dpop, public_url)
-        "refresh_token" -> OAuth.refresh(params, dpop, public_url)
-        _other -> {:error, :unsupported_grant_type}
+      with :ok <- RateLimiter.check(:oauth, Map.get(params, "client_id", "unknown")) do
+        case Map.get(params, "grant_type") do
+          "authorization_code" -> OAuth.exchange_authorization_code(params, dpop, public_url)
+          "refresh_token" -> OAuth.refresh(params, dpop, public_url)
+          _other -> {:error, :unsupported_grant_type}
+        end
       end
 
     case result do
@@ -86,6 +93,9 @@ defmodule TempestWeb.OAuthController do
         |> put_status(401)
         |> json(%{"error" => "use_dpop_nonce"})
 
+      {:error, :rate_limited} ->
+        conn |> put_status(429) |> json(%{"error" => "RateLimitExceeded"})
+
       {:error, :unsupported_grant_type} ->
         conn |> put_status(400) |> json(%{"error" => "unsupported_grant_type"})
 
@@ -98,8 +108,12 @@ defmodule TempestWeb.OAuthController do
   end
 
   def revoke(conn, params) do
-    :ok = OAuth.revoke(Map.get(params, "token", ""))
-    send_resp(conn, 200, "")
+    with :ok <- RateLimiter.check(:oauth, Map.get(params, "client_id", "unknown")) do
+      :ok = OAuth.revoke(Map.get(params, "token", ""))
+      send_resp(conn, 200, "")
+    else
+      {:error, :rate_limited} -> conn |> put_status(429) |> json(%{"error" => "RateLimitExceeded"})
+    end
   end
 
   defp authorization_page(par, error) do
