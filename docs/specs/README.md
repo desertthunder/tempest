@@ -3,14 +3,17 @@ title: Tempest AT Protocol PDS Specification Index
 updated: 2026-05-08
 ---
 
-# Tempest PDS Specs
+Tempest is a Phoenix application that will become a self-hostable AT Protocol
+Personal Data Server.
 
-Tempest is a Phoenix application that will become a self-hostable AT Protocol Personal Data Server. The first target is a single-node server for one user or a small community. Hosted-provider scale can come later.
+Near-term focus: [Target Profile - Solo Login + Archive](target-profile.md).
+Hosted-provider scale can come later.
 
-Subsystem specifications live in this directory. Milestone task plans live in `../tasks/`.
+Subsystem specifications live in this directory.
 
 ## Reading Order
 
+0. [Target Profile - Solo Login + Archive](target-profile.md)
 1. [Architecture](architecture.md)
 2. [XRPC HTTP Surface](xrpc.md)
 3. [SQLite Storage](storage-sqlite.md)
@@ -27,12 +30,6 @@ Subsystem specifications live in this directory. Milestone task plans live in `.
 14. [Deployment and Observability](deployment-observability.md)
 15. [Interop and Integration Testing](interop-testing.md)
 16. [Hurl Smoke Tests](hurl-smoke-tests.md)
-
-## Milestones
-
-Milestone tasks live in `docs/tasks/`. Each task file is intended to be small enough to implement and review without guessing at scope. Each milestone must end with a black-box Hurl smoke test.
-
-Start with [Milestone 00](../tasks/00-foundation.md), then continue in numeric order.
 
 ## Source Baseline
 
@@ -57,7 +54,7 @@ Research was checked on 2026-05-07 against:
 - Prefer plain technical prose.
 - Keep protocol facts separate from project choices.
 - Every subsystem spec must include HTTP verification.
-- Every milestone must have integration tests before it is considered done.
+- Every completed subsystem must have integration tests before it is considered done.
 - Smoke tests must be Hurl files under `test/smoke/*.hurl` and must run with `hurl --test`.
 - Use `Req` for outbound HTTP in application code.
 - Run `mix precommit` before marking implementation work complete.

@@ -1,0 +1,25 @@
+---
+title: Reference Documentation
+updated: 2026-05-31
+---
+
+These docs describe current, verified behavior of Tempest. They explain the
+implementation at a high level and introduce the AT Protocol/PDS concepts needed
+to understand that implementation.
+
+Graduated reference docs:
+
+- [Architecture](architecture.md)
+- [SQLite Storage](storage-sqlite.md)
+- [XRPC HTTP Surface](xrpc.md)
+- [Repository Core](repo-core.md)
+- [Record APIs](record-apis.md)
+- [Blobs](blobs.md)
+- [Lexicon Schemas](lexicon-schemas.md)
+
+Additional reference notes:
+
+- [Sync and Firehose](sync-firehose.md)
+
+When a spec graduates, `docs/specs/<topic>.md` becomes a short pointer to the
+reference doc and its verification commands.

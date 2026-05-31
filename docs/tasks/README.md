@@ -20,7 +20,30 @@ title: Milestone Tasks
 14. [13 Admin and Deployment](./13-admin-deployment.md)
 15. [14 Operator and Account Management UX](./14-operator-account-ux.md)
 
-Each file in this directory is a milestone. Each task is intended to be the smallest useful unit of work: one focused implementation change, test, or integration check.
+Each file in this directory is a milestone. Each task is intended to be the
+smallest useful unit of work: one focused implementation change, test, or
+integration check.
+
+## Target Profile Priority Map (Solo Login + Archive)
+
+Blocking work for the current target profile (see `docs/specs/target-profile.md`):
+
+- Compatibility stays green: `test/smoke/tempest_basic.hurl` and
+  `test/smoke/tempest_compat.hurl` must pass.
+- Identity is externally verifiable for the chosen hosted DID mode.
+- Modern client auth works end-to-end (OAuth/app passwords + rate limits) with
+  black-box Hurl coverage.
+- Data custody exists as operator workflows: repo verify/export, backup/restore,
+  and a restore drill.
+- Minimal operator UI exists for inspection and "play around" testing (account
+  dashboard + repo/blob/sequencer visibility).
+
+Deprioritized behind the above for this profile:
+
+- migration and lifecycle between PDS instances (Milestone 12)
+- MFA and advanced account/security UX (parts of Milestone 11/14)
+- hosted-provider scale features
+
 
 ## Status Labels
 

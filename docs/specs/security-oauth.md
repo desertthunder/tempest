@@ -5,7 +5,9 @@ updated: 2026-05-08
 
 # Security, OAuth, and Delegated Access
 
-Tempest should not stop at legacy password sessions. OAuth is the primary long-term authz surface for user-facing atproto clients, and the same permission engine should constrain OAuth tokens, app passwords, and delegated account access.
+Tempest should not stop at legacy password sessions. OAuth is the primary long-term
+authz surface for user-facing atproto clients, and the same permission engine should
+constrain OAuth tokens, app passwords, and delegated account access.
 
 ## Required OAuth Surface
 
@@ -28,8 +30,13 @@ Required profile behavior:
 - DPoP is required for token-bound requests.
 - Authorization responses must include the approved scopes.
 - Token responses must include and validate the account DID as `sub`.
-- Client metadata fetches must use hardened HTTP with SSRF protection, body limits, timeouts, and no unsafe redirects.
-- Unknown client metadata must be displayed conservatively; only trusted clients may show rich names/logos.
+- The subject DID's document must be externally resolvable and must contain an
+  `#atproto_pds` service endpoint matching the public URL of this Tempest
+  instance.
+- Client metadata fetches must use hardened HTTP with SSRF protection, body limits,
+  timeouts, and no unsafe redirects.
+- Unknown client metadata must be displayed conservatively; only trusted clients may
+  show rich names/logos.
 
 ## Permission Model
 
@@ -63,7 +70,8 @@ Initial compatibility scopes:
 - `blob:*/*`
 - `rpc:<nsid>?aud=<did>`
 
-Granular permission support should be added behind the same data model, even if the first UI only exposes coarse choices.
+Granular permission support should be added behind the same data model, even if the first
+UI only exposes coarse choices.
 
 ## Account Security
 
@@ -80,7 +88,8 @@ Implement after stable sessions, before calling the PDS production-ready:
 
 ## App Passwords
 
-Tempest should support app passwords because they remain part of current atproto usage for bots and CLI tools.
+Tempest should support app passwords because they remain part of current atproto usage
+for bots and CLI tools.
 
 Rules:
 
@@ -89,11 +98,13 @@ Rules:
 - Names are labels, not credentials.
 - Scopes must be at least as restrictive as OAuth.
 - Revocation must be immediate for future requests.
-- App passwords must not authorize account deletion, email changes, handle changes, PLC operations, or MFA changes.
+- App passwords must not authorize account deletion, email changes, handle changes,
+  PLC operations, or MFA changes.
 
 ## Delegated Access
 
-Delegation allows one account to manage another with explicit permission boundaries. Treat it as a separate credential class, not as shared passwords.
+Delegation allows one account to manage another with explicit permission boundaries.
+Treat it as a separate credential class, not as shared passwords.
 
 Minimum model:
 
@@ -105,15 +116,20 @@ Minimum model:
 - optional expiry
 - audit log
 
-Delegates must never gain identity recovery or deletion powers unless a later spec explicitly designs those flows with strong reauth.
+Delegates must never gain identity recovery or deletion powers unless a later spec
+explicitly designs those flows with strong reauth.
 
 ## Adversarial Checks
 
 - DPoP nonce failures must not silently fall back to bearer semantics.
-- A token must be rejected if the `sub`, authorized PDS, and current DID document do not agree.
-- SSRF protections apply to OAuth client metadata, logos, JWKS URIs, DID documents, and handle well-known fetches.
-- Partial-scope approval must be represented exactly; do not assume all requested scopes were granted.
-- Permission checks must be centralized enough that new XRPC methods cannot accidentally bypass them.
+- A token must be rejected if the `sub`, authorized PDS, and current DID document do not
+  agree.
+- SSRF protections apply to OAuth client metadata, logos, JWKS URIs, DID documents, and
+  handle well-known fetches.
+- Partial-scope approval must be represented exactly; do not assume all requested scopes
+  were granted.
+- Permission checks must be centralized enough that new XRPC methods cannot accidentally
+  bypass them.
 - Auth and recovery endpoints need independent rate limits.
 
 ## HTTP Verification
@@ -138,3 +154,9 @@ Expected:
 - <https://atproto.com/guides/scopes>
 - <https://atproto.com/specs/auth>
 - <https://docs.bsky.app/docs/advanced-guides/oauth-client>
+
+## References
+
+- Cocoon PDS: <https://github.com/haileyok/cocoon>
+- Tranquil PDS: <https://tangled.org/tranquil.farm/tranquil-pds>
+- Cirrus PDS: <https://github.com/ascorbic/cirrus>

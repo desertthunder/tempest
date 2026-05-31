@@ -3,16 +3,29 @@ title: Identity and Handles
 updated: 2026-05-08
 ---
 
-Identity is rooted in DIDs. Handles are mutable DNS names that must resolve back to the DID, while the DID document must claim the handle.
+Identity is rooted in DIDs. Handles are mutable DNS names that must resolve back to the
+DID, while the DID document must claim the handle.
 
 ## DID Support
 
 Supported methods:
 
-- `did:plc` for normal hosted accounts.
-- `did:web` for development and explicit import/migration cases.
+- `did:web` for self-hosted identities where the operator controls the domain.
+- `did:plc` for identities published to the PLC directory.
 
-Tempest must distinguish invalid DID syntax, unsupported DID method, and supported method resolution failure.
+Tempest must distinguish invalid DID syntax, unsupported DID method, and
+supported method resolution failure.
+
+### Hosted identity modes
+
+Tempest must not mint identifiers that are not externally resolvable.
+
+- In `did:web` mode, Tempest serves the DID document at `/.well-known/did.json`
+  and expects handle verification via DNS TXT and/or HTTPS well-known.
+- In `did:plc` mode, Tempest publishes PLC operations to `https://plc.directory`
+  for identity creation and handle/service updates.
+
+OAuth and relay/AppView interop depend on this being correct.
 
 ## DID Document Requirements
 
@@ -93,3 +106,9 @@ Expected:
 - <https://atproto.com/specs/handle>
 - <https://atproto.com/guides/identity>
 - <https://github.com/did-method-plc/did-method-plc>
+
+## References
+
+- Cocoon PDS: <https://github.com/haileyok/cocoon>
+- Tranquil PDS: <https://tangled.org/tranquil.farm/tranquil-pds>
+- Cirrus PDS: <https://github.com/ascorbic/cirrus>

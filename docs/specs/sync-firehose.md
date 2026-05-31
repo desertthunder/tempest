@@ -1,9 +1,12 @@
 ---
 title: Sync and Firehose
-updated: 2026-05-08
+updated: 2026-05-31
+status: implemented
 ---
 
 # Sync and Firehose
+
+Reference documentation: ../reference/sync-firehose.md
 
 Sync exposes repository exports and live event streams. `sequencer.sqlite` is the source of truth for the PDS-wide event cursor.
 

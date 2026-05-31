@@ -3,6 +3,7 @@ title: Milestone 11 - Security, OAuth, and Delegated Access
 specs:
   - ../specs/security-oauth.md
   - ../specs/accounts-auth.md
+  - ../specs/identity-handles.md
 ---
 
 Goal: make Tempest usable by modern atproto clients without weakening account security.
@@ -26,9 +27,15 @@ Goal: make Tempest usable by modern atproto clients without weakening account se
 - [ ] T11-15: Add delegated-access schema and revoke flow.
 - [ ] T11-16: Add auth, reset, OAuth, and app-password rate limits.
 - [ ] T11-17: Add Hurl smoke tests for OAuth metadata, PAR nonce, token issue, scope enforcement, and revoke.
+- [ ] T11-18: Add hosted DID mode configuration (`did:plc` vs `did:web`) and refuse unsupported combinations.
+- [ ] T11-19: Implement PLC operation publish flow for `did:plc` hosted accounts (create/update).
+- [ ] T11-20: Add identity correctness checks used by OAuth flows (DID resolution + `#atproto_pds` service endpoint match).
+- [ ] T11-21: Add Hurl smoke tests for identity correctness (handle -> DID, DID doc -> handle, service endpoint).
+- [ ] T11-22: Document operator workflows for identity troubleshooting (what to check, what to rotate, what to republish).
 
 ## Integration Tests
 
+- Identity correctness checks detect mismatched DID documents and service endpoints.
 - OAuth client can complete an authorization-code flow.
 - DPoP-bound tokens fail without valid DPoP proof.
 - Partial scopes are enforced exactly.

@@ -17,7 +17,7 @@ Goal: close protocol gaps and verify behavior against external clients, fixtures
 - [x] T10-07: Add `app.bsky.actor.getPreferences` and `app.bsky.actor.putPreferences` for private preference migration compatibility.
 - [x] T10-08: Add XRPC proxy fallback rules for service endpoints that should be proxied, not locally implemented.
 - [x] T10-09: Add interop fixture test suite.
-- [x] T10-10: Add Hurl compatibility smoke tests.
+- [/] T10-10: Add Hurl compatibility smoke tests and keep them passing.
 - [x] T10-11: Add migration/import tests that hand off to Milestone 12.
 - [x] T10-12: Add abuse cases for oversized records, deep CBOR, invalid CIDs, malformed CAR, and invalid firehose frames.
 - [x] T10-13: Add external relay/AppView verification notes.
@@ -40,3 +40,8 @@ Expected:
 
 - Both Hurl smoke tests exit successfully.
 - Output includes account DID, latest commit, exported CAR size, blob CID, and observed firehose seq.
+
+Known gap:
+
+- `test/smoke/tempest_compat.hurl` currently needs behavior alignment for
+  `com.atproto.sync.requestCrawl`.

@@ -8,12 +8,18 @@ specs:
 
 Goal: give self-hosters enough UI and operational tooling to run the PDS safely.
 
-## Tasks
+This slice exists to increase development observability:
 
 - [ ] T14-01: Add minimal authenticated account dashboard.
+- [ ] T14-04: Add repo browser for the authenticated account.
+- [ ] T14-14: Add blob browser (temp/public state + download links + headers summary).
+- [ ] T14-15: Add sequencer viewer (tail `repo_seq` + filters by DID/type).
+- [ ] T14-16: Add firehose viewer (subscribe + decode frames for display).
+
+---
+
 - [ ] T14-02: Add UI for sessions, OAuth grants, app passwords, and delegated access.
 - [ ] T14-03: Add UI for email, password, MFA, backup codes, and trusted devices.
-- [ ] T14-04: Add repo browser for the authenticated account.
 - [ ] T14-05: Add admin dashboard for account status, sequencer, storage, and relay crawl status.
 - [ ] T14-06: Add invite-code management UI.
 - [ ] T14-07: Add one-click repo verify from admin UI.

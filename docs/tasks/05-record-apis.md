@@ -4,6 +4,10 @@ specs:
   - ../specs/record-apis.md
 ---
 
-Goal: persist records in per-account repositories and expose repository XRPC reads and writes.
+Completed [May 8, 2026](../../CHANGELOG.md#2026-05-08).
 
-Completed [May 8, 2026](../../CHANGELOG.md#2026-05-08)
+## Verification
+
+```bash
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/records.hurl
+```
