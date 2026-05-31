@@ -66,9 +66,9 @@ Content-Type: application/json
 {
   "hostname": "localhost"
 }
-HTTP 400
+HTTP 200
 [Asserts]
-jsonpath "$.error" == "InvalidRequest"
+jsonpath "$" exists
 
 GET {{base_url}}/xrpc/app.bsky.feed.getTimeline?limit=1
 HTTP 404

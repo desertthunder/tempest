@@ -16,6 +16,7 @@ Graduated reference docs:
 - [Record APIs](record-apis.md)
 - [Blobs](blobs.md)
 - [Lexicon Schemas](lexicon-schemas.md)
+- [Interop and Integration Testing](interop-testing.md)
 
 Additional reference notes:
 

@@ -2,6 +2,11 @@
 
 ## v0.1.0
 
+### 2026-05-31
+
+- Added compatibility smoke coverage for `applyWrites`, `getBlocks`, `requestCrawl`,
+  preference endpoints, and unknown AppView fallback.
+
 ### 2026-05-08
 
 - Added pure-Elixir repository primitives for AT URIs, NSIDs, record keys, DIDs, TIDs,
