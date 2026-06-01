@@ -65,12 +65,13 @@ defmodule Tempest.Sequencer do
   def list_after(cursor, opts \\ []) when is_integer(cursor) and cursor >= 0 do
     limit = Keyword.get(opts, :limit, 500)
     did = Keyword.get(opts, :did)
+    event_type = Keyword.get(opts, :type)
 
     path =
       Tempest.Config.load!()
       |> Tempest.Config.sequencer_db_path()
 
-    {sql, bindings} = list_after_query(cursor, limit, did)
+    {sql, bindings} = list_after_query(cursor, limit, did, event_type)
 
     with {:ok, conn} <- Sqlite3.open(path),
          {:ok, statement} <- Sqlite3.prepare(conn, sql),
@@ -116,7 +117,18 @@ defmodule Tempest.Sequencer do
     end
   end
 
-  defp list_after_query(cursor, limit, did) when is_binary(did) do
+  defp list_after_query(cursor, limit, did, event_type)
+       when is_binary(did) and event_type in [@identity, @account, @commit] do
+    {"""
+     SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
+     FROM repo_seq
+     WHERE seq > ?1 AND did = ?2 AND event_type = ?3 AND event_cbor != ''
+     ORDER BY seq ASC
+     LIMIT ?4
+     """, [cursor, did, event_type, limit]}
+  end
+
+  defp list_after_query(cursor, limit, did, _event_type) when is_binary(did) do
     {"""
      SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
      FROM repo_seq
@@ -126,7 +138,17 @@ defmodule Tempest.Sequencer do
      """, [cursor, did, limit]}
   end
 
-  defp list_after_query(cursor, limit, _did) do
+  defp list_after_query(cursor, limit, _did, event_type) when event_type in [@identity, @account, @commit] do
+    {"""
+     SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
+     FROM repo_seq
+     WHERE seq > ?1 AND event_type = ?2 AND event_cbor != ''
+     ORDER BY seq ASC
+     LIMIT ?3
+     """, [cursor, event_type, limit]}
+  end
+
+  defp list_after_query(cursor, limit, _did, _event_type) do
     {"""
      SELECT seq, did, event_type, rev, commit_cid, event_cbor, created_at
      FROM repo_seq

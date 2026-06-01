@@ -41,6 +41,11 @@ defmodule TempestWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/account", OperatorAccountController, :dashboard
+    get "/account/repo", OperatorAccountController, :repo
+    get "/account/blobs", OperatorAccountController, :blobs
+    get "/account/sequencer", OperatorAccountController, :sequencer
+    get "/account/firehose", OperatorAccountController, :firehose
   end
 
   scope "/", TempestWeb do

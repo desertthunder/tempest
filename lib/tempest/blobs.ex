@@ -84,6 +84,26 @@ defmodule Tempest.Blobs do
   end
 
   @doc """
+  Lists all blob metadata states for account/operator inspection.
+  """
+  def list_all(did, opts \\ []) when is_binary(did) and is_list(opts) do
+    limit = Keyword.get(opts, :limit, 50)
+
+    sql = """
+    SELECT did, cid, mime_type, size, state, inserted_at, updated_at, temp_expires_at, referenced_at
+    FROM blob_metadata
+    WHERE did = ?1
+    ORDER BY updated_at DESC, cid ASC
+    LIMIT ?2
+    """
+
+    case Repo.query(sql, [did, limit]) do
+      {:ok, %{rows: rows}} -> {:ok, Enum.map(rows, &metadata_from_row/1)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Returns blob metadata for a DID/CID pair.
   """
   @spec get_metadata(String.t(), String.t()) :: {:ok, map()} | {:error, :blob_not_found | term()}
@@ -95,19 +115,8 @@ defmodule Tempest.Blobs do
     """
 
     case Repo.query(sql, [did, cid]) do
-      {:ok, %{rows: [[did, cid, mime_type, size, state, inserted_at, updated_at, temp_expires_at, referenced_at]]}} ->
-        {:ok,
-         %{
-           did: did,
-           cid: cid,
-           mime_type: mime_type,
-           size: size,
-           state: state,
-           inserted_at: inserted_at,
-           updated_at: updated_at,
-           temp_expires_at: temp_expires_at,
-           referenced_at: referenced_at
-         }}
+      {:ok, %{rows: [row]}} ->
+        {:ok, metadata_from_row(row)}
 
       {:ok, %{rows: []}} ->
         {:error, :blob_not_found}
@@ -180,6 +189,20 @@ defmodule Tempest.Blobs do
          {:ok, missing} <- missing_cids(did, referenced_cids) do
       {:ok, %{blob_count: public_count, missing_blob_count: length(missing)}}
     end
+  end
+
+  defp metadata_from_row([did, cid, mime_type, size, state, inserted_at, updated_at, temp_expires_at, referenced_at]) do
+    %{
+      did: did,
+      cid: cid,
+      mime_type: mime_type,
+      size: size,
+      state: state,
+      inserted_at: inserted_at,
+      updated_at: updated_at,
+      temp_expires_at: temp_expires_at,
+      referenced_at: referenced_at
+    }
   end
 
   defp public_count(did) do

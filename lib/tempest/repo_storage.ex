@@ -317,6 +317,56 @@ defmodule Tempest.RepoStorage do
   end
 
   @doc """
+  Lists recent current records for operator/account inspection.
+  """
+  def list_recent_records(did, opts \\ [], %Config{} = config \\ Config.load!())
+      when is_binary(did) and is_list(opts) do
+    limit = Keyword.get(opts, :limit, 50)
+
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, rows} <-
+               fetch_all(
+                 conn,
+                 """
+                 SELECT collection, rkey, path, cid, record_json, created_at, updated_at
+                 FROM records
+                 ORDER BY updated_at DESC, path ASC
+                 LIMIT ?1
+                 """,
+                 [limit]
+               ) do
+          Enum.reduce_while(rows, {:ok, []}, fn [collection, rkey, path, cid, record_json, created_at, updated_at],
+                                                {:ok, records} ->
+            case Jason.decode(record_json) do
+              {:ok, value} ->
+                record = %{
+                  collection: collection,
+                  rkey: rkey,
+                  path: path,
+                  cid: cid,
+                  value: value,
+                  created_at: created_at,
+                  updated_at: updated_at
+                }
+
+                {:cont, {:ok, [record | records]}}
+
+              {:error, reason} ->
+                {:halt, {:error, {:invalid_record_json, reason}}}
+            end
+          end)
+          |> case do
+            {:ok, records} -> {:ok, Enum.reverse(records)}
+            {:error, reason} -> {:error, reason}
+          end
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
   Exports the repository as a CAR v1 archive rooted at the current commit.
   """
   def export_car(did, %Config{} = config \\ Config.load!()) when is_binary(did) do

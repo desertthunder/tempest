@@ -10,11 +10,11 @@ Goal: give self-hosters enough UI and operational tooling to run the PDS safely.
 
 This slice exists to increase development observability:
 
-- [ ] T14-01: Add minimal authenticated account dashboard.
-- [ ] T14-04: Add repo browser for the authenticated account.
-- [ ] T14-14: Add blob browser (temp/public state + download links + headers summary).
-- [ ] T14-15: Add sequencer viewer (tail `repo_seq` + filters by DID/type).
-- [ ] T14-16: Add firehose viewer (subscribe + decode frames for display).
+- [x] T14-01: Add minimal authenticated account dashboard.
+- [x] T14-04: Add repo browser for the authenticated account.
+- [x] T14-14: Add blob browser (temp/public state + download links + headers summary).
+- [x] T14-15: Add sequencer viewer (tail `repo_seq` + filters by DID/type).
+- [x] T14-16: Add firehose viewer (subscribe + decode frames for display).
 
 ---
 
@@ -42,6 +42,7 @@ This slice exists to increase development observability:
 ```bash
 hurl --test --jobs 1 \
   --variable base_url=http://localhost:4000 \
+  --variable suffix="$(date +%s)" \
   --variable admin_token="$ADMIN_TOKEN" \
   test/smoke/operator-account-ux.hurl
 ```

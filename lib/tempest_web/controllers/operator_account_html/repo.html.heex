@@ -1,0 +1,66 @@
+<main id="repo-browser" class="operator-account">
+  <div class="operator-account__desktop">
+    <nav class="resource-strip operator-account__nav" aria-label="Operator account tools">
+      <a href={~p"/account"}>Dashboard</a>
+      <a href={~p"/account/repo"}>Repo</a>
+      <a href={~p"/account/blobs"}>Blobs</a>
+      <a href={~p"/account/sequencer"}>Sequencer</a>
+      <a href={~p"/account/firehose"}>Firehose</a>
+    </nav>
+
+    <section class="win-window" aria-labelledby="repo-title">
+      <header class="win-window__titlebar"><span id="repo-title" class="win-window__title">Repo Browser</span></header>
+      <div class="win-window__body">
+        <dl class="facts-list">
+          <dt>DID</dt>
+          <dd>{@account.did}</dd>
+          <dt>commit</dt>
+          <dd>{@latest.cid}</dd>
+          <dt>revision</dt>
+          <dd>{@latest.rev}</dd>
+          <dt>CAR</dt>
+          <dd><a href={~p"/xrpc/com.atproto.sync.getRepo?did=#{@account.did}"}>download repo CAR</a></dd>
+        </dl>
+      </div>
+    </section>
+
+    <section class="win-window" aria-labelledby="collections-title">
+      <header class="win-window__titlebar">
+        <span id="collections-title" class="win-window__title">Collections</span>
+      </header>
+      <div class="win-window__body endpoint-list" id="repo-collections">
+        <div :for={collection <- @collections} class="endpoint-list__row">
+          <span class="endpoint-list__method">NSID</span>
+          <span>{collection}</span>
+          <span class="badge badge-info badge-sm endpoint-list__badge">current</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="win-window" aria-labelledby="records-title">
+      <header class="win-window__titlebar">
+        <span id="records-title" class="win-window__title">Recent Records</span>
+      </header>
+      <div class="win-window__body operator-account__table-wrap">
+        <table id="repo-records" class="operator-account__table">
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>CID</th>
+              <th>Updated</th>
+              <th>Record</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr :for={record <- @records}>
+              <td>{record.path}</td>
+              <td>{record.cid}</td>
+              <td>{record.updated_at}</td>
+              <td><pre>{json_pretty(record.value)}</pre></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>

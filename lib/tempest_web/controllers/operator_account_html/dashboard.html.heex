@@ -1,0 +1,67 @@
+<main id="account-dashboard" class="operator-account">
+  <div class="operator-account__desktop">
+    <section class="win-window win-window--hero" aria-labelledby="operator-account-title">
+      <header class="win-window__titlebar">
+        <span id="operator-account-title" class="win-window__title">Operator Account</span>
+        <span class="win-window__controls" aria-hidden="true"><span></span><span></span><span></span></span>
+      </header>
+      <div class="win-window__body operator-account__hero">
+        <div>
+          <p class="tempest-home__brand" aria-hidden="true">Account</p>
+          <h1 class="tempest-home__title">Dashboard</h1>
+          <p class="tempest-home__subtitle">Authenticated view for <strong>{@account.handle}</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <nav class="resource-strip operator-account__nav" aria-label="Operator account tools">
+      <a href={~p"/account"}>Dashboard</a>
+      <a href={~p"/account/repo"}>Repo</a>
+      <a href={~p"/account/blobs"}>Blobs</a>
+      <a href={~p"/account/sequencer"}>Sequencer</a>
+      <a href={~p"/account/firehose"}>Firehose</a>
+    </nav>
+
+    <div class="tempest-home__grid">
+      <section class="win-window" aria-labelledby="account-identity-title">
+        <header class="win-window__titlebar">
+          <span id="account-identity-title" class="win-window__title">ACCOUNT.INI</span>
+        </header>
+        <div class="win-window__body">
+          <dl class="facts-list">
+            <dt>DID</dt>
+            <dd>{@account.did}</dd>
+            <dt>handle</dt>
+            <dd>{@account.handle}</dd>
+            <dt>email</dt>
+            <dd>{@account.email}</dd>
+            <dt>status</dt>
+            <dd>{@account.status}</dd>
+            <dt>active</dt>
+            <dd>{inspect(@account.active)}</dd>
+          </dl>
+        </div>
+      </section>
+
+      <section class="win-window" aria-labelledby="account-status-title">
+        <header class="win-window__titlebar">
+          <span id="account-status-title" class="win-window__title">Repository Status</span>
+        </header>
+        <div class="win-window__body">
+          <dl id="account-status" class="facts-list">
+            <dt>records</dt>
+            <dd>{@status["recordCount"]}</dd>
+            <dt>repos</dt>
+            <dd>{@status["repoCount"]}</dd>
+            <dt>public blobs</dt>
+            <dd>{@status["blobCount"]}</dd>
+            <dt>missing blobs</dt>
+            <dd>{@status["missingBlobCount"]}</dd>
+            <dt>migration ready</dt>
+            <dd>{inspect(@status["migrationReady"])}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>

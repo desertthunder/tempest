@@ -448,6 +448,125 @@ body {
   font-size: 0.82rem;
 }
 
+.operator-account {
+  min-height: 100vh;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+  background-color: var(--win95-desktop);
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.08) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.08) 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+}
+
+.operator-account__desktop {
+  display: grid;
+  gap: var(--space-4);
+  width: min(1180px, 100%);
+  margin-inline: auto;
+  padding-bottom: 3rem;
+}
+
+.operator-account__hero {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.operator-account__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+.operator-account__nav a {
+  color: var(--win95-link);
+  font-weight: 700;
+}
+
+.operator-account__nav a::before {
+  content: "▶ ";
+  color: red;
+}
+
+.operator-account__note {
+  margin-block: 0 var(--space-3);
+  font-family: var(--font-terminal);
+  overflow-wrap: anywhere;
+}
+
+.operator-account__table-wrap {
+  overflow-x: auto;
+  box-shadow: var(--bevel-in);
+}
+
+.operator-account__table {
+  width: 100%;
+  min-width: 46rem;
+  border-collapse: collapse;
+  background: #dfdfdf;
+  font-size: 0.78rem;
+}
+
+.operator-account__table th,
+.operator-account__table td {
+  padding: var(--space-2);
+  border: 1px dotted var(--win95-shadow);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.operator-account__table th {
+  background: var(--web-yellow);
+  font-weight: 700;
+}
+
+.operator-account__table pre {
+  max-width: 32rem;
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--font-terminal);
+}
+
+.operator-account__pill,
+.operator-account__form button {
+  padding: 0.15rem var(--space-2);
+  background: var(--web-yellow);
+  box-shadow: var(--bevel-out);
+}
+
+.operator-account__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-4);
+}
+
+.operator-account__form label {
+  display: grid;
+  gap: var(--space-1);
+  font-weight: 700;
+}
+
+.operator-account__form input {
+  min-height: 1.8rem;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: white;
+  box-shadow: var(--bevel-in);
+  font: inherit;
+}
+
+.operator-account__form button {
+  min-height: 1.8rem;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .tempest-home__hero,
   .endpoint-list__row {
