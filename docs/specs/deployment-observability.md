@@ -1,13 +1,15 @@
 ---
 title: Deployment and Observability
-updated: 2026-05-08
+updated: 2026-06-02
 ---
 
 # Deployment and Observability
 
-The first production target is one Phoenix release behind a TLS reverse proxy, with one writable data volume.
+The first production target is one Phoenix release behind HTTPS, with one
+writable data volume. The HTTPS boundary may be a local reverse proxy or a
+managed PaaS router.
 
-## Deployment Shape
+## Local Deployment Shape
 
 ```yaml
 services:
@@ -23,6 +25,26 @@ services:
 ```
 
 No external database service is required for the SQLite-first version.
+
+## Managed PaaS Shape
+
+A Railway-like deployment still needs durable local storage for SQLite, WAL
+files, repo data, signing keys, OAuth keys, and temporary backup workspaces.
+Cloudflare R2 or another S3-compatible service may store blobs and backup
+archives.
+
+```text
+managed service:
+  Phoenix release
+  persistent volume:
+    account.sqlite
+    sequencer.sqlite
+    repos/
+    keys/
+object storage:
+  blobs/
+  backup archives/
+```
 
 Optional production adapters may add:
 
@@ -45,11 +67,19 @@ TEMPEST_BLOB_STORE=local
 TEMPEST_BLOB_MAX_BYTES=10000000
 TEMPEST_SMTP_ENABLED=false
 TEMPEST_BACKUP_STORE=local
+
+# S3/R2-backed profiles also set:
+# TEMPEST_BLOB_STORE=s3
+# TEMPEST_BLOB_S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com
+# TEMPEST_BLOB_S3_BUCKET=tempest-blobs
+# TEMPEST_BACKUP_STORE=s3
+# TEMPEST_BACKUP_S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com
+# TEMPEST_BACKUP_S3_BUCKET=tempest-backups
 ```
 
-## Reverse Proxy
+## HTTPS and Reverse Proxy
 
-Caddy example:
+Caddy example for local self-hosting:
 
 ```caddyfile
 tempest.example.com {
@@ -57,7 +87,9 @@ tempest.example.com {
 }
 ```
 
-WebSockets must pass through for `subscribeRepos`.
+WebSockets must pass through for `subscribeRepos`. Managed PaaS deployments
+must verify the same behavior through the provider's HTTPS router and any
+Cloudflare DNS/proxy layer.
 
 ## Telemetry
 
@@ -86,7 +118,9 @@ Use Phoenix telemetry and structured logs first. Prometheus/OpenTelemetry can fo
 - Health checks must not require database writes.
 - Logs must not include passwords, private keys, access tokens, refresh tokens, or admin tokens.
 - Reverse proxy docs must include WebSocket behavior.
+- Managed PaaS docs must identify durable paths and warn against ephemeral disk.
 - Backup restore drills must verify account DB, sequencer DB, repos, blobs, signing keys, and OAuth keys together.
+- S3/R2-backed deployments must prove blob reads and backup restore from object storage.
 - Production docs must tell operators how to rotate JWT/OAuth/signing/admin secrets without silently invalidating account identity.
 
 ## HTTP Verification

@@ -1,6 +1,6 @@
 ---
 title: Tempest AT Protocol PDS Specification Index
-updated: 2026-05-08
+updated: 2026-06-02
 ---
 
 Tempest is a Phoenix application that will become a self-hostable AT Protocol
@@ -29,7 +29,8 @@ Subsystem specifications live in this directory.
 13. [Admin Operations](admin-operations.md)
 14. [Deployment and Observability](deployment-observability.md)
 15. [Interop and Integration Testing](interop-testing.md)
-16. [Hurl Smoke Tests](hurl-smoke-tests.md)
+16. [PDS Compatibility Against Reference Surface](pds-compatibility.md)
+17. [Hurl Smoke Tests](hurl-smoke-tests.md)
 
 ## Source Baseline
 
@@ -48,6 +49,7 @@ Research was checked on 2026-05-07 against:
 - AT Protocol OAuth spec: <https://atproto.com/specs/oauth>
 - AT Protocol OAuth scopes guide: <https://atproto.com/guides/scopes>
 - AT Protocol account migration guide: <https://atproto.com/guides/account-migration>
+- Reference PDS implementation: <https://github.com/bluesky-social/atproto/tree/main/packages/pds>
 
 ## Documentation Rules
 

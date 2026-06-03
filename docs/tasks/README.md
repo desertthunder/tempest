@@ -17,8 +17,9 @@ title: Milestone Tasks
 11. [10 Compatibility Hardening](./10-compatibility-hardening.md)
 12. [11 Security, OAuth, and Delegated Access](./11-security-oauth.md)
 13. [12 Migration and Account Lifecycle](./12-migration-lifecycle.md)
-14. [13 Admin and Deployment](./13-admin-deployment.md)
-15. [14 Operator and Account Management UX](./14-operator-account-ux.md)
+14. [13 Admin, Storage, and Operator Features](./13-admin-operator-features.md)
+15. [14 Local PDS Compatibility Testing](./14-local-pds-compatibility.md)
+16. [15 Deployment and Post-deployment Verification](./15-deployment-verification.md)
 
 Each file in this directory is a milestone. Each task is intended to be the
 smallest useful unit of work: one focused implementation change, test, or
@@ -30,13 +31,15 @@ Blocking work for the current target profile (see `docs/specs/target-profile.md`
 
 - Compatibility stays green: `test/smoke/tempest_basic.hurl` and
   `test/smoke/tempest_compat.hurl` must pass.
-- Identity is externally verifiable for the chosen hosted DID mode.
-- Modern client auth works end-to-end (OAuth/app passwords + rate limits) with
-  black-box Hurl coverage.
-- Data custody exists as operator workflows: repo verify/export, backup/restore,
-  and a restore drill.
-- Minimal operator UI exists for inspection and "play around" testing (account
-  dashboard + repo/blob/sequencer visibility).
+- Feature work lands first: admin auth/status, repo and backup commands,
+  S3/R2 adapters, SMTP, telemetry, and operator UI.
+- Local compatibility testing follows without requiring deployment: ConnCase
+  endpoint checks, SDK tests, local Hurl smoke tests, migration tests, and
+  restore drills.
+- Deployment work comes after local proof: release config, Docker, reverse
+  proxy docs, managed PaaS docs, persistent volume requirements, and R2 docs.
+- Post-deployment testing proves external DID/handle verification, HTTPS XRPC,
+  WebSocket firehose behavior, relay/AppView crawl, and real-client flows.
 
 Deprioritized behind the above for this profile:
 

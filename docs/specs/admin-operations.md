@@ -1,6 +1,6 @@
 ---
 title: Admin Operations
-updated: 2026-05-07
+updated: 2026-06-02
 ---
 
 # Admin Operations
@@ -47,13 +47,22 @@ Minimum admin-visible HTTP checks:
 
 ## Backups
 
-SQLite-first backup:
+SQLite-first local backup:
 
 1. Enter maintenance mode or pause writes.
 2. Checkpoint WAL files.
-3. Copy `account.sqlite`, `sequencer.sqlite`, `repos/`, and `blobs/`.
+3. Copy `account.sqlite`, `sequencer.sqlite`, `repos/`, `blobs/`, and keys.
 4. Resume writes.
 5. Run verification against the backup.
+
+S3/R2-backed backup:
+
+1. Enter maintenance mode or pause writes.
+2. Checkpoint WAL files.
+3. Copy SQLite DBs, WAL files, repos, and keys from the durable volume.
+4. Verify blob references against the configured object store.
+5. Upload the backup archive to the configured backup bucket.
+6. Restore into a fresh directory or volume and run read-only smoke tests.
 
 Online backup can use SQLite backup APIs later.
 
