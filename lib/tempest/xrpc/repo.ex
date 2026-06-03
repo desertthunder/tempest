@@ -5,7 +5,6 @@ defmodule Tempest.Xrpc.Repo do
 
   alias Plug.Conn
   alias Tempest.Blobs
-  alias Tempest.Blobs.LocalStorage
   alias Tempest.Config
   alias Tempest.Records
 
@@ -29,8 +28,7 @@ defmodule Tempest.Xrpc.Repo do
          {:ok, declared_mime_type} <- content_type(conn),
          {:ok, bytes, conn} <- read_upload_body(conn, config.blob_max_bytes),
          {:ok, metadata} <- Blobs.validate_upload(bytes, declared_size, declared_mime_type, config),
-         {:ok, _stored} <-
-           LocalStorage.put_temp_blob(config, conn.assigns.auth_context.account.did, metadata.cid, bytes),
+         {:ok, _stored} <- Blobs.put_temp_blob(config, conn.assigns.auth_context.account.did, metadata.cid, bytes),
          :ok <- Blobs.put_temp_metadata(conn.assigns.auth_context.account.did, metadata) do
       {:ok,
        %{

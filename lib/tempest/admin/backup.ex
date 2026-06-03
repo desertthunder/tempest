@@ -13,12 +13,14 @@ defmodule Tempest.Admin.Backup do
   def create(opts \\ []) do
     config = Keyword.get(opts, :config, Config.load!())
     backup_dir = Keyword.get(opts, :path) || default_backup_dir(config)
+    upload? = Keyword.get(opts, :upload?, false)
 
     with :ok <- File.mkdir_p(backup_dir),
          :ok <- checkpoint_sqlite_files(config),
          :ok <- copy_existing(config, backup_dir),
-         :ok <- write_manifest(config, backup_dir) do
-      {:ok, %{path: backup_dir}}
+         :ok <- write_manifest(config, backup_dir),
+         {:ok, upload} <- maybe_upload(backup_dir, upload?) do
+      {:ok, %{path: backup_dir, upload: upload}}
     end
   end
 
@@ -82,6 +84,57 @@ defmodule Tempest.Admin.Backup do
     else
       {:error, reason} -> {:error, {:sqlite_checkpoint, path, reason}}
     end
+  end
+
+  defp maybe_upload(_backup_dir, false), do: {:ok, nil}
+
+  defp maybe_upload(backup_dir, true) do
+    backup_config = Application.get_env(:tempest, __MODULE__, [])
+
+    case Keyword.get(backup_config, :store, :local) do
+      :s3 -> upload_s3_backup(backup_dir, Keyword.fetch!(backup_config, :s3))
+      "s3" -> upload_s3_backup(backup_dir, Keyword.fetch!(backup_config, :s3))
+      _local -> {:error, :backup_store_not_configured}
+    end
+  rescue
+    e in KeyError -> {:error, {:missing_backup_config, e.key}}
+  end
+
+  defp upload_s3_backup(backup_dir, s3_config) do
+    archive_path = backup_dir <> ".zip"
+    key = Keyword.get(s3_config, :key) || "backups/" <> Path.basename(archive_path)
+
+    with {:ok, archive_path} <- archive_backup(backup_dir, archive_path),
+         {:ok, uploaded} <- Tempest.Admin.S3BackupStorage.upload_file(s3_config, key, archive_path) do
+      {:ok, Map.put(uploaded, :archive_path, archive_path)}
+    end
+  end
+
+  defp archive_backup(backup_dir, archive_path) do
+    files = zip_files(backup_dir)
+
+    archive = String.to_charlist(archive_path)
+    zip_entries = Enum.map(files, fn {relative, path} -> {String.to_charlist(relative), File.read!(path)} end)
+
+    case :zip.create(archive, zip_entries) do
+      {:ok, _archive} -> {:ok, archive_path}
+      {:error, reason} -> {:error, {:zip_create, reason}}
+    end
+  end
+
+  defp zip_files(backup_dir) do
+    backup_dir
+    |> files_under()
+    |> Enum.map(fn path -> {Path.relative_to(path, backup_dir), path} end)
+  end
+
+  defp files_under(dir) do
+    dir
+    |> File.ls!()
+    |> Enum.flat_map(fn entry ->
+      path = Path.join(dir, entry)
+      if File.dir?(path), do: files_under(path), else: [path]
+    end)
   end
 
   defp copy_existing(config, backup_dir) do

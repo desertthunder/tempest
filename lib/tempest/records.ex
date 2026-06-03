@@ -6,7 +6,6 @@ defmodule Tempest.Records do
   alias Tempest.Accounts.AuthContext
   alias Tempest.Accounts.Account
   alias Tempest.Blobs
-  alias Tempest.Blobs.LocalStorage
   alias Tempest.Config
   alias Tempest.Identity
   alias Tempest.Identity.DidDocument
@@ -363,7 +362,7 @@ defmodule Tempest.Records do
     config = Config.load!()
 
     Enum.reduce_while(blob_cids, :ok, fn cid, :ok ->
-      with {:ok, _path} <- LocalStorage.promote_blob(config, did, cid),
+      with {:ok, _path} <- Blobs.promote_blob(config, did, cid),
            :ok <- Blobs.mark_public(did, [cid]) do
         {:cont, :ok}
       else
@@ -395,7 +394,7 @@ defmodule Tempest.Records do
       old_blob_cids
       |> Enum.reject(&(&1 in current_blob_cids))
       |> Enum.reduce_while(:ok, fn cid, :ok ->
-        with :ok <- LocalStorage.delete_blob(config, did, cid),
+        with :ok <- Blobs.delete_blob(config, did, cid),
              :ok <- Blobs.delete_metadata(did, [cid]) do
           {:cont, :ok}
         else

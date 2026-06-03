@@ -72,9 +72,17 @@ TEMPEST_BACKUP_STORE=local
 # TEMPEST_BLOB_STORE=s3
 # TEMPEST_BLOB_S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com
 # TEMPEST_BLOB_S3_BUCKET=tempest-blobs
+# TEMPEST_BLOB_S3_REGION=auto
+# TEMPEST_BLOB_S3_ACCESS_KEY_ID=...
+# TEMPEST_BLOB_S3_SECRET_ACCESS_KEY=...
+# TEMPEST_BLOB_S3_AUTHORIZATION=Bearer ... # optional instead of signing keys
 # TEMPEST_BACKUP_STORE=s3
 # TEMPEST_BACKUP_S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com
 # TEMPEST_BACKUP_S3_BUCKET=tempest-backups
+# TEMPEST_BACKUP_S3_REGION=auto
+# TEMPEST_BACKUP_S3_ACCESS_KEY_ID=...
+# TEMPEST_BACKUP_S3_SECRET_ACCESS_KEY=...
+# TEMPEST_BACKUP_S3_AUTHORIZATION=Bearer ... # optional instead of signing keys
 ```
 
 ## HTTPS and Reverse Proxy

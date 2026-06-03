@@ -117,6 +117,7 @@ defmodule Tempest.Blobs.S3Storage do
       |> Keyword.merge(opts)
       |> Keyword.update(:headers, default_headers(config), &(default_headers(config) ++ List.wrap(&1)))
       |> Keyword.put(:url, object_url(endpoint_url, bucket, key))
+      |> Tempest.S3Signature.sign(config)
 
     {:ok, request}
   rescue

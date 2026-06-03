@@ -321,6 +321,39 @@ defmodule Tempest.Blobs do
   end
 
   @doc """
+  Writes temporary blob bytes through the configured storage adapter.
+  """
+  def put_temp_blob(%Config{} = config, did, cid, bytes) when is_binary(bytes) do
+    adapter().put_temp_blob(adapter_config(config), did, cid, bytes)
+  end
+
+  @doc """
+  Promotes a temporary blob through the configured storage adapter.
+  """
+  def promote_blob(%Config{} = config, did, cid) do
+    adapter().promote_blob(adapter_config(config), did, cid)
+  end
+
+  @doc """
+  Reads promoted blob bytes through the configured storage adapter.
+  """
+  def get_blob(%Config{} = config, did, cid, mime_type \\ "application/octet-stream") do
+    adapter().get_blob(adapter_config(config), did, cid, mime_type)
+  end
+
+  @doc """
+  Deletes temp and promoted blob bytes through the configured storage adapter.
+  """
+  def delete_blob(%Config{} = config, did, cid) do
+    adapter().delete_blob(adapter_config(config), did, cid)
+  end
+
+  @doc """
+  Returns the configured blob storage adapter module.
+  """
+  def storage_adapter, do: adapter()
+
+  @doc """
   Returns a CDN URL for a public blob when CDN redirects are configured.
   """
   @spec cdn_url(String.t(), String.t()) :: {:ok, String.t()} | :disabled
@@ -453,6 +486,17 @@ defmodule Tempest.Blobs do
     map
     |> Map.values()
     |> Enum.reduce(acc, &collect_blob_cids/2)
+  end
+
+  defp adapter do
+    Keyword.get(blob_config(), :storage_adapter, Tempest.Blobs.LocalStorage)
+  end
+
+  defp adapter_config(%Config{} = config) do
+    case Keyword.get(blob_config(), :storage_config) do
+      nil -> config
+      storage_config -> storage_config
+    end
   end
 
   defp blob_config do

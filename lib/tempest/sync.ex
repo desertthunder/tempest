@@ -7,7 +7,6 @@ defmodule Tempest.Sync do
 
   alias Tempest.Accounts.Account
   alias Tempest.Blobs
-  alias Tempest.Blobs.LocalStorage
   alias Tempest.Config
   alias Tempest.Repo
   alias Tempest.RepoCore.{Cid, Did, Nsid, RecordKey}
@@ -265,7 +264,7 @@ defmodule Tempest.Sync do
         {:ok, %{redirect: url, cid: cid}}
 
       :disabled ->
-        with {:ok, blob} <- LocalStorage.get_blob(Config.load!(), did, cid, metadata.mime_type),
+        with {:ok, blob} <- Blobs.get_blob(Config.load!(), did, cid, metadata.mime_type),
              :ok <- ensure_blob_size(blob, metadata) do
           {:ok, Map.put(blob, :cid, cid)}
         end

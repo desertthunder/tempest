@@ -46,6 +46,52 @@ if blob_cdn_base_url = System.get_env("TEMPEST_BLOB_CDN_BASE_URL") do
   config :tempest, Tempest.Blobs, cdn_base_url: blob_cdn_base_url
 end
 
+if System.get_env("TEMPEST_BLOB_STORE") == "s3" do
+  s3_headers =
+    case System.get_env("TEMPEST_BLOB_S3_AUTHORIZATION") do
+      nil -> []
+      value -> [{"authorization", value}]
+    end
+
+  blob_s3_config =
+    [
+      endpoint_url: System.fetch_env!("TEMPEST_BLOB_S3_ENDPOINT"),
+      bucket: System.fetch_env!("TEMPEST_BLOB_S3_BUCKET"),
+      region: System.get_env("TEMPEST_BLOB_S3_REGION", "auto"),
+      access_key_id: System.get_env("TEMPEST_BLOB_S3_ACCESS_KEY_ID"),
+      secret_access_key: System.get_env("TEMPEST_BLOB_S3_SECRET_ACCESS_KEY"),
+      headers: s3_headers
+    ]
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+
+  config :tempest, Tempest.Blobs,
+    storage_adapter: Tempest.Blobs.S3Storage,
+    storage_config: blob_s3_config
+end
+
+if System.get_env("TEMPEST_BACKUP_STORE") == "s3" do
+  s3_headers =
+    case System.get_env("TEMPEST_BACKUP_S3_AUTHORIZATION") do
+      nil -> []
+      value -> [{"authorization", value}]
+    end
+
+  backup_s3_config =
+    [
+      endpoint_url: System.fetch_env!("TEMPEST_BACKUP_S3_ENDPOINT"),
+      bucket: System.fetch_env!("TEMPEST_BACKUP_S3_BUCKET"),
+      region: System.get_env("TEMPEST_BACKUP_S3_REGION", "auto"),
+      access_key_id: System.get_env("TEMPEST_BACKUP_S3_ACCESS_KEY_ID"),
+      secret_access_key: System.get_env("TEMPEST_BACKUP_S3_SECRET_ACCESS_KEY"),
+      headers: s3_headers
+    ]
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+
+  config :tempest, Tempest.Admin.Backup,
+    store: :s3,
+    s3: backup_s3_config
+end
+
 if admin_token_hash = System.get_env("TEMPEST_ADMIN_TOKEN_HASH") do
   config :tempest, :admin_token_hash, admin_token_hash
 end
