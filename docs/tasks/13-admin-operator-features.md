@@ -30,8 +30,8 @@ This slice exists to increase development observability:
 - [x] T13-13: Add `mix pds.backup.create` and `mix pds.backup.restore`.
 - [x] T13-14: Add S3-compatible blob adapter.
 - [x] T13-15: Add S3-compatible SQLite backup upload for SQLite deployments.
-- [ ] T13-16: Add SMTP adapter and account security notifications.
-- [ ] T13-17: Add telemetry events for XRPC, repo writes, blobs, and firehose.
+- [x] T13-16: Add SMTP adapter and account security notifications.
+- [x] T13-17: Add telemetry events for XRPC, repo writes, blobs, and firehose.
 - [ ] T13-18: Add UI for sessions, OAuth grants, app passwords, and delegated access.
 - [ ] T13-19: Add UI for email, password, MFA, backup codes, and trusted devices.
 - [ ] T13-20: Add admin dashboard for account status, sequencer, storage, and relay crawl status.

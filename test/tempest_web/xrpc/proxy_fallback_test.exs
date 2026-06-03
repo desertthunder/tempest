@@ -40,7 +40,7 @@ defmodule TempestWeb.Xrpc.ProxyFallbackTest do
   test "unknown PDS endpoints are not proxied", %{conn: conn} do
     Application.put_env(:tempest, Tempest.Xrpc.Proxy, upstream_base_url: "https://appview.example")
 
-    unknown_conn = get(conn, ~p"/xrpc/com.atproto.server.requestPasswordReset")
+    unknown_conn = get(conn, ~p"/xrpc/com.atproto.server.unknownMethod")
 
     assert %{"error" => "UnknownMethod"} = json_response(unknown_conn, 404)
   end

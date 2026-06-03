@@ -74,6 +74,19 @@ defmodule TempestWeb.Telemetry do
         description: "The time the connection spent waiting before being checked out for the query"
       ),
 
+      # Tempest protocol metrics
+      counter("tempest.xrpc.request.count", tags: [:nsid, :status]),
+      summary("tempest.xrpc.request.duration", unit: {:native, :millisecond}, tags: [:nsid, :status]),
+      counter("tempest.repo.write.count", tags: [:action]),
+      counter("tempest.repo.commit.count"),
+      counter("tempest.blob.upload.count", tags: [:mime_type]),
+      sum("tempest.blob.upload.bytes", tags: [:mime_type]),
+      counter("tempest.firehose.event.count", tags: [:event_type]),
+      sum("tempest.firehose.event.bytes", tags: [:event_type]),
+      counter("tempest.firehose.backfill.count"),
+      counter("tempest.firehose.subscriber.count", tags: [:event]),
+      counter("tempest.email.deliver.count", tags: [:purpose, :status]),
+
       # VM Metrics
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
       summary("vm.total_run_queue_lengths.total"),

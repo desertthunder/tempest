@@ -30,6 +30,11 @@ defmodule Tempest.Xrpc.Repo do
          {:ok, metadata} <- Blobs.validate_upload(bytes, declared_size, declared_mime_type, config),
          {:ok, _stored} <- Blobs.put_temp_blob(config, conn.assigns.auth_context.account.did, metadata.cid, bytes),
          :ok <- Blobs.put_temp_metadata(conn.assigns.auth_context.account.did, metadata) do
+      Tempest.Telemetry.execute([:blob, :upload], %{count: 1, bytes: metadata.size}, %{
+        did: conn.assigns.auth_context.account.did,
+        mime_type: metadata.mime_type
+      })
+
       {:ok,
        %{
          blob: %{

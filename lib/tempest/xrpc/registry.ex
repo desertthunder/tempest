@@ -155,6 +155,60 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["ExpiredToken", "InvalidToken"]
     },
     %Method{
+      nsid: "com.atproto.server.requestPasswordReset",
+      kind: :procedure,
+      auth: :none,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :request_password_reset},
+      errors: ["InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.server.resetPassword",
+      kind: :procedure,
+      auth: :none,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :reset_password},
+      errors: ["InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.server.requestEmailConfirmation",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :request_email_confirmation},
+      errors: ["ExpiredToken", "InvalidToken"]
+    },
+    %Method{
+      nsid: "com.atproto.server.confirmEmail",
+      kind: :procedure,
+      auth: :none,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :confirm_email},
+      errors: ["InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.server.requestEmailUpdate",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :request_email_update},
+      errors: ["ExpiredToken", "InvalidToken", "InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.server.updateEmail",
+      kind: :procedure,
+      auth: :none,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Server, :update_email},
+      errors: ["InvalidRequest"]
+    },
+    %Method{
       nsid: "com.atproto.identity.resolveHandle",
       kind: :query,
       auth: :none,

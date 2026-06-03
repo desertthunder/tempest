@@ -92,6 +92,22 @@ if System.get_env("TEMPEST_BACKUP_STORE") == "s3" do
     s3: backup_s3_config
 end
 
+if System.get_env("TEMPEST_SMTP_ENABLED") in ["1", "true", "TRUE"] do
+  config :tempest, Tempest.Mailer,
+    adapter: Swoosh.Adapters.SMTP,
+    relay: System.fetch_env!("TEMPEST_SMTP_HOST"),
+    port: System.get_env("TEMPEST_SMTP_PORT", "587") |> String.to_integer(),
+    username: System.get_env("TEMPEST_SMTP_USERNAME"),
+    password: System.get_env("TEMPEST_SMTP_PASSWORD"),
+    ssl: System.get_env("TEMPEST_SMTP_SSL") in ["1", "true", "TRUE"],
+    tls: String.to_existing_atom(System.get_env("TEMPEST_SMTP_TLS", "if_available")),
+    auth: String.to_existing_atom(System.get_env("TEMPEST_SMTP_AUTH", "if_available"))
+
+  config :tempest, Tempest.Security.Email,
+    from_name: System.get_env("TEMPEST_SMTP_FROM_NAME", "Tempest"),
+    from_address: System.fetch_env!("TEMPEST_SMTP_FROM_ADDRESS")
+end
+
 if admin_token_hash = System.get_env("TEMPEST_ADMIN_TOKEN_HASH") do
   config :tempest, :admin_token_hash, admin_token_hash
 end

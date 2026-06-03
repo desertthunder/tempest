@@ -105,9 +105,13 @@ defmodule TempestWeb.XrpcController do
   end
 
   defp dispatch(conn, params, method) do
-    {module, function} = method.handler
+    result =
+      Tempest.Telemetry.timed([:xrpc, :request], %{nsid: method.nsid, method: conn.method}, fn ->
+        {module, function} = method.handler
+        apply(module, function, [conn, params, method])
+      end)
 
-    case apply(module, function, [conn, params, method]) do
+    case result do
       {:ok, body} ->
         respond(conn, method, body)
 

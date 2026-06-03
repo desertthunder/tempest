@@ -3,7 +3,7 @@ defmodule Tempest.Xrpc.Server do
   Handlers for `com.atproto.server.*` XRPC methods.
   """
 
-  alias Tempest.Accounts
+  alias Tempest.{Accounts, Security}
 
   def describe_server(_conn, _params, _method) do
     config = Tempest.Config.load!()
@@ -139,8 +139,60 @@ defmodule Tempest.Xrpc.Server do
     end
   end
 
+  def request_password_reset(_conn, params, _method) do
+    case Security.request_password_reset(Map.get(params, "email") || Map.get(params, "identifier")) do
+      {:ok, _result} -> {:ok, %{}}
+      {:error, reason} -> email_error(reason)
+    end
+  end
+
+  def reset_password(_conn, params, _method) do
+    case Security.reset_password(Map.get(params, "token"), Map.get(params, "password")) do
+      {:ok, _account} -> {:ok, %{}}
+      {:error, :invalid_token} -> {:error, 400, "InvalidRequest", "token is invalid or expired"}
+      {:error, message} when is_binary(message) -> {:error, 400, "InvalidRequest", message}
+      {:error, reason} -> email_error(reason)
+    end
+  end
+
+  def request_email_confirmation(conn, _params, _method) do
+    case Security.request_email_confirmation(conn.assigns.auth_context.account) do
+      {:ok, _result} -> {:ok, %{}}
+      {:error, reason} -> email_error(reason)
+    end
+  end
+
+  def confirm_email(_conn, params, _method) do
+    case Security.confirm_email(Map.get(params, "token")) do
+      {:ok, _account} -> {:ok, %{}}
+      {:error, :invalid_token} -> {:error, 400, "InvalidRequest", "token is invalid or expired"}
+      {:error, reason} -> email_error(reason)
+    end
+  end
+
+  def request_email_update(conn, params, _method) do
+    case Security.request_email_update(conn.assigns.auth_context.account, Map.get(params, "email")) do
+      {:ok, _result} -> {:ok, %{}}
+      {:error, reason} -> email_error(reason)
+    end
+  end
+
+  def update_email(_conn, params, _method) do
+    case Security.update_email(Map.get(params, "token")) do
+      {:ok, _account} -> {:ok, %{}}
+      {:error, :invalid_token} -> {:error, 400, "InvalidRequest", "token is invalid or expired"}
+      {:error, reason} -> email_error(reason)
+    end
+  end
+
   defp available_user_domain("." <> _domain = hostname), do: hostname
   defp available_user_domain(hostname), do: "." <> hostname
+
+  defp email_error(%Ecto.Changeset{} = changeset),
+    do: {:error, 400, "InvalidRequest", format_changeset_errors(changeset)}
+
+  defp email_error({:validation, %Ecto.Changeset{} = changeset}), do: email_error(changeset)
+  defp email_error(reason), do: {:error, 500, "InternalServerError", "email flow failed: #{inspect(reason)}"}
 
   defp lifecycle_error(:pds_service_mismatch),
     do: {:error, 400, "InvalidRequest", "DID document does not point at this PDS"}

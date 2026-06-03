@@ -76,9 +76,15 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     com/atproto/server/describeServer.json
     com/atproto/server/getServiceAuth.json
     com/atproto/server/getSession.json
+    com/atproto/server/confirmEmail.json
     com/atproto/server/refreshSession.json
     com/atproto/server/requestAccountDelete.json
+    com/atproto/server/requestEmailConfirmation.json
+    com/atproto/server/requestEmailUpdate.json
+    com/atproto/server/requestPasswordReset.json
     com/atproto/server/reserveSigningKey.json
+    com/atproto/server/resetPassword.json
+    com/atproto/server/updateEmail.json
     com/atproto/sync/getBlob.json
     com/atproto/sync/getBlocks.json
     com/atproto/sync/getLatestCommit.json

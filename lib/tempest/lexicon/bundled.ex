@@ -10,7 +10,7 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 45,
+    "document_count" => 51,
     "document_ids" => [
       "app.bsky.actor.getPreferences",
       "app.bsky.actor.profile",
@@ -33,6 +33,12 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.repo.uploadBlob",
       "com.atproto.server.activateAccount",
       "com.atproto.server.checkAccountStatus",
+      "com.atproto.server.confirmEmail",
+      "com.atproto.server.requestEmailConfirmation",
+      "com.atproto.server.requestEmailUpdate",
+      "com.atproto.server.requestPasswordReset",
+      "com.atproto.server.resetPassword",
+      "com.atproto.server.updateEmail",
       "com.atproto.server.createAccount",
       "com.atproto.server.createSession",
       "com.atproto.server.deactivateAccount",
@@ -64,6 +70,122 @@ defmodule Tempest.Lexicon.Bundled do
   }
 
   @documents [
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Confirm an email using a token from com.atproto.server.requestEmailConfirmation.",
+          "errors" => [
+            %{"name" => "AccountNotFound"},
+            %{"name" => "ExpiredToken"},
+            %{"name" => "InvalidToken"},
+            %{"name" => "InvalidEmail"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"email" => %{"type" => "string"}, "token" => %{"type" => "string"}},
+              "required" => ["email", "token"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.confirmEmail",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Request an email with a code to confirm ownership of email.",
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestEmailConfirmation",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Request a token in order to update email.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"tokenRequired" => %{"type" => "boolean"}},
+              "required" => ["tokenRequired"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestEmailUpdate",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Initiate a user account password reset via email.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"email" => %{"type" => "string"}},
+              "required" => ["email"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestPasswordReset",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Reset a user account password using a token.",
+          "errors" => [%{"name" => "ExpiredToken"}, %{"name" => "InvalidToken"}],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"password" => %{"type" => "string"}, "token" => %{"type" => "string"}},
+              "required" => ["token", "password"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.resetPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Update an account's email.",
+          "errors" => [%{"name" => "ExpiredToken"}, %{"name" => "InvalidToken"}, %{"name" => "TokenRequired"}],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "email" => %{"type" => "string"},
+                "emailAuthFactor" => %{"type" => "boolean"},
+                "token" => %{
+                  "description" =>
+                    "Requires a token from com.atproto.sever.requestEmailUpdate if the account's email has been confirmed.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["email"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.updateEmail",
+      "lexicon" => 1
+    },
     %{
       "defs" => %{
         "main" => %{

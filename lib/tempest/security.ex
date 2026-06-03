@@ -75,6 +75,8 @@ defmodule Tempest.Security do
     end)
   end
 
+  def consume_email_token(_raw, _purpose), do: {:error, :invalid_token}
+
   def start_totp_enrollment(%Account{} = account, label \\ nil) do
     secret = Totp.new_secret()
     label = label || account.handle
@@ -193,10 +195,20 @@ defmodule Tempest.Security do
 
     case Repo.get_by(Account, email: identifier) || Repo.get_by(Account, handle: identifier) ||
            Repo.get_by(Account, did: identifier) do
-      %Account{} = account -> issue_email_token(account, "reset_password")
+      %Account{} = account -> Tempest.Security.Email.deliver_password_reset(account)
       nil -> {:ok, :accepted}
     end
   end
+
+  def request_email_confirmation(%Account{} = account), do: Tempest.Security.Email.deliver_confirmation(account)
+
+  def confirm_email(raw_token), do: consume_email_token(raw_token, "confirm_email")
+
+  def request_email_update(%Account{} = account, new_email) when is_binary(new_email) do
+    Tempest.Security.Email.deliver_update(account, new_email)
+  end
+
+  def update_email(raw_token), do: consume_email_token(raw_token, "update_email")
 
   def reset_password(raw_token, new_password) do
     with :ok <- Password.validate(new_password),

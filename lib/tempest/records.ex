@@ -437,14 +437,19 @@ defmodule Tempest.Records do
       }
       |> maybe_put("prev", Map.get(stored, :prev_record_cid))
 
-    with {:ok, payload} <- commit_payload(did, stored, [path], [op]) do
-      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, payload)
+    with {:ok, payload} <- commit_payload(did, stored, [path], [op]),
+         {:ok, event} <- Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, action, payload) do
+      emit_repo_write_telemetry(did, action, stored, 1)
+      {:ok, event}
     end
   end
 
   defp insert_apply_writes_event(did, stored) do
-    with {:ok, payload} <- commit_payload(did, stored, stored.paths, stored.ops) do
-      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "applyWrites", payload)
+    with {:ok, payload} <- commit_payload(did, stored, stored.paths, stored.ops),
+         {:ok, event} <-
+           Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "applyWrites", payload) do
+      emit_repo_write_telemetry(did, "applyWrites", stored, length(stored.ops))
+      {:ok, event}
     end
   end
 
@@ -452,12 +457,25 @@ defmodule Tempest.Records do
     path = collection <> "/" <> rkey
     op = %{"action" => "delete", "path" => path, "cid" => nil, "prev" => stored.prev_record_cid}
 
-    with {:ok, payload} <- commit_payload(did, stored, [path], [op]) do
-      Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "delete", payload)
+    with {:ok, payload} <- commit_payload(did, stored, [path], [op]),
+         {:ok, event} <- Tempest.Sequencer.insert_repo_commit(did, stored.rev, stored.commit_cid, "delete", payload) do
+      emit_repo_write_telemetry(did, "delete", stored, 1)
+      {:ok, event}
     end
   end
 
   defp maybe_insert_delete_event(_did, %{deleted?: false}, _collection, _rkey), do: {:ok, nil}
+
+  defp emit_repo_write_telemetry(did, action, stored, op_count) do
+    Tempest.Telemetry.execute([:repo, :write], %{count: 1, op_count: op_count}, %{
+      did: did,
+      action: action,
+      rev: stored.rev,
+      commit_cid: stored.commit_cid
+    })
+
+    Tempest.Telemetry.execute([:repo, :commit], %{count: 1}, %{did: did, rev: stored.rev, commit_cid: stored.commit_cid})
+  end
 
   defp commit_payload(did, stored, paths, ops) do
     base = %{

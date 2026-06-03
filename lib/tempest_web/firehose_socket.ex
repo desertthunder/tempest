@@ -19,6 +19,9 @@ defmodule TempestWeb.FirehoseSocket do
          {:ok, frames} <- encode_events(events) do
       state = %__MODULE__{last_seq: last_seq(events, start_seq)}
 
+      Tempest.Telemetry.execute([:firehose, :backfill], %{count: length(events)}, %{cursor: cursor})
+      Tempest.Telemetry.execute([:firehose, :subscriber], %{count: 1}, %{event: :connect})
+
       if frames == [] do
         {:ok, state}
       else
@@ -39,6 +42,11 @@ defmodule TempestWeb.FirehoseSocket do
     if event.seq > state.last_seq do
       with {:ok, frame} <- EventStream.encode_message(event),
            :ok <- ensure_frame_size(frame) do
+        Tempest.Telemetry.execute([:firehose, :event], %{count: 1, bytes: byte_size(frame)}, %{
+          did: event.did,
+          event_type: event.event_type
+        })
+
         {:push, {:binary, frame}, %{state | last_seq: event.seq}}
       else
         {:error, reason} ->
@@ -59,6 +67,12 @@ defmodule TempestWeb.FirehoseSocket do
     Enum.reduce_while(events, {:ok, []}, fn event, {:ok, frames} ->
       with {:ok, frame} <- EventStream.encode_message(event),
            :ok <- ensure_frame_size(frame) do
+        Tempest.Telemetry.execute([:firehose, :event], %{count: 1, bytes: byte_size(frame)}, %{
+          did: event.did,
+          event_type: event.event_type,
+          backfill?: true
+        })
+
         {:cont, {:ok, [frame | frames]}}
       else
         {:error, reason} -> {:halt, {:error, reason}}
