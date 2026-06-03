@@ -81,12 +81,19 @@ defmodule Tempest.Accounts.PersistenceTest do
   end
 
   defp migrate!(repo_pid) do
-    Ecto.Migrator.run(Repo, "priv/repo/migrations", :up,
-      all: true,
-      dynamic_repo: repo_pid,
-      log: false,
-      log_migrations_sql: false,
-      log_migrator_sql: false
-    )
+    ignore_module_conflict? = Code.compiler_options().ignore_module_conflict
+    Code.compiler_options(ignore_module_conflict: true)
+
+    try do
+      Ecto.Migrator.run(Repo, "priv/repo/migrations", :up,
+        all: true,
+        dynamic_repo: repo_pid,
+        log: false,
+        log_migrations_sql: false,
+        log_migrator_sql: false
+      )
+    after
+      Code.compiler_options(ignore_module_conflict: ignore_module_conflict?)
+    end
   end
 end

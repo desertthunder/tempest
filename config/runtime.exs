@@ -46,6 +46,10 @@ if blob_cdn_base_url = System.get_env("TEMPEST_BLOB_CDN_BASE_URL") do
   config :tempest, Tempest.Blobs, cdn_base_url: blob_cdn_base_url
 end
 
+if admin_token_hash = System.get_env("TEMPEST_ADMIN_TOKEN_HASH") do
+  config :tempest, :admin_token_hash, admin_token_hash
+end
+
 if lexicon_paths = System.get_env("TEMPEST_LEXICON_PATHS") do
   paths = String.split(lexicon_paths, ",", trim: true)
   config :tempest, Tempest.Lexicon.Registry, paths: paths

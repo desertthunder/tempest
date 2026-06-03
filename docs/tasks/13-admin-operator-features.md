@@ -20,14 +20,14 @@ This slice exists to increase development observability:
 
 ---
 
-- [ ] T13-06: Add admin token hashing and verification.
-- [ ] T13-07: Add admin status endpoint.
-- [ ] T13-08: Add `mix pds.repo.verify`.
-- [ ] T13-09: Add `mix pds.repo.export`.
-- [ ] T13-10: Add `mix pds.repo.import`.
-- [ ] T13-11: Add `mix pds.sequencer.status`.
-- [ ] T13-12: Add `mix pds.blob.gc`.
-- [ ] T13-13: Add `mix pds.backup.create` and `mix pds.backup.restore`.
+- [x] T13-06: Add admin token hashing and verification.
+- [x] T13-07: Add admin status endpoint.
+- [x] T13-08: Add `mix pds.repo.verify`.
+- [x] T13-09: Add `mix pds.repo.export`.
+- [x] T13-10: Add `mix pds.repo.import`.
+- [x] T13-11: Add `mix pds.sequencer.status`.
+- [x] T13-12: Add `mix pds.blob.gc`.
+- [x] T13-13: Add `mix pds.backup.create` and `mix pds.backup.restore`.
 - [ ] T13-14: Add S3-compatible blob adapter.
 - [ ] T13-15: Add S3-compatible SQLite backup upload for SQLite deployments.
 - [ ] T13-16: Add SMTP adapter and account security notifications.
