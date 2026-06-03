@@ -45,6 +45,42 @@ defmodule TempestWeb.AdminControllerTest do
     assert response["error"] == "InvalidToken"
   end
 
+  test "admin UI rejects account tokens and renders operator pages", %{conn: conn} do
+    Application.put_env(:tempest, :admin_token_hash, AdminAuth.hash_token("admin-secret-token"))
+
+    {:ok, session} =
+      Accounts.create_account(%{
+        "handle" => "admin-ui-user.test",
+        "email" => "admin-ui@example.com",
+        "password" => "correct horse battery staple"
+      })
+
+    rejected =
+      conn
+      |> put_req_header("authorization", "Bearer #{session["accessJwt"]}")
+      |> get(~p"/admin")
+
+    assert json_response(rejected, 401)["error"] == "InvalidToken"
+
+    for {path, expected} <- [
+          {~p"/admin", "Admin Dashboard"},
+          {~p"/admin/invites", "Invite Code Management"},
+          {~p"/admin/repo", "Repo Verify, Export, and Import"},
+          {~p"/admin/backups", "Backup Create and Restore Dry Run"},
+          {~p"/admin/storage", "Storage Status"},
+          {~p"/admin/compatibility", "Compatibility Status"}
+        ] do
+      html =
+        conn
+        |> recycle()
+        |> put_req_header("authorization", "Bearer admin-secret-token")
+        |> get(path)
+        |> html_response(200)
+
+      assert html =~ expected
+    end
+  end
+
   test "admin status reports database sequencer and blob store status", %{conn: conn} do
     Application.put_env(:tempest, :admin_token_hash, AdminAuth.hash_token("admin-secret-token"))
 

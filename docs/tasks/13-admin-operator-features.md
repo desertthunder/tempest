@@ -32,15 +32,15 @@ This slice exists to increase development observability:
 - [x] T13-15: Add S3-compatible SQLite backup upload for SQLite deployments.
 - [x] T13-16: Add SMTP adapter and account security notifications.
 - [x] T13-17: Add telemetry events for XRPC, repo writes, blobs, and firehose.
-- [ ] T13-18: Add UI for sessions, OAuth grants, app passwords, and delegated access.
-- [ ] T13-19: Add UI for email, password, MFA, backup codes, and trusted devices.
-- [ ] T13-20: Add admin dashboard for account status, sequencer, storage, and relay crawl status.
-- [ ] T13-21: Add invite-code management UI.
-- [ ] T13-22: Add repo verify/export/import actions in operator UI.
-- [ ] T13-23: Add backup create/restore dry-run UI.
-- [ ] T13-24: Add storage status UI for local blobs, S3/R2 blobs, and backups.
-- [ ] T13-25: Add account migration in/out status UI.
-- [ ] T13-26: Add compatibility status view based on the reference endpoint matrix.
+- [x] T13-18: Add UI for sessions, OAuth grants, app passwords, and delegated access.
+- [x] T13-19: Add UI for email, password, MFA, backup codes, and trusted devices.
+- [x] T13-20: Add admin dashboard for account status, sequencer, storage, and relay crawl status.
+- [x] T13-21: Add invite-code management UI.
+- [x] T13-22: Add repo verify/export/import actions in operator UI.
+- [x] T13-23: Add backup create/restore dry-run UI.
+- [x] T13-24: Add storage status UI for local blobs, S3/R2 blobs, and backups.
+- [x] T13-25: Add account migration in/out status UI.
+- [x] T13-26: Add compatibility status view based on the reference endpoint matrix.
 
 ## Integration Tests
 

@@ -1,12 +1,6 @@
 <main id="firehose-viewer" class="operator-account">
   <div class="operator-account__desktop">
-    <nav class="resource-strip operator-account__nav" aria-label="Operator account tools">
-      <a href={~p"/account"}>Dashboard</a>
-      <a href={~p"/account/repo"}>Repo</a>
-      <a href={~p"/account/blobs"}>Blobs</a>
-      <a href={~p"/account/sequencer"}>Sequencer</a>
-      <a href={~p"/account/firehose"}>Firehose</a>
-    </nav>
+    <.account_nav />
 
     <section class="win-window" aria-labelledby="firehose-title">
       <header class="win-window__titlebar">

@@ -8,6 +8,33 @@ defmodule Tempest.Admin do
   alias Tempest.Accounts.Account
   alias Tempest.{Blobs, Config, Repo, RepoStorage, Sequencer, Storage}
 
+  @compatibility_methods ~w(
+    com.atproto.server.describeServer com.atproto.server.createAccount com.atproto.server.createSession
+    com.atproto.server.refreshSession com.atproto.server.deleteSession com.atproto.server.getSession
+    com.atproto.server.createAppPassword com.atproto.server.listAppPasswords com.atproto.server.revokeAppPassword
+    com.atproto.server.getServiceAuth com.atproto.server.checkAccountStatus com.atproto.server.activateAccount
+    com.atproto.server.deactivateAccount com.atproto.server.requestAccountDelete com.atproto.server.deleteAccount
+    com.atproto.server.requestPasswordReset com.atproto.server.resetPassword com.atproto.server.confirmEmail
+    com.atproto.server.requestEmailConfirmation com.atproto.server.requestEmailUpdate com.atproto.server.updateEmail
+    com.atproto.server.reserveSigningKey com.atproto.identity.resolveHandle com.atproto.identity.updateHandle
+    com.atproto.identity.getRecommendedDidCredentials com.atproto.identity.requestPlcOperationSignature
+    com.atproto.identity.signPlcOperation com.atproto.identity.submitPlcOperation com.atproto.repo.createRecord
+    com.atproto.repo.putRecord com.atproto.repo.deleteRecord com.atproto.repo.applyWrites com.atproto.repo.getRecord
+    com.atproto.repo.listRecords com.atproto.repo.describeRepo com.atproto.repo.uploadBlob
+    com.atproto.repo.listMissingBlobs com.atproto.repo.importRepo com.atproto.sync.getRepo
+    com.atproto.sync.getBlocks com.atproto.sync.getRecord com.atproto.sync.getLatestCommit
+    com.atproto.sync.getRepoStatus com.atproto.sync.listRepos com.atproto.sync.listBlobs
+    com.atproto.sync.getBlob com.atproto.sync.requestCrawl com.atproto.sync.subscribeRepos
+    com.atproto.sync.notifyOfUpdate app.bsky.actor.getPreferences app.bsky.actor.putPreferences
+  )
+
+  @partial_methods ~w(
+    com.atproto.server.requestPasswordReset com.atproto.server.resetPassword com.atproto.server.confirmEmail
+    com.atproto.server.requestEmailConfirmation com.atproto.server.requestEmailUpdate com.atproto.server.updateEmail
+  )
+
+  @deferred_methods ~w(com.atproto.sync.notifyOfUpdate)
+
   @doc """
   Returns admin-visible service status.
   """
@@ -25,6 +52,37 @@ defmodule Tempest.Admin do
       "blobStore" => blob_store_status(config, accounts),
       "accounts" => accounts
     }
+  end
+
+  def compatibility_status do
+    endpoints = Enum.map(@compatibility_methods, &compatibility_endpoint/1)
+
+    %{
+      endpoints: endpoints,
+      summary: Enum.frequencies_by(endpoints, & &1.status),
+      notes: [
+        "Unknown app.bsky.* methods use the configured proxy/fallback policy.",
+        "Status is route-based and should be read with the smoke-test matrix."
+      ]
+    }
+  end
+
+  defp compatibility_endpoint(method) do
+    %{
+      method: method,
+      status: compatibility_status_for(method),
+      route: if(method == "com.atproto.sync.subscribeRepos", do: "websocket", else: "xrpc")
+    }
+  end
+
+  defp compatibility_status_for(method) when method in @partial_methods, do: "partial"
+  defp compatibility_status_for(method) when method in @deferred_methods, do: "deferred"
+
+  defp compatibility_status_for(method) do
+    case Tempest.Xrpc.Registry.fetch(method) do
+      {:ok, _method} -> "implemented"
+      {:error, _reason} -> "planned"
+    end
   end
 
   defp database_status(config) do

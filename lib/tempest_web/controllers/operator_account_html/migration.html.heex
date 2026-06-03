@@ -1,0 +1,20 @@
+<main id="account-migration" class="operator-account">
+  <div class="operator-account__desktop">
+    <.account_nav />
+
+    <section class="win-window" aria-labelledby="migration-title">
+      <header class="win-window__titlebar"><span id="migration-title" class="win-window__title">Account Migration Status</span></header>
+      <div class="win-window__body">
+        <dl class="facts-list">
+          <dt>DID</dt><dd>{@account.did}</dd>
+          <dt>active</dt><dd>{inspect(@status["active"])}</dd>
+          <dt>status</dt><dd>{@status["status"]}</dd>
+          <dt>records</dt><dd>{@status["recordCount"]}</dd>
+          <dt>public blobs</dt><dd>{@status["blobCount"]}</dd>
+          <dt>missing blobs</dt><dd>{@status["missingBlobCount"]}</dd>
+          <dt>migration ready</dt><dd>{inspect(@status["migrationReady"])}</dd>
+        </dl>
+      </div>
+    </section>
+  </div>
+</main>

@@ -1,0 +1,20 @@
+<main id="admin-repo-ops" class="operator-account">
+  <div class="operator-account__desktop">
+    <.admin_nav />
+
+    <section class="win-window" aria-labelledby="repo-ops-title">
+      <header class="win-window__titlebar"><span id="repo-ops-title" class="win-window__title">Repo Verify, Export, and Import</span></header>
+      <div class="win-window__body">
+        <form class="operator-account__form" method="post" action={~p"/admin/repo"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <label>DID <input name="did" /></label>
+          <label>Path <input name="path" /></label>
+          <button name="op" value="verify">Verify</button>
+          <button name="op" value="export">Export</button>
+          <button name="op" value="import">Import</button>
+        </form>
+        <pre :if={@result} class="operator-account__note">{inspect(@result, pretty: true)}</pre>
+      </div>
+    </section>
+  </div>
+</main>

@@ -44,8 +44,20 @@ defmodule TempestWeb.Router do
     get "/account", OperatorAccountController, :dashboard
     get "/account/repo", OperatorAccountController, :repo
     get "/account/blobs", OperatorAccountController, :blobs
+    get "/account/access", OperatorAccountController, :access
+    get "/account/security", OperatorAccountController, :security
+    get "/account/migration", OperatorAccountController, :migration
     get "/account/sequencer", OperatorAccountController, :sequencer
     get "/account/firehose", OperatorAccountController, :firehose
+
+    get "/admin", AdminController, :dashboard
+    get "/admin/invites", AdminController, :invites
+    get "/admin/repo", AdminController, :repo
+    post "/admin/repo", AdminController, :repo_action
+    get "/admin/backups", AdminController, :backups
+    post "/admin/backups", AdminController, :backup_action
+    get "/admin/storage", AdminController, :storage
+    get "/admin/compatibility", AdminController, :compatibility
   end
 
   scope "/", TempestWeb do

@@ -1,0 +1,68 @@
+<main id="account-security" class="operator-account">
+  <div class="operator-account__desktop">
+    <.account_nav />
+
+    <section class="win-window" aria-labelledby="security-title">
+      <header class="win-window__titlebar"><span id="security-title" class="win-window__title">Email, Password, MFA, and Devices</span></header>
+      <div class="win-window__body">
+        <dl class="facts-list">
+          <dt>DID</dt><dd>{@account.did}</dd>
+          <dt>email</dt><dd>{@account.email}</dd>
+          <dt>password</dt><dd>stored as a hash</dd>
+          <dt>status</dt><dd>{@account.status}</dd>
+        </dl>
+      </div>
+    </section>
+
+    <div class="tempest-home__grid">
+      <section class="win-window" aria-labelledby="mfa-title">
+        <header class="win-window__titlebar"><span id="mfa-title" class="win-window__title">MFA Credentials</span></header>
+        <div class="win-window__body operator-account__table-wrap">
+          <table class="operator-account__table operator-account__table--compact">
+            <thead><tr><th>Type</th><th>Label</th><th>Status</th><th>Last used</th></tr></thead>
+            <tbody>
+              <tr :for={credential <- @inventory.mfa_credentials}>
+                <td>{credential.type}</td><td>{present(credential.label)}</td><td>{status_value(credential)}</td><td>{present(credential.last_used_at)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="win-window" aria-labelledby="backup-codes-title">
+        <header class="win-window__titlebar"><span id="backup-codes-title" class="win-window__title">Backup Codes</span></header>
+        <div class="win-window__body operator-account__table-wrap">
+          <table class="operator-account__table operator-account__table--compact">
+            <thead><tr><th>ID</th><th>Status</th><th>Created</th><th>Used</th></tr></thead>
+            <tbody>
+              <tr :for={code <- @inventory.backup_codes}>
+                <td>{code.id}</td><td>{if code.used?, do: "used", else: "available"}</td><td>{code.inserted_at}</td><td>{present(code.used_at)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section class="win-window" aria-labelledby="devices-title">
+      <header class="win-window__titlebar"><span id="devices-title" class="win-window__title">Trusted Devices</span></header>
+      <div class="win-window__body">
+        <p class="operator-account__note">Trusted devices are represented by MFA credentials of type <code>trusted_device</code>.</p>
+      </div>
+    </section>
+
+    <section class="win-window" aria-labelledby="events-title">
+      <header class="win-window__titlebar"><span id="events-title" class="win-window__title">Security Event Log</span></header>
+      <div class="win-window__body operator-account__table-wrap">
+        <table class="operator-account__table">
+          <thead><tr><th>Event</th><th>Metadata</th><th>Created</th></tr></thead>
+          <tbody>
+            <tr :for={event <- @inventory.security_events}>
+              <td>{event.event_type}</td><td><pre>{event.metadata_json}</pre></td><td>{event.inserted_at}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>

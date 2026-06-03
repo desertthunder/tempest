@@ -1,7 +1,7 @@
 defmodule TempestWeb.OperatorAccountController do
   use TempestWeb, :controller
 
-  alias Tempest.{Accounts, Blobs, RepoStorage, Sequencer}
+  alias Tempest.{Accounts, Blobs, RepoStorage, Security, Sequencer}
   alias TempestWeb.XrpcErrorJSON
 
   @page_limit 50
@@ -53,6 +53,31 @@ defmodule TempestWeb.OperatorAccountController do
         did_filter: Map.get(params, "did"),
         type_filter: Map.get(params, "type")
       )
+    else
+      {:error, reason} -> reject(conn, reason)
+    end
+  end
+
+  def access(conn, _params) do
+    with {:ok, auth} <- authenticate(conn) do
+      render(conn, :access, account: auth.account, inventory: Security.account_security_inventory(auth.account))
+    else
+      {:error, reason} -> reject(conn, reason)
+    end
+  end
+
+  def security(conn, _params) do
+    with {:ok, auth} <- authenticate(conn) do
+      render(conn, :security, account: auth.account, inventory: Security.account_security_inventory(auth.account))
+    else
+      {:error, reason} -> reject(conn, reason)
+    end
+  end
+
+  def migration(conn, _params) do
+    with {:ok, auth} <- authenticate(conn),
+         {:ok, status} <- Accounts.check_account_status(auth) do
+      render(conn, :migration, account: auth.account, status: status)
     else
       {:error, reason} -> reject(conn, reason)
     end

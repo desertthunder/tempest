@@ -26,6 +26,9 @@ defmodule TempestWeb.OperatorAccountControllerTest do
     assert_authed_html(conn, account, ~p"/account", "Operator Account")
     assert_authed_html(conn, account, ~p"/account/repo", "app.bsky.actor.profile/self")
     assert_authed_html(conn, account, ~p"/account/blobs", "Blob Browser")
+    assert_authed_html(conn, account, ~p"/account/access", "Sessions and Delegated Access")
+    assert_authed_html(conn, account, ~p"/account/security", "Email, Password, MFA, and Devices")
+    assert_authed_html(conn, account, ~p"/account/migration", "Account Migration Status")
     assert_authed_html(conn, account, ~p"/account/sequencer", "Sequencer Viewer")
     assert_authed_html(conn, account, ~p"/account/firehose", "Firehose Viewer")
   end

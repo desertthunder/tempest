@@ -1,0 +1,23 @@
+<main id="admin-backups" class="operator-account">
+  <div class="operator-account__desktop">
+    <.admin_nav />
+
+    <section class="win-window" aria-labelledby="backup-title">
+      <header class="win-window__titlebar"><span id="backup-title" class="win-window__title">Backup Create and Restore Dry Run</span></header>
+      <div class="win-window__body">
+        <form class="operator-account__form" method="post" action={~p"/admin/backups"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <label>Backup path <input name="path" /></label>
+          <button name="op" value="create">Create backup</button>
+        </form>
+        <form class="operator-account__form" method="post" action={~p"/admin/backups"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <label>Backup path <input name="path" /></label>
+          <label>Target path <input name="target" /></label>
+          <button name="op" value="restore_dry_run">Restore dry run</button>
+        </form>
+        <pre :if={@result} class="operator-account__note">{inspect(@result, pretty: true)}</pre>
+      </div>
+    </section>
+  </div>
+</main>

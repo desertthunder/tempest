@@ -5,7 +5,8 @@ defmodule Tempest.Security do
 
   import Ecto.Query
 
-  alias Tempest.Accounts.{Account, Password, Session}
+  alias Tempest.Accounts.{Account, AppPassword, Password, Session}
+  alias Tempest.OAuth.Token
   alias Tempest.Security.{BackupCode, DelegatedAccessGrant, EmailToken, MfaCredential, RateLimiter, SecurityEvent, Totp}
   alias Tempest.Repo
 
@@ -188,6 +189,71 @@ defmodule Tempest.Security do
     else
       {:error, :not_found}
     end
+  end
+
+  def account_security_inventory(%Account{} = account) do
+    %{
+      sessions: list_sessions(account),
+      oauth_grants: list_oauth_grants(account),
+      app_passwords: list_app_password_records(account),
+      delegated_access: list_delegations(account),
+      mfa_credentials: list_mfa_credentials(account),
+      backup_codes: list_backup_code_summaries(account),
+      security_events: list_security_events(account, limit: 50)
+    }
+  end
+
+  def list_oauth_grants(%Account{} = account) do
+    Token
+    |> where([t], t.account_id == ^account.id)
+    |> order_by([t], desc: t.inserted_at)
+    |> Repo.all()
+  end
+
+  def list_app_password_records(%Account{} = account) do
+    AppPassword
+    |> where([p], p.account_id == ^account.id)
+    |> order_by([p], desc: p.inserted_at)
+    |> Repo.all()
+  end
+
+  def list_delegations(%Account{} = account) do
+    DelegatedAccessGrant
+    |> where([g], g.owner_account_id == ^account.id)
+    |> order_by([g], desc: g.inserted_at)
+    |> Repo.all()
+  end
+
+  def list_mfa_credentials(%Account{} = account) do
+    MfaCredential
+    |> where([c], c.account_id == ^account.id)
+    |> order_by([c], desc: c.inserted_at)
+    |> Repo.all()
+  end
+
+  def list_backup_code_summaries(%Account{} = account) do
+    BackupCode
+    |> where([c], c.account_id == ^account.id)
+    |> order_by([c], asc: c.id)
+    |> Repo.all()
+    |> Enum.map(fn code ->
+      %{
+        id: code.id,
+        used?: not is_nil(code.used_at),
+        used_at: code.used_at,
+        inserted_at: code.inserted_at
+      }
+    end)
+  end
+
+  def list_security_events(%Account{} = account, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 50)
+
+    SecurityEvent
+    |> where([e], e.account_id == ^account.id)
+    |> order_by([e], desc: e.inserted_at)
+    |> limit(^limit)
+    |> Repo.all()
   end
 
   def request_password_reset(identifier) do
