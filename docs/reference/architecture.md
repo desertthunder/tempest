@@ -1,6 +1,6 @@
 ---
 title: Architecture
-updated: 2026-05-31
+updated: 2026-06-03
 ---
 
 Tempest is a Phoenix application that implements AT Protocol PDS behavior through
@@ -40,6 +40,8 @@ TempestWeb.Router
   ├─ /xrpc/:method               -> XrpcController
   ├─ /xrpc/...subscribeRepos     -> FirehoseController / WebSocket
   ├─ /.well-known/atproto-did    -> WellKnownController
+  ├─ /account/*                  -> OperatorAccountController
+  ├─ /admin/*                    -> AdminController
   └─ /                            -> PageController
         │
         ▼
@@ -49,6 +51,8 @@ Contexts
   ├─ Records   -> per-DID repo SQLite files
   ├─ Blobs     -> account.sqlite metadata + local bytes
   ├─ Sync      -> CAR/block/blob reads
+  ├─ Security  -> MFA, email tokens, grants, event log
+  ├─ Admin     -> status, repo ops, backups
   └─ Sequencer -> sequencer.sqlite + PubSub fanout
 ```
 
@@ -91,6 +95,8 @@ correctness-first tradeoff.
 | --- | --- |
 | `Tempest.Xrpc.Registry` | XRPC method table and dispatch metadata |
 | `Tempest.Accounts` | accounts, sessions, auth contexts, app passwords |
+| `Tempest.Security` | security inventory, MFA, email tokens, delegated access |
+| `Tempest.Admin` | admin status, compatibility status, repo and backup helpers |
 | `Tempest.Identity.KeyStore` | account signing key generation and storage |
 | `Tempest.Records` | record write/read boundary |
 | `Tempest.RepoStorage` | per-DID SQLite repository storage |

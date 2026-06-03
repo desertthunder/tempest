@@ -1,6 +1,6 @@
 ---
 title: Reference Documentation
-updated: 2026-05-31
+updated: 2026-06-03
 ---
 
 These docs describe current, verified behavior of Tempest. They explain the
@@ -16,6 +16,10 @@ Graduated reference docs:
 - [Record APIs](record-apis.md)
 - [Blobs](blobs.md)
 - [Migration and Account Lifecycle](migration-lifecycle.md)
+- [Security, OAuth, and Delegated Access](security-oauth.md)
+- [Admin and Operator Operations](admin-operations.md)
+- [Deployment and Observability](deployment-observability.md)
+- [PDS Compatibility Matrix](pds-compatibility.md)
 - [Lexicon Schemas](lexicon-schemas.md)
 - [Interop and Integration Testing](interop-testing.md)
 

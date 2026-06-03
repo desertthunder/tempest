@@ -5,12 +5,7 @@ Elixir and Phoenix.
 
 ## PDS Completion TODO
 
-- [ ] Firehose: durable sequencing, CAR slices, cursor backfill, and `subscribeRepos`.
-- [ ] Blobs: upload, validate, serve, list, reference-check, and garbage collect.
-- [ ] Lexicons: generated pinned schemas and broader endpoint/record validation.
-- [ ] Compatibility: official fixtures, SDK smoke tests, rate limits, and relay/AppView checks.
-- [ ] Auth and operations: OAuth, app passwords, admin tools, repo import/export/verify, and backups.
-- [ ] Deployment: release packaging, Docker/Compose, HTTPS proxy docs, telemetry, and SMTP.
+The current endpoint matrix/coverage is [`docs/reference/pds-compatibility.md`](docs/reference/pds-compatibility.md).
 
 ## Run Locally
 
@@ -36,6 +31,28 @@ Server boot creates `account.sqlite`, `sequencer.sqlite`, and local storage dire
 
 ## Development Tools
 
+Account operator UI:
+
+```text
+/account
+/account/repo
+/account/blobs
+/account/access
+/account/security
+/account/migration
+/account/sequencer
+/account/firehose
+```
+
+Admin UI and status, using `Authorization: Bearer $ADMIN_TOKEN`:
+
+```text
+/admin
+/admin/storage
+/admin/compatibility
+/xrpc/_admin/status
+```
+
 Generate a TOTP code for a base32 secret:
 
 ```bash
@@ -47,31 +64,10 @@ when the server is running.
 
 ## Endpoints
 
-Available as of [2026-05-08](./CHANGELOG.md#2026-05-08)
+See the maintained compatibility matrix:
 
-- `GET /xrpc/_health`
-- `GET /xrpc/com.atproto.server.describeServer`
-- `POST /xrpc/com.atproto.server.createAccount`
-- `POST /xrpc/com.atproto.server.createSession`
-- `GET /xrpc/com.atproto.server.getSession`
-- `POST /xrpc/com.atproto.server.refreshSession`
-- `POST /xrpc/com.atproto.server.deleteSession`
-- `GET /xrpc/com.atproto.identity.resolveHandle`
-- `POST /xrpc/com.atproto.identity.updateHandle`
-- `GET /.well-known/atproto-did`
-- `POST /xrpc/com.atproto.repo.createRecord`
-- `POST /xrpc/com.atproto.repo.putRecord`
-- `POST /xrpc/com.atproto.repo.deleteRecord`
-- `GET /xrpc/com.atproto.repo.getRecord`
-- `GET /xrpc/com.atproto.repo.listRecords`
-- `GET /xrpc/com.atproto.repo.describeRepo`
-- `GET /xrpc/com.atproto.sync.getRepo`
-- `GET /xrpc/com.atproto.sync.getLatestCommit`
-- `GET /xrpc/com.atproto.sync.getRecord`
-- `GET /xrpc/com.atproto.sync.getBlocks`
-- `GET /xrpc/com.atproto.sync.getRepoStatus`
-- `GET /xrpc/com.atproto.sync.listRepos`
-- `GET /xrpc/com.atproto.sync.listBlobs`
+- [`docs/reference/pds-compatibility.md`](docs/reference/pds-compatibility.md)
+- Admin UI: `/admin/compatibility`
 
 ## Credits
 

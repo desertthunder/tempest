@@ -2,6 +2,14 @@
 
 ## v0.1.0
 
+### 2026-06-03
+
+- Added authenticated account operator UI for repo/blob browsing, sequencer and
+  firehose inspection, access credentials, security state, and migration status.
+- Added admin operator UI for service status, account status, storage, repo
+  verify/export/import actions, backup create/restore dry-run, and compatibility
+  status.
+
 ### 2026-05-31
 
 - Added compatibility smoke coverage for `applyWrites`, `getBlocks`, `requestCrawl`,

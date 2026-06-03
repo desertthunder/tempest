@@ -1,6 +1,6 @@
 ---
 title: Interop and Integration Testing
-updated: 2026-05-31
+updated: 2026-06-03
 ---
 
 Tempest treats black-box HTTP tests as the boundary between "implemented" and
@@ -22,11 +22,11 @@ must exercise the running server over HTTP/WebSocket.
 
 ### Hurl
 
-[Hurl](https://hurl.dev/) is a command-line HTTP test runner. A `.hurl` file is both a
-readable request transcript and an executable assertion suite: it sends requests, checks
-status codes and headers, asserts JSON paths, and captures response values for
-later requests. Tempest uses Hurl for black-box checks because it tests the same
-public surface that clients use.
+[Hurl](https://hurl.dev/) is a command-line HTTP test runner. A `.hurl` file is
+both a readable request transcript and an executable assertion suite: it sends
+requests, checks status codes and headers, asserts JSON paths, and captures
+response values for later requests. Tempest uses Hurl for black-box checks
+because it tests the same public surface that clients use.
 
 ## Test layers
 
@@ -51,10 +51,59 @@ Important smoke files:
 - `test/smoke/firehose.hurl`: subscribe, write, receive event
 - `test/smoke/blobs.hurl`: upload, reference, list, serve
 - `test/smoke/lexicon-schemas.hurl`: known/unknown schema validation
+- `test/smoke/migration-lifecycle.hurl`: migration import and lifecycle checks
+- `test/smoke/oauth-security.hurl`: OAuth metadata and error-path checks
+- `test/smoke/operator-account-ux.hurl`: account operator UI checks
 - `test/smoke/tempest_basic.hurl`: end-to-end baseline PDS flow
 - `test/smoke/tempest_compat.hurl`: compatibility hardening checks
 
-Run suites that create accounts or depend on event order with `--jobs 1`.
+Run suites that create accounts or depend on event order with `--jobs 1`. Use
+fresh account variables for every run. `accounts.hurl` and `identity.hurl` both
+use `account_handle`, so run them separately or give the full directory run a
+fresh database/handle plan if both files create accounts in the same pass.
+
+## Hurl rules
+
+- Use `{{base_url}}`; do not hard-code localhost into Hurl files.
+- Capture tokens and DIDs instead of parsing JSON in shell scripts.
+- Assert status, content type, and protocol-required fields.
+- Run account-creating suites with `--jobs 1` and fresh variables.
+- Store large request bodies in `test/fixtures/`.
+
+## Run commands
+
+Start the server first:
+
+```bash
+mix phx.server
+```
+
+Health check:
+
+```bash
+hurl --test --variable base_url=http://localhost:4000 test/smoke/health.hurl
+```
+
+Account/session flow:
+
+```bash
+suffix="$(date +%s)"
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  --variable account_handle="smoke-${suffix}.test" \
+  --variable account_email="smoke-${suffix}@example.com" \
+  --variable account_password="correct horse battery staple" \
+  test/smoke/accounts.hurl
+```
+
+Operator account UI:
+
+```bash
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  --variable suffix="$(date +%s)" \
+  test/smoke/operator-account-ux.hurl
+```
 
 ## Compatibility smoke coverage
 
@@ -69,7 +118,14 @@ firehose observation.
 
 ```bash
 mix test
-hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/tempest_basic.hurl test/smoke/tempest_compat.hurl
+suffix="$(date +%s)"
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  --variable suffix="${suffix}" \
+  --variable account_handle="smoke-${suffix}.test" \
+  --variable account_email="smoke-${suffix}@example.com" \
+  --variable account_password="correct horse battery staple" \
+  test/smoke/
 ```
 
 ## Sources

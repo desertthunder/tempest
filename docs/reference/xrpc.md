@@ -1,6 +1,6 @@
 ---
 title: XRPC HTTP Surface
-updated: 2026-05-31
+updated: 2026-06-03
 ---
 
 XRPC is the public HTTP RPC layer used by AT Protocol clients and services.
@@ -19,8 +19,10 @@ Errors are protocol-shaped JSON with an `error` string and optional `message`.
 
 ## Implementation
 
-`TempestWeb.Router` sends `/xrpc/*` requests through the XRPC pipeline.
-`Tempest.Xrpc.Registry` is the method table. Each entry declares:
+`TempestWeb.Router` sends protocol methods through the XRPC pipeline.
+`Tempest.Xrpc.Registry` is the method table. `_health` is public, and
+`_admin/status` is protected by admin-token auth outside normal account bearer
+credentials. Each registry entry declares:
 
 - NSID
 - kind (`query`, `procedure`, `subscription`)

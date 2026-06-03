@@ -1,6 +1,6 @@
 ---
 title: Target Profile - Solo Login + Archive
-updated: 2026-05-31
+updated: 2026-06-03
 ---
 
 # Target Profile: Solo Login + Archive
@@ -28,9 +28,15 @@ Tempest is considered *usable* for this profile when both tracks are true:
 - Repo verification can detect corruption/missing blocks.
 - Backup and restore procedures are documented and exercised.
 
+## Current Gaps
+
+Local custody and operator features are implemented for development and local
+verification. Remaining work for this profile is external proof: release
+packaging, HTTPS/WebSocket deployment checks, relay/AppView crawl, real-client
+login/write/read tests, and restore drills against deployed storage.
+
 ## Planned Expanded Capabilities
 
 - multi-account hosting and community administration
-- account migration between PDS instances (service auth, activation sequencing)
-- MFA and advanced account recovery UX
-- S3/CDN production adapters (beyond local default)
+- richer MFA and account recovery UX
+- CDN fronting for object storage

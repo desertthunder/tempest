@@ -1,6 +1,6 @@
 ---
 title: Tempest AT Protocol PDS Specification Index
-updated: 2026-06-02
+updated: 2026-06-03
 ---
 
 Tempest is a Phoenix application that will become a self-hostable AT Protocol
@@ -30,7 +30,6 @@ Subsystem specifications live in this directory.
 14. [Deployment and Observability](deployment-observability.md)
 15. [Interop and Integration Testing](interop-testing.md)
 16. [PDS Compatibility Against Reference Surface](pds-compatibility.md)
-17. [Hurl Smoke Tests](hurl-smoke-tests.md)
 
 ## Source Baseline
 

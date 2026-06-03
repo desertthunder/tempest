@@ -31,8 +31,8 @@ Blocking work for the current target profile (see `docs/specs/target-profile.md`
 
 - Compatibility stays green: `test/smoke/tempest_basic.hurl` and
   `test/smoke/tempest_compat.hurl` must pass.
-- Feature work lands first: admin auth/status, repo and backup commands,
-  S3/R2 adapters, SMTP, telemetry, and operator UI.
+- Admin/operator feature work is complete for the local profile: admin auth,
+  repo and backup commands, S3/R2 adapters, SMTP, telemetry, and operator UI.
 - Local compatibility testing follows without requiring deployment: ConnCase
   endpoint checks, SDK tests, local Hurl smoke tests, migration tests, and
   restore drills.
@@ -82,7 +82,14 @@ hurl --test --variable base_url=http://localhost:4000 test/smoke/01-xrpc-shell.h
 Run all smoke tests:
 
 ```bash
-hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/
+suffix="$(date +%s)"
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  --variable suffix="${suffix}" \
+  --variable account_handle="smoke-${suffix}.test" \
+  --variable account_email="smoke-${suffix}@example.com" \
+  --variable account_password="correct horse battery staple" \
+  test/smoke/
 ```
 
 Use `--jobs 1` for smoke suites that create shared accounts or depend on event order.
