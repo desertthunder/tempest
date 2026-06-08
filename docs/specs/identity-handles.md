@@ -74,7 +74,7 @@ Migration-ready identity support requires:
 - `reserveSigningKey` for migration flows that need stable key material before the account is activated.
 - `did:web` support for both PDS-hosted subdomains and bring-your-own domains.
 
-See [Migration and Account Lifecycle](migration-lifecycle.md) for account activation sequencing.
+See [Migration and Account Lifecycle](./migration-lifecycle.md) for account activation sequencing.
 
 ## Adversarial Checks
 

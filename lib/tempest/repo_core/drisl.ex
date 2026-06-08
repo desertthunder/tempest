@@ -382,7 +382,7 @@ defmodule Tempest.RepoCore.Drisl do
 
   defp take_bytes(bytes, length) do
     if byte_size(bytes) >= length do
-      <<value::binary-size(length), rest::binary>> = bytes
+      <<value::binary-size(^length), rest::binary>> = bytes
       {:ok, value, rest}
     else
       {:error, :invalid_cbor}

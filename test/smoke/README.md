@@ -1,7 +1,7 @@
 # Smoke Tests
 
 Canonical smoke-test documentation lives in
-[`docs/reference/interop-testing.md`](../../docs/reference/interop-testing.md).
+[Interop & Integration Testing](../../docs/reference/interop-testing.md).
 
 Quick run:
 
@@ -15,7 +15,7 @@ hurl --test --jobs 1 \
   --variable account_handle="smoke-${suffix}.test" \
   --variable account_email="smoke-${suffix}@example.com" \
   --variable account_password="correct horse battery staple" \
-  test/smoke/
+  test/smoke/*.hurl
 ```
 
 Use fresh account variables for every run. Some files create accounts with the

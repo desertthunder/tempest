@@ -3,13 +3,19 @@
     <.admin_nav />
 
     <section class="win-window" aria-labelledby="invite-title">
-      <header class="win-window__titlebar"><span id="invite-title" class="win-window__title">Invite Code Management</span></header>
+      <header class="win-window__titlebar">
+        <span id="invite-title" class="win-window__title">Invite Code Management</span>
+      </header>
       <div class="win-window__body">
         <dl class="facts-list">
-          <dt>invite requirement</dt><dd>{@status["describeServerInviteRequired"] || "disabled"}</dd>
-          <dt>configured account creation</dt><dd>open</dd>
+          <dt>invite requirement</dt>
+          <dd>{@status["describeServerInviteRequired"] || "disabled"}</dd>
+          <dt>configured account creation</dt>
+          <dd>open</dd>
         </dl>
-        <p class="operator-account__note">Invite-code storage is not enabled in this profile. This view keeps the operator status visible without accepting normal account credentials.</p>
+        <p class="operator-account__note">
+          Invite-code storage is not enabled in this profile. This view keeps the operator status visible without accepting normal account credentials.
+        </p>
       </div>
     </section>
   </div>

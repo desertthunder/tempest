@@ -28,6 +28,8 @@ config :tempest, Tempest.Repo,
 
 config :tempest, Tempest.Lexicon.Registry, bundled?: true, paths: []
 
+config :tempest, Tempest.Sync, relays: ["https://bsky.network", "https://vsky.network"]
+
 config :tempest, TempestWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,

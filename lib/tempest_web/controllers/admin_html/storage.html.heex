@@ -3,13 +3,27 @@
     <.admin_nav />
 
     <section class="win-window" aria-labelledby="storage-title">
-      <header class="win-window__titlebar"><span id="storage-title" class="win-window__title">Storage Status</span></header>
+      <header class="win-window__titlebar">
+        <span id="storage-title" class="win-window__title">Storage Status</span>
+      </header>
       <div class="win-window__body operator-account__table-wrap">
         <table class="operator-account__table">
-          <thead><tr><th>Name</th><th>Path</th><th>Type</th><th>Exists</th><th>Bytes</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Path</th>
+              <th>Type</th>
+              <th>Exists</th>
+              <th>Bytes</th>
+            </tr>
+          </thead>
           <tbody>
             <tr :for={{name, item} <- @status["database"]}>
-              <td>{name}</td><td>{item["path"]}</td><td>{item["type"]}</td><td>{present(item["exists"])}</td><td>{present(item["bytes"])}</td>
+              <td>{name}</td>
+              <td>{item["path"]}</td>
+              <td>{item["type"]}</td>
+              <td>{present(item["exists"])}</td>
+              <td>{present(item["bytes"])}</td>
             </tr>
           </tbody>
         </table>
@@ -17,13 +31,19 @@
     </section>
 
     <section class="win-window" aria-labelledby="blob-storage-title">
-      <header class="win-window__titlebar"><span id="blob-storage-title" class="win-window__title">Blobs and Backups</span></header>
+      <header class="win-window__titlebar">
+        <span id="blob-storage-title" class="win-window__title">Blobs and Backups</span>
+      </header>
       <div class="win-window__body">
         <dl class="facts-list">
-          <dt>blob adapter</dt><dd>{@status["blobStore"]["adapter"]}</dd>
-          <dt>blob path</dt><dd>{@status["blobStore"]["path"]}</dd>
-          <dt>public blobs</dt><dd>{@status["blobStore"]["publicBlobCount"]}</dd>
-          <dt>backup store</dt><dd>{Application.get_env(:tempest, Tempest.Admin.Backup, []) |> Keyword.get(:store, :local) |> present()}</dd>
+          <dt>blob adapter</dt>
+          <dd>{@status["blobStore"]["adapter"]}</dd>
+          <dt>blob path</dt>
+          <dd>{@status["blobStore"]["path"]}</dd>
+          <dt>public blobs</dt>
+          <dd>{@status["blobStore"]["publicBlobCount"]}</dd>
+          <dt>backup store</dt>
+          <dd>{Application.get_env(:tempest, Tempest.Admin.Backup, []) |> Keyword.get(:store, :local) |> present()}</dd>
         </dl>
       </div>
     </section>

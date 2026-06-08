@@ -3,7 +3,9 @@
     <.admin_nav />
 
     <section class="win-window win-window--hero" aria-labelledby="admin-title">
-      <header class="win-window__titlebar"><span id="admin-title" class="win-window__title">Admin Dashboard</span></header>
+      <header class="win-window__titlebar">
+        <span id="admin-title" class="win-window__title">Admin Dashboard</span>
+      </header>
       <div class="win-window__body operator-account__hero">
         <h1 class="tempest-home__title">Operator Status</h1>
         <p class="tempest-home__subtitle">Admin-only view for account, sequencer, storage, and relay crawl state.</p>
@@ -12,37 +14,64 @@
 
     <div class="tempest-home__grid">
       <section class="win-window" aria-labelledby="admin-service-title">
-        <header class="win-window__titlebar"><span id="admin-service-title" class="win-window__title">Service</span></header>
+        <header class="win-window__titlebar">
+          <span id="admin-service-title" class="win-window__title">Service</span>
+        </header>
         <div class="win-window__body">
           <dl class="facts-list">
-            <dt>status</dt><dd>{@status["status"]}</dd>
-            <dt>version</dt><dd>{@status["version"]}</dd>
-            <dt>admin token</dt><dd>{present(@status["admin"]["tokenConfigured"])}</dd>
-            <dt>accounts</dt><dd>{length(@status["accounts"])}</dd>
+            <dt>status</dt>
+            <dd>{@status["status"]}</dd>
+            <dt>version</dt>
+            <dd>{@status["version"]}</dd>
+            <dt>admin token</dt>
+            <dd>{present(@status["admin"]["tokenConfigured"])}</dd>
+            <dt>accounts</dt>
+            <dd>{length(@status["accounts"])}</dd>
           </dl>
         </div>
       </section>
 
       <section class="win-window" aria-labelledby="admin-seq-title">
-        <header class="win-window__titlebar"><span id="admin-seq-title" class="win-window__title">Sequencer</span></header>
+        <header class="win-window__titlebar">
+          <span id="admin-seq-title" class="win-window__title">Sequencer</span>
+        </header>
         <div class="win-window__body">
           <dl class="facts-list">
-            <dt>current seq</dt><dd>{@status["sequencer"]["currentSeq"]}</dd>
-            <dt>torn writes</dt><dd>{@status["sequencer"]["tornWriteCount"]}</dd>
-            <dt>relay crawl</dt><dd>requestCrawl endpoint enabled</dd>
+            <dt>current seq</dt>
+            <dd>{@status["sequencer"]["currentSeq"]}</dd>
+            <dt>torn writes</dt>
+            <dd>{@status["sequencer"]["tornWriteCount"]}</dd>
+            <dt>relay crawl</dt>
+            <dd>requestCrawl endpoint enabled</dd>
           </dl>
         </div>
       </section>
     </div>
 
     <section class="win-window" aria-labelledby="admin-accounts-title">
-      <header class="win-window__titlebar"><span id="admin-accounts-title" class="win-window__title">Account Status</span></header>
+      <header class="win-window__titlebar">
+        <span id="admin-accounts-title" class="win-window__title">Account Status</span>
+      </header>
       <div class="win-window__body operator-account__table-wrap">
         <table class="operator-account__table">
-          <thead><tr><th>DID</th><th>Handle</th><th>Status</th><th>Records</th><th>Blobs</th><th>Missing blobs</th></tr></thead>
+          <thead>
+            <tr>
+              <th>DID</th>
+              <th>Handle</th>
+              <th>Status</th>
+              <th>Records</th>
+              <th>Blobs</th>
+              <th>Missing blobs</th>
+            </tr>
+          </thead>
           <tbody>
             <tr :for={account <- @status["accounts"]}>
-              <td>{account["did"]}</td><td>{account["handle"]}</td><td>{account["status"]}</td><td>{account["recordCount"]}</td><td>{account["blobCount"]}</td><td>{account["missingBlobCount"]}</td>
+              <td>{account["did"]}</td>
+              <td>{account["handle"]}</td>
+              <td>{account["status"]}</td>
+              <td>{account["recordCount"]}</td>
+              <td>{account["blobCount"]}</td>
+              <td>{account["missingBlobCount"]}</td>
             </tr>
           </tbody>
         </table>

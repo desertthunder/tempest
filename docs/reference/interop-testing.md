@@ -40,8 +40,6 @@ Tempest uses these layers together:
 
 ## Smoke tests
 
-Important smoke files:
-
 - `test/smoke/health.hurl`: health and storage writability
 - `test/smoke/xrpc.hurl`: XRPC dispatch and protocol-shaped errors
 - `test/smoke/accounts.hurl`: account/session lifecycle
@@ -56,6 +54,7 @@ Important smoke files:
 - `test/smoke/operator-account-ux.hurl`: account operator UI checks
 - `test/smoke/tempest_basic.hurl`: end-to-end baseline PDS flow
 - `test/smoke/tempest_compat.hurl`: compatibility hardening checks
+- `test/smoke/deployed/crawlers.hurl`: deployed relay crawler fan-out checks
 
 Run suites that create accounts or depend on event order with `--jobs 1`. Use
 fresh account variables for every run. `accounts.hurl` and `identity.hurl` both
@@ -112,7 +111,11 @@ account creation, profile write/read, repo CAR export, blob upload/reference, an
 firehose observation.
 
 `tempest_compat.hurl` covers compatibility extras: private preference endpoints,
-`applyWrites`, `getBlocks`, `requestCrawl`, and unknown AppView method fallback.
+`applyWrites`, `getBlocks`, and unknown AppView method fallback.
+
+`test/smoke/deployed/crawlers.hurl` covers `requestCrawl` against configured
+relays. Run it only against a publicly reachable deployment, because real relays
+such as `bsky.network` and `vsky.network` reject `localhost` and private hostnames.
 
 ## Verification
 
@@ -125,7 +128,16 @@ hurl --test --jobs 1 \
   --variable account_handle="smoke-${suffix}.test" \
   --variable account_email="smoke-${suffix}@example.com" \
   --variable account_password="correct horse battery staple" \
-  test/smoke/
+  test/smoke/*.hurl
+```
+
+Deployed crawler check:
+
+```bash
+hurl --test --jobs 1 \
+  --variable base_url=https://tempest.example.com \
+  --variable crawler_hostname=tempest.example.com \
+  test/smoke/deployed/crawlers.hurl
 ```
 
 ## Sources

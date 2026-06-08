@@ -118,15 +118,13 @@ defmodule Tempest.Security.ExternalMetadataFetcher do
 
   defp validate_uri_shape(_uri), do: {:error, :unsafe_url}
 
-  defp validate_host(host) when is_binary(host) do
+  defp validate_host(host) do
     cond do
       String.trim(host) == "" -> {:error, :unsafe_url}
       String.contains?(host, ["/", "\\", " ", "\t", "\n", "\r"]) -> {:error, :unsafe_url}
       true -> :ok
     end
   end
-
-  defp validate_host(_host), do: {:error, :unsafe_url}
 
   defp lookup_addresses(host) do
     case config(:dns_lookup, nil) do

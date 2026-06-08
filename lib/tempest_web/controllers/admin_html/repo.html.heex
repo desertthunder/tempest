@@ -3,7 +3,9 @@
     <.admin_nav />
 
     <section class="win-window" aria-labelledby="repo-ops-title">
-      <header class="win-window__titlebar"><span id="repo-ops-title" class="win-window__title">Repo Verify, Export, and Import</span></header>
+      <header class="win-window__titlebar">
+        <span id="repo-ops-title" class="win-window__title">Repo Verify, Export, and Import</span>
+      </header>
       <div class="win-window__body">
         <form class="operator-account__form" method="post" action={~p"/admin/repo"}>
           <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />

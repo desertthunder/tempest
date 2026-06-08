@@ -45,7 +45,7 @@ Session design:
 
 OAuth is required for stronger long-term compatibility, but it should follow repo and sync correctness.
 
-See [Security, OAuth, and Delegated Access](security-oauth.md) for the full OAuth, app-password, MFA, and delegated-access plan. This file owns the legacy session substrate and account tables; OAuth must reuse those account identities rather than introducing a second account model.
+See [Security, OAuth, and Delegated Access](./security-oauth.md) for the full OAuth, app-password, MFA, and delegated-access plan. This file owns the legacy session substrate and account tables; OAuth must reuse those account identities rather than introducing a second account model.
 
 ## Account Creation
 

@@ -298,7 +298,7 @@ defmodule Tempest.RepoCore.Car do
 
   defp take_exact(bytes, length, error) do
     if byte_size(bytes) >= length do
-      <<value::binary-size(length), rest::binary>> = bytes
+      <<value::binary-size(^length), rest::binary>> = bytes
       {:ok, value, rest}
     else
       {:error, error}

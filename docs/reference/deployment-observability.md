@@ -37,6 +37,7 @@ TEMPEST_BLOB_STORE=local
 TEMPEST_BLOB_MAX_BYTES=10000000
 TEMPEST_SMTP_ENABLED=false
 TEMPEST_BACKUP_STORE=local
+TEMPEST_CRAWLERS=https://bsky.network,https://vsky.network
 ```
 
 Optional adapters add SMTP, S3/R2 blob storage, and S3/R2 backup uploads. Those

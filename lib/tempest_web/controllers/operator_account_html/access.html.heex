@@ -3,7 +3,9 @@
     <.account_nav />
 
     <section class="win-window" aria-labelledby="access-title">
-      <header class="win-window__titlebar"><span id="access-title" class="win-window__title">Sessions and Delegated Access</span></header>
+      <header class="win-window__titlebar">
+        <span id="access-title" class="win-window__title">Sessions and Delegated Access</span>
+      </header>
       <div class="win-window__body">
         <p class="operator-account__note">Access inventory for {@account.did}. Secrets are never shown.</p>
       </div>
@@ -13,10 +15,22 @@
       <header class="win-window__titlebar"><span id="sessions-title" class="win-window__title">Sessions</span></header>
       <div class="win-window__body operator-account__table-wrap">
         <table class="operator-account__table">
-          <thead><tr><th>ID</th><th>Family</th><th>Status</th><th>Expires</th><th>Created</th></tr></thead>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Family</th>
+              <th>Status</th>
+              <th>Expires</th>
+              <th>Created</th>
+            </tr>
+          </thead>
           <tbody>
             <tr :for={session <- @inventory.sessions}>
-              <td>{session.id}</td><td>{session.family_id}</td><td>{status_value(session)}</td><td>{session.expires_at}</td><td>{session.inserted_at}</td>
+              <td>{session.id}</td>
+              <td>{session.family_id}</td>
+              <td>{status_value(session)}</td>
+              <td>{session.expires_at}</td>
+              <td>{session.inserted_at}</td>
             </tr>
           </tbody>
         </table>
@@ -25,13 +39,25 @@
 
     <div class="tempest-home__grid">
       <section class="win-window" aria-labelledby="oauth-title">
-        <header class="win-window__titlebar"><span id="oauth-title" class="win-window__title">OAuth Grants</span></header>
+        <header class="win-window__titlebar">
+          <span id="oauth-title" class="win-window__title">OAuth Grants</span>
+        </header>
         <div class="win-window__body operator-account__table-wrap">
           <table class="operator-account__table operator-account__table--compact">
-            <thead><tr><th>Client</th><th>Scope</th><th>Status</th><th>Expires</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Expires</th>
+              </tr>
+            </thead>
             <tbody>
               <tr :for={grant <- @inventory.oauth_grants}>
-                <td>{grant.client_id}</td><td>{grant.scope}</td><td>{status_value(grant)}</td><td>{grant.expires_at}</td>
+                <td>{grant.client_id}</td>
+                <td>{grant.scope}</td>
+                <td>{status_value(grant)}</td>
+                <td>{grant.expires_at}</td>
               </tr>
             </tbody>
           </table>
@@ -39,13 +65,25 @@
       </section>
 
       <section class="win-window" aria-labelledby="app-password-title">
-        <header class="win-window__titlebar"><span id="app-password-title" class="win-window__title">App Passwords</span></header>
+        <header class="win-window__titlebar">
+          <span id="app-password-title" class="win-window__title">App Passwords</span>
+        </header>
         <div class="win-window__body operator-account__table-wrap">
           <table class="operator-account__table operator-account__table--compact">
-            <thead><tr><th>Name</th><th>Scope</th><th>Status</th><th>Last used</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Last used</th>
+              </tr>
+            </thead>
             <tbody>
               <tr :for={password <- @inventory.app_passwords}>
-                <td>{password.name}</td><td>{password.scope}</td><td>{status_value(password)}</td><td>{present(password.last_used_at)}</td>
+                <td>{password.name}</td>
+                <td>{password.scope}</td>
+                <td>{status_value(password)}</td>
+                <td>{present(password.last_used_at)}</td>
               </tr>
             </tbody>
           </table>
@@ -54,13 +92,27 @@
     </div>
 
     <section class="win-window" aria-labelledby="delegated-title">
-      <header class="win-window__titlebar"><span id="delegated-title" class="win-window__title">Delegated Access</span></header>
+      <header class="win-window__titlebar">
+        <span id="delegated-title" class="win-window__title">Delegated Access</span>
+      </header>
       <div class="win-window__body operator-account__table-wrap">
         <table class="operator-account__table">
-          <thead><tr><th>Delegate DID</th><th>Scope</th><th>Status</th><th>Expires</th><th>Created</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Delegate DID</th>
+              <th>Scope</th>
+              <th>Status</th>
+              <th>Expires</th>
+              <th>Created</th>
+            </tr>
+          </thead>
           <tbody>
             <tr :for={grant <- @inventory.delegated_access}>
-              <td>{grant.delegate_did}</td><td>{grant.scope}</td><td>{status_value(grant)}</td><td>{present(grant.expires_at)}</td><td>{grant.inserted_at}</td>
+              <td>{grant.delegate_did}</td>
+              <td>{grant.scope}</td>
+              <td>{status_value(grant)}</td>
+              <td>{present(grant.expires_at)}</td>
+              <td>{grant.inserted_at}</td>
             </tr>
           </tbody>
         </table>

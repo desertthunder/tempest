@@ -211,7 +211,7 @@ defmodule Tempest.RepoCore.Cid do
     with {:ok, bits} <- decode_base32_bits(encoded),
          :ok <- validate_base32_padding(bits) do
       bit_count = div(bit_size(bits), 8) * 8
-      <<bytes::bitstring-size(bit_count), _padding::bitstring>> = bits
+      <<bytes::bitstring-size(^bit_count), _padding::bitstring>> = bits
       {:ok, bytes}
     end
   end
@@ -234,7 +234,7 @@ defmodule Tempest.RepoCore.Cid do
       :ok
     else
       data_bits = bit_size(bits) - padding_bits
-      <<_data::bitstring-size(data_bits), padding::size(padding_bits)>> = bits
+      <<_data::bitstring-size(^data_bits), padding::size(^padding_bits)>> = bits
 
       if padding == 0 do
         :ok

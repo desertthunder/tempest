@@ -61,15 +61,6 @@ HTTP 200
 [Asserts]
 header "content-type" contains "application/vnd.ipld.car"
 
-POST {{base_url}}/xrpc/com.atproto.sync.requestCrawl
-Content-Type: application/json
-{
-  "hostname": "localhost"
-}
-HTTP 200
-[Asserts]
-jsonpath "$" exists
-
 GET {{base_url}}/xrpc/app.bsky.feed.getTimeline?limit=1
 HTTP 404
 [Asserts]

@@ -3,25 +3,41 @@
     <.admin_nav />
 
     <section class="win-window" aria-labelledby="compat-title">
-      <header class="win-window__titlebar"><span id="compat-title" class="win-window__title">Compatibility Status</span></header>
+      <header class="win-window__titlebar">
+        <span id="compat-title" class="win-window__title">Compatibility Status</span>
+      </header>
       <div class="win-window__body">
         <dl class="facts-list">
-          <dt>implemented</dt><dd>{@status.summary["implemented"] || 0}</dd>
-          <dt>partial</dt><dd>{@status.summary["partial"] || 0}</dd>
-          <dt>planned</dt><dd>{@status.summary["planned"] || 0}</dd>
-          <dt>deferred</dt><dd>{@status.summary["deferred"] || 0}</dd>
+          <dt>implemented</dt>
+          <dd>{@status.summary["implemented"] || 0}</dd>
+          <dt>partial</dt>
+          <dd>{@status.summary["partial"] || 0}</dd>
+          <dt>planned</dt>
+          <dd>{@status.summary["planned"] || 0}</dd>
+          <dt>deferred</dt>
+          <dd>{@status.summary["deferred"] || 0}</dd>
         </dl>
       </div>
     </section>
 
     <section class="win-window" aria-labelledby="compat-matrix-title">
-      <header class="win-window__titlebar"><span id="compat-matrix-title" class="win-window__title">Reference Endpoint Matrix</span></header>
+      <header class="win-window__titlebar">
+        <span id="compat-matrix-title" class="win-window__title">Reference Endpoint Matrix</span>
+      </header>
       <div class="win-window__body operator-account__table-wrap">
         <table class="operator-account__table">
-          <thead><tr><th>Method</th><th>Status</th><th>Route</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Route</th>
+            </tr>
+          </thead>
           <tbody>
             <tr :for={endpoint <- @status.endpoints}>
-              <td>{endpoint.method}</td><td>{endpoint.status}</td><td>{endpoint.route}</td>
+              <td>{endpoint.method}</td>
+              <td>{endpoint.status}</td>
+              <td>{endpoint.route}</td>
             </tr>
           </tbody>
         </table>

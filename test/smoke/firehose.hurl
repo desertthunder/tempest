@@ -2,8 +2,8 @@
 #
 # Hurl 8.0.0 in this environment does not provide a WebSocket client, so the
 # binary subscribe/write/receive stream is covered by ExUnit. This smoke test
-# verifies the public setup path, durable commit creation, requestCrawl, and the
-# subscribeRepos HTTP upgrade boundary.
+# verifies the public setup path, durable commit creation, and the subscribeRepos
+# HTTP upgrade boundary. Crawler fan-out is covered by crawlers.hurl.
 
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
 Content-Type: application/json
@@ -57,15 +57,6 @@ GET {{base_url}}/xrpc/com.atproto.sync.getBlocks?did={{created_did}}&cids%5B%5D=
 HTTP 200
 [Asserts]
 header "content-type" contains "application/vnd.ipld.car"
-
-POST {{base_url}}/xrpc/com.atproto.sync.requestCrawl
-Content-Type: application/json
-{
-  "hostname": "localhost"
-}
-HTTP 200
-[Asserts]
-header "content-type" contains "application/json"
 
 GET {{base_url}}/xrpc/com.atproto.sync.subscribeRepos?cursor=0
 HTTP 426

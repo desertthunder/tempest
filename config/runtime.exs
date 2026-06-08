@@ -46,6 +46,11 @@ if blob_cdn_base_url = System.get_env("TEMPEST_BLOB_CDN_BASE_URL") do
   config :tempest, Tempest.Blobs, cdn_base_url: blob_cdn_base_url
 end
 
+if crawlers = System.get_env("TEMPEST_CRAWLERS") do
+  relays = String.split(crawlers, ",", trim: true) |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+  config :tempest, Tempest.Sync, relays: relays
+end
+
 if System.get_env("TEMPEST_BLOB_STORE") == "s3" do
   s3_headers =
     case System.get_env("TEMPEST_BLOB_S3_AUTHORIZATION") do
