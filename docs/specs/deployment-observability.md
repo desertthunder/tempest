@@ -4,7 +4,10 @@ updated: 2026-06-03
 status: implemented
 ---
 
-Reference documentation: ../reference/deployment-observability.md
+Reference documentation:
+
+- [Observability](../reference/deployment-observability.md)
+- [Budget](../reference/budget.md)
 
 Verification:
 

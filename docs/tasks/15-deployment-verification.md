@@ -4,6 +4,9 @@ specs:
   - ../specs/admin-operations.md
   - ../specs/deployment-observability.md
   - ../specs/pds-compatibility.md
+references:
+  - ../reference/deployment-observability.md
+  - ../reference/budget.md
 ---
 
 Goal: make Tempest deployable, restorable, and externally verifiable as a
@@ -15,20 +18,22 @@ SQLite-first PDS on local Docker or a managed PaaS with optional S3/R2 storage.
 - [ ] T15-04: Add Caddy reverse proxy example.
 - [ ] T15-05: Add production env template.
 - [ ] T15-06: Add deployment docs for local-only, S3-backed, and reverse-proxy
-  setups.
-- [ ] T15-07: Add managed PaaS deployment profile for Railway-like hosts.
-- [ ] T15-08: Document persistent volume requirements for SQLite, repos, keys,
-  WAL files, and backup workspaces.
-- [ ] T15-09: Add Cloudflare R2 blob-store configuration docs.
-- [ ] T15-10: Add Cloudflare R2 backup-store configuration docs.
+      setups.
+- [x] T15-07: Add managed PaaS deployment profile for Railway-like hosts.
+- [x] T15-08: Document persistent volume requirements for SQLite, repos, keys,
+      WAL files, and backup workspaces.
+- [x] T15-09: Add Cloudflare R2 blob-store configuration docs.
+- [x] T15-10: Add Cloudflare R2 backup-store configuration docs.
 - [ ] T15-11: Add deployed HTTPS/WebSocket smoke test profile.
 - [ ] T15-12: Add Hurl smoke test for deployed HTTPS target.
 - [ ] T15-13: Add restore drill for managed PaaS volume plus S3/R2 backups.
 - [ ] T15-14: Add public DID and handle verification procedure.
 - [ ] T15-15: Add public relay/AppView crawl verification procedure for a
-  deployed HTTPS node.
+      deployed HTTPS node.
 - [ ] T15-16: Add real-client compatibility checklist for deployed login,
-  profile writes, posts, blobs, and session refresh.
+      profile writes, posts, blobs, and session refresh.
+- [x] T15-17: Add budget deployment guide for Railway Hobby plus Cloudflare R2
+      free-tier planning.
 
 ## Integration Tests
 

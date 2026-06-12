@@ -23,6 +23,10 @@ Graduated reference docs:
 - [Lexicon Schemas](./lexicon-schemas.md)
 - [Interop and Integration Testing](./interop-testing.md)
 
+---
+
+- [Budget](./budget.md)
+
 Additional reference notes:
 
 - [Identity Troubleshooting](identity-troubleshooting.md)

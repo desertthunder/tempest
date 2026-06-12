@@ -44,6 +44,9 @@ Optional adapters add SMTP, S3/R2 blob storage, and S3/R2 backup uploads. Those
 profiles also need endpoint, bucket, region, and credential variables for the
 chosen object store.
 
+For the single-user Railway plus Cloudflare R2 budget profile, see
+[`budget`](./budget.md).
+
 ## Durable paths
 
 A deployment must preserve these paths together:
