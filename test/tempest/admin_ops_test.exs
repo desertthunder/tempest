@@ -89,6 +89,11 @@ defmodule Tempest.AdminOpsTest do
     assert {:ok, %{path: ^restore_dir}} = Backup.restore(backup_dir, config: config, target: restore_dir, force?: true)
   end
 
+  # This drill intentionally verifies restored state through filesystem, SQLite, and
+  # storage contexts instead of booting a second HTTP endpoint against restore_dir.
+  #
+  # Public HTTP coverage for the same compatibility surface lives in
+  # test/smoke/local-pds-compat.sh.
   test "local restore drill preserves DBs, repos, blobs, signing keys, and OAuth keys" do
     unique = System.unique_integer([:positive])
     data_dir = Path.join([System.tmp_dir!(), "tempest-restore-drill-source-#{unique}"])

@@ -67,10 +67,11 @@ defmodule Tempest.Accounts.Tokens do
   def verify_service_auth(_token), do: {:error, :invalid}
 
   defp peek_service_auth_header(token) do
-    case JOSE.JWT.peek_protected(token) do
-      %JOSE.JWS{fields: fields, alg: {_module, :ES256K}} -> {:ok, Map.put(fields, "alg", "ES256K")}
-      %JOSE.JWS{fields: fields} -> {:ok, fields}
-      _other -> {:error, :invalid}
+    %JOSE.JWS{fields: fields, alg: alg} = JOSE.JWT.peek_protected(token)
+
+    case alg do
+      {_, :ES256K} -> {:ok, Map.put(fields, "alg", "ES256K")}
+      _ -> {:ok, fields}
     end
   rescue
     _error -> {:error, :invalid}

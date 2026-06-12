@@ -31,7 +31,7 @@ coverage through the same public HTTP/WebSocket contract clients use.
       backfill, live events, and deactivated accounts.
 - [x] T14-10: Add local restore-drill test that verifies DBs, repos, blobs,
       signing keys, and OAuth keys together.
-- [ ] T14-11: Add local Hurl smoke profile that runs the completed compatibility
+- [x] T14-11: Add local Hurl smoke profile that runs the completed compatibility
       suites without deployment.
 
 ## Integration Tests
@@ -50,10 +50,5 @@ coverage through the same public HTTP/WebSocket contract clients use.
 ## HTTP Verification
 
 ```bash
-hurl --test --jobs 1 \
-  --variable base_url=http://localhost:4000 \
-  test/smoke/tempest_basic.hurl \
-  test/smoke/tempest_compat.hurl \
-  test/smoke/oauth-security.hurl \
-  test/smoke/migration-lifecycle.hurl
+test/smoke/local-pds-compat.sh http://localhost:4000
 ```

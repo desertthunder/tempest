@@ -3,7 +3,15 @@
 Canonical smoke-test documentation lives in
 [Interop & Integration Testing](../../docs/reference/interop-testing.md).
 
-Quick run:
+Local PDS compatibility profile:
+
+```bash
+mix phx.server
+
+test/smoke/local-pds-compat.sh http://localhost:4000
+```
+
+Quick full-directory run:
 
 ```bash
 mix phx.server
