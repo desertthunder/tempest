@@ -305,28 +305,7 @@ defmodule TempestWeb.Xrpc.CompatibilityAuthContentTest do
     |> post(path, params)
   end
 
-  defp dpop(method, url, nonce) do
-    header = %{
-      "typ" => "dpop+jwt",
-      "alg" => "ES256",
-      "jwk" => %{"kty" => "EC", "crv" => "P-256", "x" => "x", "y" => "y"}
-    }
-
-    payload = %{
-      "htu" => url,
-      "htm" => method,
-      "iat" => DateTime.utc_now() |> DateTime.to_unix(),
-      "jti" => Ecto.UUID.generate(),
-      "nonce" => nonce
-    }
-
-    [header, payload, "signature"]
-    |> Enum.map(&encode_part/1)
-    |> Enum.join(".")
-  end
-
-  defp encode_part(value) when is_map(value), do: value |> Jason.encode!() |> encode_part()
-  defp encode_part(value), do: Base.url_encode64(value, padding: false)
+  defp dpop(method, url, nonce), do: Tempest.DpopProof.proof(method, url, nonce)
 
   defp code_challenge(verifier) do
     :crypto.hash(:sha256, verifier) |> Base.url_encode64(padding: false)

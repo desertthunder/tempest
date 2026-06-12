@@ -2,10 +2,10 @@ defmodule Tempest.OAuth.Dpop do
   @moduledoc """
   DPoP nonce creation and proof validation.
 
-  The verifier validates JWT shape, required proof claims (`htm`, `htu`, `iat`,
-  `jti`, `nonce`), nonce freshness/single use, and computes the public-key JWK
-  thumbprint used for token binding. Signature verification can be tightened as
-  algorithm support grows; callers must treat a missing/invalid proof as fatal.
+  The verifier validates JWT shape, the protected JWS header, the signature using
+  the embedded public JWK, required proof claims (`htm`, `htu`, `iat`, `jti`,
+  `nonce`), nonce freshness/single use, and the public-key JWK thumbprint used
+  for token binding. Callers must treat a missing/invalid proof as fatal.
   """
 
   import Ecto.Query
@@ -15,6 +15,7 @@ defmodule Tempest.OAuth.Dpop do
 
   @nonce_lifetime_seconds 5 * 60
   @max_iat_skew_seconds 60
+  @supported_algs ["ES256", "ES384", "ES512", "RS256", "PS256"]
 
   def issue_nonce do
     nonce = random_token(32)
@@ -37,9 +38,12 @@ defmodule Tempest.OAuth.Dpop do
   def verify_proof("", _method, _url, _opts), do: {:error, :missing_dpop}
 
   def verify_proof(proof, method, url, opts) when is_binary(proof) do
-    with {:ok, header, payload, _signature_input, _signature} <- decode_jwt(proof),
-         %{"jwk" => jwk} when is_map(jwk) <- header,
+    with {:ok, header} <- decode_protected_header(proof),
+         :ok <- validate_header(header),
+         %{"alg" => alg, "jwk" => jwk} when is_map(jwk) <- header,
+         :ok <- validate_key_alg(jwk, alg),
          {:ok, jkt} <- jwk_thumbprint(jwk),
+         {:ok, payload} <- verify_signature(proof, jwk, alg),
          :ok <- validate_payload(payload, method, url),
          :ok <- validate_bound_jkt(jkt, Keyword.get(opts, :bound_jkt)) do
       {:ok, %{jkt: jkt, jwk: jwk, nonce: payload["nonce"], jti: payload["jti"]}}
@@ -120,15 +124,12 @@ defmodule Tempest.OAuth.Dpop do
     {:ok, fields |> Jason.encode!() |> then(&:crypto.hash(:sha256, &1)) |> Base.url_encode64(padding: false)}
   end
 
-  defp decode_jwt(jwt) do
+  defp decode_protected_header(jwt) do
     case String.split(jwt, ".") do
-      [encoded_header, encoded_payload, encoded_signature] ->
+      [encoded_header, _encoded_payload, _encoded_signature] ->
         with {:ok, header_json} <- Base.url_decode64(encoded_header, padding: false),
-             {:ok, payload_json} <- Base.url_decode64(encoded_payload, padding: false),
-             {:ok, signature} <- Base.url_decode64(encoded_signature, padding: false),
-             {:ok, header} <- Jason.decode(header_json),
-             {:ok, payload} <- Jason.decode(payload_json) do
-          {:ok, header, payload, encoded_header <> "." <> encoded_payload, signature}
+             {:ok, header} <- Jason.decode(header_json) do
+          {:ok, header}
         else
           _error -> {:error, :invalid_dpop}
         end
@@ -136,6 +137,43 @@ defmodule Tempest.OAuth.Dpop do
       _parts ->
         {:error, :invalid_dpop}
     end
+  end
+
+  defp validate_header(%{"alg" => alg, "jwk" => jwk} = header) when is_binary(alg) and is_map(jwk) do
+    with :ok <- validate_typ(Map.get(header, "typ")),
+         true <- alg in @supported_algs do
+      :ok
+    else
+      {:error, reason} -> {:error, reason}
+      false -> {:error, :unsupported_dpop_alg}
+    end
+  end
+
+  defp validate_header(_header), do: {:error, :invalid_dpop}
+
+  defp validate_typ(nil), do: :ok
+
+  defp validate_typ(typ) when is_binary(typ) do
+    if String.downcase(typ) == "dpop+jwt", do: :ok, else: {:error, :invalid_dpop}
+  end
+
+  defp validate_typ(_typ), do: {:error, :invalid_dpop}
+
+  defp validate_key_alg(%{"kty" => "EC", "crv" => "P-256"}, "ES256"), do: :ok
+  defp validate_key_alg(%{"kty" => "EC", "crv" => "P-384"}, "ES384"), do: :ok
+  defp validate_key_alg(%{"kty" => "EC", "crv" => "P-521"}, "ES512"), do: :ok
+  defp validate_key_alg(%{"kty" => "RSA"}, alg) when alg in ["RS256", "PS256"], do: :ok
+  defp validate_key_alg(_jwk, _alg), do: {:error, :unsupported_dpop_key}
+
+  defp verify_signature(proof, jwk, alg) do
+    public_jwk = JOSE.JWK.from_map(jwk)
+
+    case JOSE.JWT.verify_strict(public_jwk, [alg], proof) do
+      {true, %JOSE.JWT{fields: payload}, _jws} when is_map(payload) -> {:ok, payload}
+      _invalid -> {:error, :invalid_dpop}
+    end
+  rescue
+    _error -> {:error, :invalid_dpop}
   end
 
   defp require_binary(map, key) do

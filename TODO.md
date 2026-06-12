@@ -1,25 +1,5 @@
 # Parking Lot (TODO)
 
-## DPoP Signature Verification
-
-- Add {:jose, "~> 1.11"}.
-- In Tempest.OAuth.Dpop.verify_proof/4:
-  - parse protected header
-  - require typ: "dpop+jwt" when present
-  - require alg allowlist, probably start with ES256
-  - require embedded public jwk
-  - verify JWS signature using that JWK
-  - only then validate htm, htu, iat, jti, nonce, and bound jkt
-- Tighten supported keys:
-  - probably P-256 / ES256 first
-  - Verify & Test ES384, ES512, RS256, PS256
-- Add negative tests:
-  - modified payload fails
-  - wrong key fails
-  - wrong alg fails
-  - reused nonce fails
-  - wrong htu / htm fails
-
 ## Service Auth Interop
 
 Production service auth needs to be an atproto-compatible JWT:
