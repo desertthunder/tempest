@@ -25,6 +25,40 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
 }
 
+.desktop-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.desktop-icon {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  width: 5.5rem;
+  padding: var(--space-2);
+  color: white;
+  font-size: 0.76rem;
+  line-height: var(--leading-tight);
+  text-align: center;
+  text-decoration: none;
+  text-shadow: 1px 1px 0 rgb(0 0 0 / 0.75);
+}
+
+.desktop-icon:hover,
+.desktop-icon:focus-visible {
+  color: white;
+  background: rgb(7 19 122 / 0.58);
+  outline-color: white;
+}
+
+.desktop-icon img {
+  width: 2.5rem;
+  height: 2.5rem;
+  image-rendering: pixelated;
+}
+
 .tempest-home__hero {
   display: flex;
   justify-content: space-between;
@@ -100,12 +134,76 @@
   gap: 0.2rem;
 }
 
+.win-window__titlebar:not(:has(.win-window__controls)):not(:has(.win-window__close))::after {
+  content: "";
+  width: 3.4rem;
+  height: 0.95rem;
+  background-image:
+    url("/images/icons/minimize.svg"),
+    url("/images/icons/maximize.svg"),
+    url("/images/icons/close.svg"),
+    linear-gradient(var(--surface), var(--surface)),
+    linear-gradient(var(--surface), var(--surface)),
+    linear-gradient(var(--surface), var(--surface));
+  background-position:
+    0.15rem 50%,
+    1.35rem 50%,
+    2.55rem 50%,
+    0 0,
+    1.2rem 0,
+    2.4rem 0;
+  background-repeat: no-repeat;
+  background-size:
+    0.7rem 0.7rem,
+    0.7rem 0.7rem,
+    0.7rem 0.7rem,
+    1rem 0.95rem,
+    1rem 0.95rem,
+    1rem 0.95rem;
+}
+
+.win-window__close {
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  height: 0.95rem;
+  overflow: hidden;
+  color: transparent;
+  background-color: var(--surface);
+  background-image: url("/images/icons/close.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.7rem 0.7rem;
+  box-shadow: var(--border-out);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.win-window__close:hover {
+  color: transparent;
+}
+
 .win-window__controls span,
 .taskbar__start {
   width: 1rem;
   height: 0.95rem;
-  background: var(--surface);
+  background-color: var(--surface);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.7rem 0.7rem;
   box-shadow: var(--border-out);
+}
+
+.win-window__controls span:nth-child(1) {
+  background-image: url("/images/icons/minimize.svg");
+}
+
+.win-window__controls span:nth-child(2) {
+  background-image: url("/images/icons/maximize.svg");
+}
+
+.win-window__controls span:nth-child(3) {
+  background-image: url("/images/icons/close.svg");
 }
 
 .win-window__body {
@@ -293,8 +391,11 @@
 }
 
 .taskbar__start {
-  display: inline-grid;
+  display: inline-flex;
   place-items: center;
+  gap: var(--space-1);
+  align-items: center;
+  justify-content: center;
   width: auto;
   min-width: 4.5rem;
   height: 1.65rem;
@@ -303,9 +404,60 @@
   font-weight: 700;
 }
 
+.taskbar__start img {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
 .taskbar__app {
   padding: 0.25rem var(--space-3);
   box-shadow: var(--border-in);
+  font-size: var(--step--1);
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  place-items: center;
+  padding: var(--space-4);
+}
+
+.modal:target {
+  display: grid;
+}
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.28);
+}
+
+.modal__window {
+  position: relative;
+  z-index: 1;
+  width: min(31rem, 100%);
+}
+
+.about-computer {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  background: var(--surface-raised);
+}
+
+.about-computer h2 {
+  margin-block-end: var(--space-2);
+  font-size: var(--step-1);
+  line-height: var(--leading-tight);
+}
+
+.about-computer p {
+  margin-block-end: var(--space-3);
+}
+
+.about-computer__facts {
   font-size: var(--step--1);
 }
 
@@ -385,7 +537,8 @@
 @media (max-width: 640px) {
   .tempest-home__hero,
   .endpoint-list__row,
-  .facts-list {
+  .facts-list,
+  .about-computer {
     grid-template-columns: 1fr;
   }
 

@@ -1,5 +1,16 @@
 <main id="tempest-home" class="tempest-home">
   <div class="tempest-home__desktop" aria-label="Tempest desktop">
+    <nav class="desktop-icons" aria-label="Desktop shortcuts">
+      <a class="desktop-icon" href="https://github.com/desertthunder/tempest">
+        <img src={~p"/images/icons/github.svg"} alt="" width="40" height="40" />
+        <span>GitHub</span>
+      </a>
+      <a class="desktop-icon" href="#about-computer">
+        <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
+        <span>About this Computer</span>
+      </a>
+    </nav>
+
     <section class="win-window win-window--hero" aria-labelledby="tempest-title">
       <header class="win-window__titlebar">
         <span class="win-window__title">Tempest PDS</span>
@@ -132,8 +143,37 @@
       </nav>
     </section>
 
+    <section id="about-computer" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-computer-title">
+      <a href="#" class="modal__backdrop" aria-label="Close About this Computer"></a>
+      <div class="win-window modal__window">
+        <header class="win-window__titlebar">
+          <span id="about-computer-title" class="win-window__title">About this Computer</span>
+          <a href="#" class="win-window__close" aria-label="Close">×</a>
+        </header>
+        <div class="win-window__body about-computer">
+          <img src={~p"/images/icons/computer.svg"} alt="" width="56" height="56" />
+          <div>
+            <h2>Tempest PDS</h2>
+            <p>A compact AT Protocol Personal Data Server for learning, operating, and testing protocol flows.</p>
+            <dl class="facts-list about-computer__facts">
+              <dt>version</dt>
+              <dd>v{@app_version}</dd>
+              <dt>host</dt>
+              <dd>{@host}</dd>
+              <dt>rendered</dt>
+              <dd>{@rendered_at}</dd>
+              <dt>source</dt>
+              <dd><a href="https://github.com/desertthunder/tempest">github.com/desertthunder/tempest</a></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <footer class="taskbar">
-      <span class="taskbar__start">Start</span>
+      <span class="taskbar__start">
+        <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
+      </span>
       <span class="taskbar__app">tempest pds / {@host}</span>
     </footer>
   </div>
