@@ -36,7 +36,7 @@ Blocking work for the current target profile (see `docs/specs/target-profile.md`
 - Admin/operator feature work is complete for the local profile: admin auth,
   repo and backup commands, S3/R2 adapters, SMTP, telemetry, and operator UI.
 - Local compatibility testing follows without requiring deployment: ConnCase
-  endpoint checks, SDK tests, local Hurl smoke tests, migration tests, and
+  endpoint checks, HTTP black-box tests, local Hurl smoke tests, migration tests, and
   restore drills.
 - Deployment work comes after local proof: release config, Docker, reverse
   proxy docs, managed PaaS docs, persistent volume requirements, and R2 docs.

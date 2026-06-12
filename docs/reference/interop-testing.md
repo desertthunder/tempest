@@ -14,7 +14,8 @@ AT Protocol compatibility has several layers:
 - syntax compatibility: DIDs, handles, NSIDs, rkeys, CIDs, AT URIs
 - binary compatibility: CBOR, CAR, MST, commits, signatures
 - XRPC compatibility: methods, verbs, content types, JSON error shape
-- client compatibility: known SDKs and clients can exercise normal flows
+- client compatibility: clients can exercise normal flows through the public
+  HTTP/WebSocket contract
 - network compatibility: relays/AppViews can resolve identity and sync data
 
 A passing unit test does not prove an endpoint is usable by clients. A smoke test
@@ -36,7 +37,8 @@ Tempest uses these layers together:
 2. context tests for account, identity, record, blob, and sync flows
 3. Phoenix integration tests using `ConnCase`
 4. running-server Hurl smoke tests under `test/smoke/`
-5. fixture/SDK/network tests where behavior depends on external compatibility
+5. deployed network tests where behavior depends on public DNS, TLS, relays, or
+   AppViews
 
 ## Smoke tests
 
@@ -142,7 +144,6 @@ hurl --test --jobs 1 \
 
 ## Sources
 
-- <https://github.com/bluesky-social/atproto/tree/main/packages/atproto-interop-tests>
 - <https://github.com/bluesky-social/atproto/tree/main/lexicons>
 - <https://atproto.com/specs/repository>
 - <https://atproto.com/specs/sync>

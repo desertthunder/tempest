@@ -20,7 +20,8 @@ Tempest is considered *usable* for this profile when both tracks are true:
 
 - Identity is externally verifiable for the chosen hosted DID mode.
 - Modern client auth works end-to-end (OAuth/app passwords as required).
-- Records, blobs, sync reads, and firehose interoperate with known SDKs/fixtures.
+- Records, blobs, sync reads, and firehose pass public HTTP/WebSocket
+  compatibility tests.
 
 ### Track B: Data Custody
 

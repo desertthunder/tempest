@@ -16,13 +16,19 @@ updated: 2026-05-29
 
 ## AppView
 
-- Local PDS-owned endpoints remain locally implemented.
-- Service surface such as `app.bsky.feed.*` and `chat.bsky.*` may proxy to a configured
-  AppView via `Tempest.Xrpc.Proxy`.
-- `app.bsky.actor.getPreferences` and `app.bsky.actor.putPreferences` are intentionally
-  local because they carry private account migration state.
+- Tempest is a PDS, not an AppView. Local PDS-owned endpoints remain locally
+  implemented.
+- `app.bsky.actor.getPreferences` and `app.bsky.actor.putPreferences` are
+  intentionally local because they carry private account migration state.
+- Unknown service methods whose NSID starts with `app.bsky.` or `chat.bsky.` are
+  proxy-eligible only when `Tempest.Xrpc.Proxy` is configured with an
+  `upstream_base_url`.
+- Proxy requests preserve the original HTTP verb, query parameters or JSON body,
+  and the `authorization`, `accept`, and `content-type` headers. Responses
+  preserve the upstream status, content type, and body.
 - If no AppView upstream is configured, proxyable unknown service methods return
   protocol-shaped `UnknownMethod` instead of silently failing.
+- Unknown `com.atproto.*` methods are never proxied.
 
 ## Smoke commands
 
@@ -31,5 +37,6 @@ hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/tempes
 hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/tempest_compat.hurl
 ```
 
-External relay/AppView checks should be documented with the upstream host, atproto
-commit/SDK version, date, and observed failures before changing compatibility status.
+External relay/AppView checks should be documented with the upstream host,
+atproto commit or protocol version, date, and observed failures before changing
+compatibility status.

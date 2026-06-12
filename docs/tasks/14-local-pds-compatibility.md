@@ -11,7 +11,7 @@ Goal: prove Tempest's PDS behavior locally before relying on deployment,
 public DNS, TLS, relays, or AppViews.
 
 Use `ConnCase` for detailed endpoint checks. Keep Hurl for running-server smoke
-coverage and use SDK tests where client behavior matters.
+coverage through the same public HTTP/WebSocket contract clients use.
 
 - [x] T14-01: Keep the endpoint compatibility matrix aligned with implemented
       behavior and reference Lexicons.
@@ -20,26 +20,25 @@ coverage and use SDK tests where client behavior matters.
 - [x] T14-03: Add ConnCase auth tests for bearer tokens, app passwords, OAuth
       tokens, admin tokens, and missing credentials.
 - [x] T14-04: Add ConnCase content-type and verb tests for XRPC endpoints.
-- [x] T14-05: Add SDK black-box tests for login, write, read, blob, CAR, and
+- [x] T14-05: Add HTTP black-box tests for login, write, read, blob, CAR, and
       firehose flows against a local server.
 - [x] T14-06: Add OAuth and app-password black-box compatibility tests.
-- [ ] T14-07: Add migration-in and migration-out compatibility tests using two
+- [x] T14-07: Add migration-in and migration-out compatibility tests using two
       local Tempest instances.
-- [ ] T14-08: Add an explicit AppView proxy/fallback policy and local coverage
+- [x] T14-08: Add an explicit AppView proxy/fallback policy and local coverage
       for unknown `app.bsky.*` methods.
-- [ ] T14-09: Integrate official AT Protocol interop fixtures where practical.
-- [ ] T14-10: Add firehose frame comparison tests for header/body CBOR shape,
+- [ ] T14-09: Add firehose frame comparison tests for header/body CBOR shape,
       backfill, live events, and deactivated accounts.
-- [ ] T14-11: Add local restore-drill test that verifies DBs, repos, blobs,
+- [ ] T14-10: Add local restore-drill test that verifies DBs, repos, blobs,
       signing keys, and OAuth keys together.
-- [ ] T14-12: Add local Hurl smoke profile that runs the completed compatibility
+- [ ] T14-11: Add local Hurl smoke profile that runs the completed compatibility
       suites without deployment.
 
 ## Integration Tests
 
 - ConnCase covers request parsing, auth, response shape, and error shape for the
   endpoint matrix.
-- SDK tests can create an account, authenticate, write records, upload blobs,
+- HTTP black-box tests can create an account, authenticate, write records, upload blobs,
   read records, export CAR, and observe firehose events.
 - OAuth and app-password flows work through public HTTP endpoints, not internal
   context calls.

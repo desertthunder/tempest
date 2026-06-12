@@ -94,7 +94,20 @@ deferred     endpoint is out of scope for the current target profile
 | ------------------------------- | ----------: | ------------------------------ |
 | `app.bsky.actor.getPreferences` | implemented | preference smoke test          |
 | `app.bsky.actor.putPreferences` | implemented | preference smoke test          |
-| Unknown `app.bsky.*` methods    |     partial | explicit proxy/fallback policy |
+| Unknown `app.bsky.*` methods    | implemented | proxy/fallback policy tests     |
+
+## AppView proxy/fallback policy
+
+Tempest is a PDS, not an AppView. Registered PDS-owned methods and private
+compatibility helpers, including `app.bsky.actor.getPreferences` and
+`app.bsky.actor.putPreferences`, are always handled locally. Unknown service
+methods whose NSID starts with `app.bsky.` or `chat.bsky.` are proxy-eligible
+only when `Tempest.Xrpc.Proxy` has an `upstream_base_url` configured. Proxying
+forwards the original verb, query parameters or JSON body, and the `authorization`,
+`accept`, and `content-type` headers, then preserves the upstream HTTP status and
+response body. Without an upstream, proxy-eligible unknown methods return a
+protocol-shaped `UnknownMethod` 404. Unknown `com.atproto.*` methods are never
+proxied.
 
 ## Non-endpoint compatibility
 
