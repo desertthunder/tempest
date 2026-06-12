@@ -23,3 +23,15 @@ post-import revision monotonicity, activation event ordering, unavailable old PD
 failure, and self-controlled `did:web` activation.
 
 Reference documentation: [Migration and Account Lifecycle](../reference/migration-lifecycle.md).
+
+## Follow-up PLC Migration Endpoint Coverage
+
+- [ ] Cover migration-out through `com.atproto.identity.getRecommendedDidCredentials`,
+      `requestPlcOperationSignature`, `signPlcOperation`, and
+      `submitPlcOperation` using a fake PLC service.
+- [ ] Prove PLC operations cannot activate or migrate accounts unless the DID
+      document preserves recoverability and points `#atproto_pds` at the intended
+      service endpoint.
+- [ ] Add black-box tests for PLC endpoint auth: session bearer allowed with
+      strong reauth; app passwords, ordinary OAuth tokens, admin tokens, and
+      missing credentials denied.

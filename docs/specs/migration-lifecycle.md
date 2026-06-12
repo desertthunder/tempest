@@ -39,6 +39,24 @@ com.atproto.server.requestPasswordReset
 com.atproto.server.resetPassword
 ```
 
+## PLC Endpoint Compatibility
+
+Migration-in and migration-out require public coverage for these identity XRPC
+methods in addition to the internal PLC client boundary:
+
+```text
+com.atproto.identity.getRecommendedDidCredentials
+com.atproto.identity.requestPlcOperationSignature
+com.atproto.identity.signPlcOperation
+com.atproto.identity.submitPlcOperation
+```
+
+Tests must use a fake PLC service and prove that invalid, unsigned, stale, or
+service-diverting operations fail closed. Successful submissions must preserve
+rotation-key recoverability, keep `#atproto_pds` pointed at Tempest when the
+account is active here, and emit/audit identity lifecycle changes in migration
+order.
+
 ## Migration Flow
 
 Supported happy path:

@@ -17,12 +17,12 @@ coverage and use SDK tests where client behavior matters.
       behavior and reference Lexicons.
 - [x] T14-02: Add ConnCase response-shape and error-shape tests for core PDS
       endpoints.
-- [ ] T14-03: Add ConnCase auth tests for bearer tokens, app passwords, OAuth
+- [x] T14-03: Add ConnCase auth tests for bearer tokens, app passwords, OAuth
       tokens, admin tokens, and missing credentials.
-- [ ] T14-04: Add ConnCase content-type and verb tests for XRPC endpoints.
-- [ ] T14-05: Add SDK black-box tests for login, write, read, blob, CAR, and
+- [x] T14-04: Add ConnCase content-type and verb tests for XRPC endpoints.
+- [x] T14-05: Add SDK black-box tests for login, write, read, blob, CAR, and
       firehose flows against a local server.
-- [ ] T14-06: Add OAuth and app-password black-box compatibility tests.
+- [x] T14-06: Add OAuth and app-password black-box compatibility tests.
 - [ ] T14-07: Add migration-in and migration-out compatibility tests using two
       local Tempest instances.
 - [ ] T14-08: Add an explicit AppView proxy/fallback policy and local coverage

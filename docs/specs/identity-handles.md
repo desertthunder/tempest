@@ -68,11 +68,29 @@ The boundary must make it possible to test against a fake PLC service.
 
 Migration-ready identity support requires:
 
-- `getRecommendedDidCredentials` returning this PDS service endpoint, signing key, handle, and PLC rotation-key recommendations.
-- `requestPlcOperationSignature` and `signPlcOperation` with a separate security token factor.
-- `submitPlcOperation` validating that the operation keeps the account recoverable and points the atproto service at Tempest before submission.
-- `reserveSigningKey` for migration flows that need stable key material before the account is activated.
+- `com.atproto.identity.getRecommendedDidCredentials` returning this PDS service endpoint, signing key, handle, and PLC rotation-key recommendations.
+- `com.atproto.identity.requestPlcOperationSignature` and `com.atproto.identity.signPlcOperation` with a separate security token factor.
+- `com.atproto.identity.submitPlcOperation` validating that the operation keeps the account recoverable and points the atproto service at Tempest before submission.
+- `com.atproto.server.reserveSigningKey` for migration flows that need stable key material before the account is activated.
 - `did:web` support for both PDS-hosted subdomains and bring-your-own domains.
+
+### PLC XRPC Endpoint Coverage
+
+Tempest must expose the PLC identity XRPC methods as first-class compatibility
+endpoints, not only as internal PLC client helpers:
+
+| Method | Auth | Required local coverage |
+|---|---|---|
+| `com.atproto.identity.getRecommendedDidCredentials` | bearer access | response includes DID, handle, atproto signing key, service endpoint, and recommended rotation keys for the authenticated account |
+| `com.atproto.identity.requestPlcOperationSignature` | bearer access + strong reauth challenge | creates an auditable, single-use PLC operation signature request without submitting an operation |
+| `com.atproto.identity.signPlcOperation` | bearer access + valid reauth token | signs only operations that preserve account recoverability and Tempest service routing |
+| `com.atproto.identity.submitPlcOperation` | bearer access + signed operation | submits through `Tempest.Identity.PlcClient`, rejects operations that remove Tempest as PDS, and records success/failure for migration audit |
+
+Coverage must include response shapes, protocol error shapes, auth failures,
+app-password/OAuth denial for recovery-sensitive actions, and fake-PLC boundary
+tests. These endpoints are account-recovery operations; app passwords and broad
+OAuth scopes must not authorize them unless a future spec explicitly defines a
+separate high-assurance delegated scope.
 
 See [Migration and Account Lifecycle](./migration-lifecycle.md) for account activation sequencing.
 

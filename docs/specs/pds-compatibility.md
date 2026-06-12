@@ -6,6 +6,11 @@ status: implemented
 
 Reference documentation: ../reference/pds-compatibility.md
 
+PLC endpoint coverage is tracked explicitly by `identity-handles.md` and the
+compatibility matrix. The PLC XRPC methods stay `planned` until they have
+registered handlers, bundled Lexicons, response/error shape tests, auth denial
+coverage for app passwords/OAuth, and fake PLC submission tests.
+
 Verification:
 
 ```bash

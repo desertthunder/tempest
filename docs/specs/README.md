@@ -30,6 +30,8 @@ Subsystem specifications live in this directory.
 14. [Deployment and Observability](./deployment-observability.md)
 15. [Interop and Integration Testing](./interop-testing.md)
 16. [PDS Compatibility Against Reference Surface](./pds-compatibility.md)
+17. [Public Stats Dashboard](./public-stats-dashboard.md)
+18. [Documentation Viewer](./doc-viewer.md)
 
 ## Source Baseline
 

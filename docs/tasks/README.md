@@ -4,22 +4,24 @@ title: Milestone Tasks
 
 ## Milestones
 
-1. [00 Foundation](./00-foundation.md)
-2. [01 XRPC Shell](./01-xrpc-shell.md)
-3. [02 Accounts and Sessions](./02-accounts-sessions.md)
-4. [03 Identity and Handles](./03-identity-handles.md)
-5. [04 Repository Core](./04-repo-core.md)
-6. [05 Record APIs](./05-record-apis.md)
-7. [06 CAR and Sync Reads](./06-car-sync-reads.md)
-8. [07 Firehose](./07-firehose.md)
-9. [08 Blobs](./08-blobs.md)
-10. [09 Lexicon Schemas](./09-lexicon-schemas.md)
-11. [10 Compatibility Hardening](./10-compatibility-hardening.md)
-12. [11 Security, OAuth, and Delegated Access](./11-security-oauth.md)
-13. [12 Migration and Account Lifecycle](./12-migration-lifecycle.md)
-14. [13 Admin, Storage, and Operator Features](./13-admin-operator-features.md)
-15. [14 Local PDS Compatibility Testing](./14-local-pds-compatibility.md)
-16. [15 Deployment and Post-deployment Verification](./15-deployment-verification.md)
+1. [Foundation](./00-foundation.md)
+2. [XRPC Shell](./01-xrpc-shell.md)
+3. [Accounts and Sessions](./02-accounts-sessions.md)
+4. [Identity and Handles](./03-identity-handles.md)
+5. [Repository Core](./04-repo-core.md)
+6. [Record APIs](./05-record-apis.md)
+7. [CAR and Sync Reads](./06-car-sync-reads.md)
+8. [Firehose](./07-firehose.md)
+9. [Blobs](./08-blobs.md)
+10. [Lexicon Schemas](./09-lexicon-schemas.md)
+11. [Compatibility Hardening](./10-compatibility-hardening.md)
+12. [Security, OAuth, and Delegated Access](./11-security-oauth.md)
+13. [Migration and Account Lifecycle](./12-migration-lifecycle.md)
+14. [Admin, Storage, and Operator Features](./13-admin-operator-features.md)
+15. [Local PDS Compatibility Testing](./14-local-pds-compatibility.md)
+16. [Deployment and Post-deployment Verification](./15-deployment-verification.md)
+17. [Public Stats Dashboard](./16-public-stats-dashboard.md)
+18. [Doc Viewer](./17-doc-viewer.md)
 
 Each file in this directory is a milestone. Each task is intended to be the
 smallest useful unit of work: one focused implementation change, test, or
@@ -46,7 +48,6 @@ Deprioritized behind the above for this profile:
 - migration and lifecycle between PDS instances (Milestone 12)
 - MFA and advanced account/security UX (parts of Milestone 11/14)
 - hosted-provider scale features
-
 
 ## Status Labels
 
