@@ -6,7 +6,18 @@ defmodule Tempest.Identity do
   import Ecto.Query
 
   alias Tempest.Accounts.{Account, AuthContext}
-  alias Tempest.Identity.{Correctness, DidDocument, HandleResolver, KeyStore, PlcClient, PlcOperation, Validators}
+
+  alias Tempest.Identity.{
+    Correctness,
+    DidDocument,
+    HandleResolver,
+    KeyStore,
+    PlcClient,
+    PlcOperation,
+    SsrfProtection,
+    Validators
+  }
+
   alias Tempest.{Repo, Sequencer}
 
   def validate_did_syntax(did), do: Validators.validate_did(did)
@@ -44,9 +55,11 @@ defmodule Tempest.Identity do
   def did_document_for_did(did) when is_binary(did) do
     case Repo.get_by(Account, did: did) do
       %Account{} = account -> {:ok, did_document_for_account(account)}
-      nil -> {:error, :did_not_found}
+      nil -> resolve_did_document(did)
     end
   end
+
+  def did_document_for_did(_did), do: {:error, :invalid_did_syntax}
 
   def hosted_did_for_handle(handle) when is_binary(handle) do
     handle = Validators.normalize_handle(handle)
@@ -94,6 +107,61 @@ defmodule Tempest.Identity do
   end
 
   def update_handle(_auth_context, _handle), do: {:error, :invalid_handle_syntax}
+
+  defp resolve_did_document(did) do
+    with :ok <- Validators.validate_did(did),
+         {:ok, url} <- did_document_url(did),
+         :ok <- SsrfProtection.validate_url(url),
+         {:ok, document} <- fetch_did_document(url),
+         ^did <- Map.get(document, "id") do
+      {:ok, document}
+    else
+      {:error, reason} -> {:error, reason}
+      _other -> {:error, :did_not_found}
+    end
+  end
+
+  defp did_document_url("did:web:" <> identifier) do
+    parts = String.split(identifier, ":")
+
+    case parts do
+      [host] -> {:ok, "https://#{host}/.well-known/did.json"}
+      [host | path_parts] -> {:ok, "https://#{host}/#{Enum.join(path_parts, "/")}/did.json"}
+      _parts -> {:error, :invalid_did_syntax}
+    end
+  end
+
+  defp did_document_url("did:plc:" <> _identifier = did), do: {:ok, plc_directory_url() <> "/" <> URI.encode(did)}
+  defp did_document_url(_did), do: {:error, :unsupported_did_method}
+
+  defp fetch_did_document(url) do
+    opts =
+      [
+        url: url,
+        redirect: false,
+        retry: false,
+        receive_timeout: 2_000,
+        connect_options: [timeout: 1_000]
+      ]
+      |> Keyword.merge(identity_config(:http_req_options) || [])
+
+    case Req.get(opts) do
+      {:ok, %{status: 200, body: body}} when is_map(body) -> {:ok, body}
+      {:ok, %{status: 200, body: body}} when is_binary(body) -> Jason.decode(body)
+      {:ok, _response} -> {:error, :did_not_found}
+      {:error, _reason} -> {:error, :resolution_failed}
+    end
+  end
+
+  defp plc_directory_url do
+    identity_config(:plc_directory_url) || "https://plc.directory"
+  end
+
+  defp identity_config(key) do
+    :tempest
+    |> Application.get_env(Tempest.Identity, [])
+    |> Keyword.get(key)
+  end
 
   defp local_resolve_handle(handle) do
     Account

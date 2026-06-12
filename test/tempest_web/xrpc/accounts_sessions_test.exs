@@ -9,6 +9,20 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
 
   @password "correct horse battery staple"
 
+  setup context do
+    Req.Test.set_req_test_from_context(context)
+    Req.Test.verify_on_exit!(context)
+
+    old_identity_config = Application.get_env(:tempest, Tempest.Identity, [])
+
+    Application.put_env(:tempest, Tempest.Identity,
+      http_req_options: [plug: {Req.Test, __MODULE__}],
+      dns_lookup: fn _host -> {:ok, [{93, 184, 216, 34}]} end
+    )
+
+    on_exit(fn -> Application.put_env(:tempest, Tempest.Identity, old_identity_config) end)
+  end
+
   test "createAccount persists account and returns session tokens", %{conn: conn} do
     conn = create_account(conn, "alice.test", "alice@example.com")
 
@@ -188,12 +202,13 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
 
     assert %{"error" => "InvalidRequest"} = json_response(missing_proof_conn, 400)
 
-    service_auth =
-      Tokens.sign_service_auth(
-        %Account{did: did},
-        Tempest.Config.load!().public_url,
-        "com.atproto.server.createAccount"
-      )
+    {service_auth, did_document} =
+      remote_service_auth(did, Tempest.Config.load!().public_url, "com.atproto.server.createAccount")
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.request_path == "/#{did}"
+      Req.Test.json(req_conn, did_document)
+    end)
 
     migrated =
       conn
@@ -227,12 +242,13 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
   test "migrated did:web account stays private until activation emits ordered events", %{conn: conn} do
     did = "did:web:migrated-#{System.unique_integer([:positive])}.example.com"
 
-    service_auth =
-      Tokens.sign_service_auth(
-        %Account{did: did},
-        Tempest.Config.load!().public_url,
-        "com.atproto.server.createAccount"
-      )
+    {service_auth, did_document} =
+      remote_service_auth(did, Tempest.Config.load!().public_url, "com.atproto.server.createAccount")
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.request_path == "/.well-known/did.json"
+      Req.Test.json(req_conn, did_document)
+    end)
 
     migrated =
       conn
@@ -433,5 +449,46 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
   defp sequencer_events(did) do
     {:ok, events} = Tempest.Sequencer.list_after(0, did: did)
     events
+  end
+
+  defp remote_service_auth(did, audience, method_nsid) do
+    key = JOSE.JWK.generate_key({:ec, "secp256k1"})
+    {_kty, private_jwk} = JOSE.JWK.to_map(key)
+    public_key_multibase = public_key_multibase(private_jwk)
+    now = DateTime.utc_now() |> DateTime.to_unix()
+
+    headers = %{"typ" => "JWT", "alg" => "ES256K", "kid" => did <> "#atproto"}
+
+    claims = %{
+      "iss" => did,
+      "sub" => did,
+      "aud" => audience,
+      "lxm" => method_nsid,
+      "iat" => now,
+      "exp" => now + 600
+    }
+
+    {_jws, token} = JOSE.JWT.sign(key, headers, claims) |> JOSE.JWS.compact()
+
+    document = %{
+      "@context" => ["https://www.w3.org/ns/did/v1"],
+      "id" => did,
+      "verificationMethod" => [
+        %{
+          "id" => did <> "#atproto",
+          "type" => "Multikey",
+          "controller" => did,
+          "publicKeyMultibase" => public_key_multibase
+        }
+      ]
+    }
+
+    {token, document}
+  end
+
+  defp public_key_multibase(%{"x" => encoded_x, "y" => encoded_y}) do
+    x = Base.url_decode64!(encoded_x, padding: false)
+    y = Base.url_decode64!(encoded_y, padding: false)
+    "u" <> Base.url_encode64(<<4, x::binary, y::binary>>, padding: false)
   end
 end
