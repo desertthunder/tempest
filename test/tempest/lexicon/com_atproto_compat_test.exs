@@ -165,4 +165,26 @@ defmodule Tempest.Lexicon.OfficialComAtprotoCompatibilityTest do
     refute "app.bsky.feed.post" in ids
     refute "app.bsky.graph.follow" in ids
   end
+
+  test "registered XRPC compatibility endpoints have bundled Lexicon documents" do
+    missing_lexicons =
+      Tempest.Xrpc.Registry.all()
+      |> Enum.map(& &1.nsid)
+      |> Enum.reject(fn nsid -> match?({:ok, _document}, Tempest.Lexicon.Registry.fetch(nsid)) end)
+
+    assert missing_lexicons == []
+  end
+
+  test "admin compatibility matrix marks unregistered PLC identity endpoints as planned" do
+    endpoints = Tempest.Admin.compatibility_status().endpoints
+
+    for method <- [
+          "com.atproto.identity.getRecommendedDidCredentials",
+          "com.atproto.identity.requestPlcOperationSignature",
+          "com.atproto.identity.signPlcOperation",
+          "com.atproto.identity.submitPlcOperation"
+        ] do
+      assert %{status: "planned"} = Enum.find(endpoints, &(&1.method == method))
+    end
+  end
 end
