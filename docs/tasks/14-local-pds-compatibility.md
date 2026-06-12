@@ -27,9 +27,9 @@ coverage through the same public HTTP/WebSocket contract clients use.
       local Tempest instances.
 - [x] T14-08: Add an explicit AppView proxy/fallback policy and local coverage
       for unknown `app.bsky.*` methods.
-- [ ] T14-09: Add firehose frame comparison tests for header/body CBOR shape,
+- [x] T14-09: Add firehose frame comparison tests for header/body CBOR shape,
       backfill, live events, and deactivated accounts.
-- [ ] T14-10: Add local restore-drill test that verifies DBs, repos, blobs,
+- [x] T14-10: Add local restore-drill test that verifies DBs, repos, blobs,
       signing keys, and OAuth keys together.
 - [ ] T14-11: Add local Hurl smoke profile that runs the completed compatibility
       suites without deployment.
