@@ -1,0 +1,39 @@
+body {
+  color: var(--text);
+  background: var(--win-desktop);
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  line-height: var(--leading-copy);
+}
+
+a {
+  color: var(--win-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+strong,
+b,
+th {
+  font-weight: 700;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+}
+
+:focus-visible {
+  outline: 2px dotted var(--text);
+  outline-offset: 3px;
+}
+
+[data-phx-session],
+[data-phx-teleported-src] {
+  display: contents;
+}

@@ -20,8 +20,7 @@ config :tempest, TempestWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "+uUQkQUThGq4zX4Vl0a0Jfn8JGPw6ZlqzIJ2FRI+qzdG6VLTMlZN0Pyq7xKGQBRH",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:tempest, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:tempest, ~w(--watch)]}
+    esbuild: {Esbuild, :install_and_run, [:tempest, ~w(--sourcemap=inline --watch)]}
   ]
 
 # ## SSL Support

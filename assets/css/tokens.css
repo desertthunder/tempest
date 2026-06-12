@@ -1,0 +1,71 @@
+:root {
+  --color-gray-0: #f8f9fa;
+  --color-gray-1: #f1f3f5;
+  --color-gray-2: #e9ecef;
+  --color-gray-3: #dee2e6;
+  --color-gray-4: #ced4da;
+  --color-gray-5: #adb5bd;
+  --color-gray-6: #868e96;
+  --color-gray-7: #495057;
+  --color-gray-8: #343a40;
+  --color-gray-9: #212529;
+
+  --win-desktop: #0b7f7f;
+  --win-face: #c6c6c6;
+  --win-face-soft: #deded8;
+  --win-light: #ffffff;
+  --win-shadow: #8a8a8a;
+  --win-dark: #3f3f3f;
+  --win-title: #07137a;
+  --win-title-soft: #1654a7;
+  --win-link: #0000bb;
+  --web-yellow: #fff8b8;
+
+  --surface: var(--win-face);
+  --surface-raised: var(--win-face-soft);
+  --surface-sunken: #f7f7f2;
+  --text: #050505;
+  --muted: var(--win-dark);
+  --accent: var(--win-title);
+  --accent-soft: var(--web-yellow);
+  --danger: #8a1111;
+  --success: #087a32;
+  --info: #10689e;
+}
+@font-face {
+  font-family: "Monaspace Neon";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  font-stretch: 75% 125%;
+  src: url("/fonts/MonaspaceNeonVar.woff2") format("woff2");
+}
+
+:root {
+  --font-ui: "MS Sans Serif", Tahoma, Arial, sans-serif;
+  --font-display: "Arial Black", "Franklin Gothic Heavy", Impact, sans-serif;
+  --font-mono: "Monaspace Neon", "Lucida Console", monospace;
+
+  --step--1: 0.82rem;
+  --step-0: 0.95rem;
+  --step-1: clamp(1.2rem, 2vw, 1.55rem);
+  --step-2: clamp(1.55rem, 3vw, 2.25rem);
+  --step-3: clamp(2rem, 5vw, 3.7rem);
+  --leading-tight: 1.1;
+  --leading-copy: 1.55;
+}
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --measure: 68rem;
+  --measure-text: 48rem;
+  --border-out: inset -1px -1px 0 var(--win-dark), inset 1px 1px 0 var(--win-light), inset -2px -2px 0 var(--win-shadow), inset 2px 2px 0 #eeeeee;
+  --border-in: inset -1px -1px 0 var(--win-light), inset 1px 1px 0 var(--win-dark), inset -2px -2px 0 #eeeeee, inset 2px 2px 0 var(--win-shadow);
+  --shadow-window: 6px 6px 0 rgb(0 0 0 / 0.24);
+}
