@@ -1,27 +1,10 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#   "argon2-cffi>=23.1.0",
-# ]
-# ///
-"""Generate a TEMPEST_ADMIN_TOKEN_HASH value.
-
-Usage:
-    scripts/ar.py
-    scripts/ar.py 'my-long-admin-token'
-    ADMIN_TOKEN='my-long-admin-token' scripts/ar.py --from-env
-
-By default, the script generates a new random admin token and prints the token
-once, along with the Argon2 hash to put in Railway or another secret manager.
-"""
+"""Generate a TEMPEST_ADMIN_TOKEN_HASH value."""
 
 from __future__ import annotations
 
 import argparse
 import os
 import secrets
-import sys
 
 from argon2 import PasswordHasher, Type
 
@@ -66,8 +49,8 @@ def token_from_args(args: argparse.Namespace) -> tuple[str, bool]:
     return secrets.token_urlsafe(48), True
 
 
-def main() -> int:
-    args = parser().parse_args()
+def main(argv: list[str] | None = None) -> int:
+    args = parser().parse_args(argv)
     token, generated = token_from_args(args)
 
     if len(token) < 32 and not args.allow_short:
@@ -88,7 +71,3 @@ def main() -> int:
     print("# Store this value in Railway or your secret manager.")
     print(f"TEMPEST_ADMIN_TOKEN_HASH={token_hash}")
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

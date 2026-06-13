@@ -37,6 +37,13 @@ export TEMPEST_SERVICE_DID="did:web:tempest.desertthunder.dev"
 read -s OLD_PASSWORD
 ```
 
+The migration CLI reads the same environment variables as the curl examples and
+writes the same artifacts:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
+```
+
 Use the account password or a Bluesky app password:
 
 ```bash
@@ -65,6 +72,12 @@ jq '{did, handle, has_access: (.accessJwt != null), has_refresh: (.refreshJwt !=
 ## Service Auth for Migration
 
 Ask the old PDS for service auth scoped to account creation on Tempest:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest service-auth
+```
+
+The equivalent curl call is:
 
 ```bash
 curl -fsS -G "$OLD_PDS/xrpc/com.atproto.server.getServiceAuth" \
@@ -98,6 +111,20 @@ must have:
 - audience equal to the target service DID, such as
   `did:web:tempest.desertthunder.dev`;
 - method (`lxm`) equal to `com.atproto.server.createAccount`.
+
+## Admin Token Hash
+
+Generate `TEMPEST_ADMIN_TOKEN_HASH` through the same uv project:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest argon
+```
+
+The `ar` and `arg2` aliases run the same helper:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest ar --only-hash
+```
 
 ## Safety Notes
 

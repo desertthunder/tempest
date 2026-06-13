@@ -246,6 +246,7 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
       remote_service_auth(did, "did:web:tempest.test", "com.atproto.server.createAccount",
         include_kid?: false,
         include_sub?: false,
+        public_key_encoding: :base58btc_compressed_multikey,
         lifetime_seconds: 60
       )
 
@@ -486,7 +487,7 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
   defp remote_service_auth(did, audience, method_nsid, opts \\ []) do
     key = JOSE.JWK.generate_key({:ec, "secp256k1"})
     {_kty, private_jwk} = JOSE.JWK.to_map(key)
-    public_key_multibase = public_key_multibase(private_jwk)
+    public_key_multibase = public_key_multibase(private_jwk, opts)
     now = DateTime.utc_now() |> DateTime.to_unix()
 
     headers =
@@ -521,10 +522,46 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     {token, document}
   end
 
-  defp public_key_multibase(%{"x" => encoded_x, "y" => encoded_y}) do
+  defp public_key_multibase(private_jwk, opts) do
+    case Keyword.get(opts, :public_key_encoding, :base64url_uncompressed) do
+      :base58btc_compressed_multikey -> compressed_base58btc_multikey(private_jwk)
+      :base64url_uncompressed -> base64url_uncompressed_multibase(private_jwk)
+    end
+  end
+
+  defp base64url_uncompressed_multibase(%{"x" => encoded_x, "y" => encoded_y}) do
     x = Base.url_decode64!(encoded_x, padding: false)
     y = Base.url_decode64!(encoded_y, padding: false)
     "u" <> Base.url_encode64(<<4, x::binary, y::binary>>, padding: false)
+  end
+
+  defp compressed_base58btc_multikey(%{"x" => encoded_x, "y" => encoded_y}) do
+    x = Base.url_decode64!(encoded_x, padding: false)
+    y = Base.url_decode64!(encoded_y, padding: false)
+    prefix = if rem(:binary.decode_unsigned(y), 2) == 0, do: 2, else: 3
+    multikey = <<0xE7, 0x01, prefix, x::binary>>
+    "z" <> base58btc_encode(multikey)
+  end
+
+  defp base58btc_encode(bytes) do
+    alphabet = ~c"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    value = :binary.decode_unsigned(bytes)
+    encoded = encode_base58_value(value, alphabet, [])
+
+    leading_zeroes =
+      bytes
+      |> :binary.bin_to_list()
+      |> Enum.take_while(&(&1 == 0))
+      |> length()
+
+    List.to_string(List.duplicate(?1, leading_zeroes) ++ encoded)
+  end
+
+  defp encode_base58_value(0, _alphabet, []), do: [?1]
+  defp encode_base58_value(0, _alphabet, acc), do: acc
+
+  defp encode_base58_value(value, alphabet, acc) do
+    encode_base58_value(div(value, 58), alphabet, [Enum.at(alphabet, rem(value, 58)) | acc])
   end
 
   defp maybe_put(map, true, key, value), do: Map.put(map, key, value)

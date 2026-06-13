@@ -42,4 +42,9 @@ tempest-*.tar
 npm-debug.log
 /assets/node_modules/
 
+# Python helper tooling.
+__pycache__/
+*.py[cod]
+.venv/
+
 .sandbox/

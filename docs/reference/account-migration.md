@@ -44,6 +44,41 @@ path because the operator can update the DID document directly.
 
 ## Migration-In Flow
 
+The Python CLI mirrors the manual curl flow below. It reads configuration from
+environment variables, writes artifacts into `.sandbox/` by default, and defaults
+to the full migration-in sequence:
+
+```bash
+export OLD_PDS="https://jellybaby.us-east.host.bsky.network"
+export HANDLE="tempestpds.bsky.social"
+export DID="did:plc:oga6ppys7zwxlheuqmcm7dac"
+export TEMPEST="https://tempest.desertthunder.dev"
+export TEMPEST_SERVICE_DID="did:web:tempest.desertthunder.dev"
+export EMAIL="operator@example.com"
+read -s OLD_PASSWORD
+read -s TEMPEST_PASSWORD
+
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest
+```
+
+Run individual steps when resuming or inspecting a failure:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest service-auth
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest export-car
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest list-source-blobs
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest download-source-blobs
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest create-account
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest import-repo
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest status
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest missing-blobs
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest upload-missing-blobs
+```
+
+The same project also exposes the admin-token Argon2 helper as
+`tempest argon`, with `tempest ar` and `tempest arg2` aliases.
+
 From the source PDS, export the account repository:
 
 ```bash
