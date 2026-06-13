@@ -52,6 +52,39 @@ defmodule Tempest.Identity do
     }
   end
 
+  def sign_plc_operation(%Account{} = account, token, operation_fields) when is_map(operation_fields) do
+    operation =
+      account
+      |> PlcOperation.for_account()
+      |> Map.merge(Map.take(operation_fields, ["rotationKeys", "alsoKnownAs", "verificationMethods", "services"]))
+
+    with :ok <- Correctness.check_local(account),
+         {:ok, _token_record} <- Tempest.Security.consume_plc_operation_token(account, token),
+         {:ok, signed_operation} <- PlcOperation.sign(account, operation),
+         {:ok, _event} <- Tempest.Security.log_event(account, "plc_operation.signed", %{}) do
+      {:ok, signed_operation}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def sign_plc_operation(%Account{}, _token, _operation_fields), do: {:error, :invalid_operation}
+
+  def submit_plc_operation(%Account{} = account, operation) do
+    with :ok <- Correctness.check_local(account),
+         :ok <- PlcOperation.validate_signed_for_account(account, operation),
+         :ok <- PlcClient.publish_operation(account.did, operation),
+         {:ok, _audit_event} <- Tempest.Security.log_event(account, "plc_operation.submitted", %{}),
+         {:ok, _identity_event} <-
+           Sequencer.insert_identity_event(account.did, "plc.submit", %{"handle" => account.handle}) do
+      :ok
+    else
+      {:error, reason} ->
+        Tempest.Security.log_event(account, "plc_operation.submit_failed", %{reason: inspect(reason)})
+        {:error, reason}
+    end
+  end
+
   def publish_plc_operation(%Account{} = account) do
     with true <- String.starts_with?(account.did, "did:plc:"),
          :ok <- Correctness.check_local(account),

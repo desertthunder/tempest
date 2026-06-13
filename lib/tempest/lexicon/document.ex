@@ -160,12 +160,7 @@ defmodule Tempest.Lexicon.Document do
   defp walk_ref_graph(ref, graph, path, max_ref_depth) do
     cond do
       ref in path ->
-        cycle =
-          path
-          |> Enum.reverse()
-          |> close_cycle(ref)
-
-        {:error, {:ref_cycle, cycle}}
+        :ok
 
       true ->
         graph
@@ -177,12 +172,6 @@ defmodule Tempest.Lexicon.Document do
           end
         end)
     end
-  end
-
-  defp close_cycle(path, ref) do
-    path
-    |> Enum.drop_while(&(&1 != ref))
-    |> then(&(&1 ++ [ref]))
   end
 
   defp validate_nsid(id) do

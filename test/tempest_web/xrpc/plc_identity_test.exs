@@ -5,10 +5,12 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
   import Plug.Conn
 
   alias Tempest.Accounts.Account
+  alias Tempest.Identity.PlcOperation
   alias Tempest.Identity.SigningKey
   alias Tempest.Repo
   alias Tempest.Security
   alias Tempest.Security.SecurityEvent
+  alias Tempest.Sequencer
 
   @password "correct horse battery staple"
 
@@ -144,6 +146,174 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
     assert %{"error" => "InvalidRequest", "message" => "password is required"} = json_response(conn, 400)
   end
 
+  test "signPlcOperation consumes reauth token and returns signed operation", %{conn: conn} do
+    account = create_account!(conn, "plc-sign.test", "plc-sign@example.com")
+    stored_account = Repo.get_by!(Account, did: account["did"])
+    operation = PlcOperation.for_account(stored_account)
+    token = request_plc_token!(conn, account["accessJwt"])
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(operation, token))
+
+    assert %{"operation" => signed_operation} = json_response(conn, 200)
+    assert is_binary(signed_operation["sig"])
+    assert {:ok, _signature} = Base.url_decode64(signed_operation["sig"], padding: false)
+    assert Map.delete(signed_operation, "sig") == operation
+    assert audit_event_count(stored_account, "plc_operation_signature.token_consumed") == 1
+    assert audit_event_count(stored_account, "plc_operation.signed") == 1
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(operation, token))
+
+    assert %{"error" => "AuthenticationRequired", "message" => "PLC operation token is invalid"} =
+             json_response(conn, 401)
+  end
+
+  test "signPlcOperation rejects service-diverting and unrecoverable operations", %{conn: conn} do
+    account = create_account!(conn, "plc-invalid-sign.test", "plc-invalid-sign@example.com")
+    stored_account = Repo.get_by!(Account, did: account["did"])
+    operation = PlcOperation.for_account(stored_account)
+    token = request_plc_token!(conn, account["accessJwt"])
+
+    diverted =
+      put_in(operation, ["services", "atproto_pds", "endpoint"], "https://elsewhere.invalid")
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(diverted, token))
+
+    assert %{"error" => "InvalidRequest", "message" => "PLC operation must point at this PDS"} =
+             json_response(conn, 400)
+
+    token = request_plc_token!(conn, account["accessJwt"])
+    unrecoverable = Map.put(operation, "rotationKeys", ["did:key:zUnusable"])
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(unrecoverable, token))
+
+    assert %{"error" => "InvalidRequest", "message" => "PLC operation must preserve account recovery"} =
+             json_response(conn, 400)
+  end
+
+  test "submitPlcOperation submits signed operation through fake PLC and records events", %{conn: conn} do
+    account = create_account!(conn, "plc-submit.test", "plc-submit@example.com")
+    stored_account = Repo.get_by!(Account, did: account["did"])
+    operation = PlcOperation.for_account(stored_account)
+    signed_operation = sign_operation!(conn, account["accessJwt"], operation)
+    {:ok, seq_before} = Sequencer.current_seq()
+
+    put_identity_test_config()
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.method == "POST"
+      assert req_conn.host == "plc.test"
+      assert req_conn.request_path == "/" <> URI.encode(account["did"])
+
+      {:ok, body, req_conn} = Plug.Conn.read_body(req_conn)
+      decoded = Jason.decode!(body)
+
+      assert decoded == signed_operation
+      assert is_binary(decoded["sig"])
+      assert decoded["services"]["atproto_pds"]["endpoint"] == "http://localhost:4002"
+
+      send_resp(req_conn, 200, Jason.encode!(%{"ok" => true}))
+    end)
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.submitPlcOperation", %{"operation" => signed_operation})
+
+    assert %{} = json_response(conn, 200)
+    assert audit_event_count(stored_account, "plc_operation.submitted") == 1
+
+    assert {:ok, events} = Sequencer.list_after(seq_before, did: account["did"], type: "#identity")
+    assert Enum.any?(events, &(&1.payload["action"] == "plc.submit"))
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      {:ok, body, req_conn} = Plug.Conn.read_body(req_conn)
+
+      assert Jason.decode!(body) == signed_operation
+      send_resp(req_conn, 200, Jason.encode!(%{"ok" => true}))
+    end)
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.submitPlcOperation", %{"operation" => signed_operation})
+
+    assert %{} = json_response(conn, 200)
+    assert audit_event_count(stored_account, "plc_operation.submitted") == 2
+  end
+
+  test "submitPlcOperation rejects unsigned, diverted, and failed PLC operations", %{conn: conn} do
+    account = create_account!(conn, "plc-submit-fail.test", "plc-submit-fail@example.com")
+    stored_account = Repo.get_by!(Account, did: account["did"])
+    operation = PlcOperation.for_account(stored_account)
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.submitPlcOperation", %{"operation" => operation})
+
+    assert %{"error" => "InvalidRequest", "message" => "signed PLC operation is required"} =
+             json_response(conn, 400)
+
+    signed_operation = sign_operation!(conn, account["accessJwt"], operation)
+
+    diverted =
+      put_in(signed_operation, ["services", "atproto_pds", "endpoint"], "https://elsewhere.invalid")
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.submitPlcOperation", %{"operation" => diverted})
+
+    assert %{"error" => "InvalidRequest", "message" => "PLC operation must point at this PDS"} =
+             json_response(conn, 400)
+
+    put_identity_test_config()
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      send_resp(req_conn, 500, Jason.encode!(%{"error" => "bad"}))
+    end)
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.submitPlcOperation", %{"operation" => signed_operation})
+
+    assert %{"error" => "UpstreamFailure", "message" => "PLC directory rejected the operation"} =
+             json_response(conn, 502)
+
+    assert audit_event_count(stored_account, "plc_operation.submit_failed") == 3
+  end
+
   defp create_account!(conn, handle, email) do
     conn
     |> put_req_header("content-type", "application/json")
@@ -153,6 +323,34 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
       "password" => @password
     })
     |> json_response(200)
+  end
+
+  defp request_plc_token!(conn, access_jwt) do
+    conn
+    |> recycle()
+    |> put_req_header("authorization", "Bearer #{access_jwt}")
+    |> put_req_header("content-type", "application/json")
+    |> post(~p"/xrpc/com.atproto.identity.requestPlcOperationSignature", %{"password" => @password})
+    |> json_response(200)
+    |> Map.fetch!("token")
+  end
+
+  defp sign_operation!(conn, access_jwt, operation) do
+    token = request_plc_token!(conn, access_jwt)
+
+    conn
+    |> recycle()
+    |> put_req_header("authorization", "Bearer #{access_jwt}")
+    |> put_req_header("content-type", "application/json")
+    |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(operation, token))
+    |> json_response(200)
+    |> Map.fetch!("operation")
+  end
+
+  defp sign_params(operation, token) do
+    operation
+    |> Map.take(["rotationKeys", "alsoKnownAs", "verificationMethods", "services"])
+    |> Map.put("token", token)
   end
 
   defp put_identity_test_config do

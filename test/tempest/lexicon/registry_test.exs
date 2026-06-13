@@ -118,15 +118,14 @@ defmodule Tempest.Lexicon.RegistryTest do
              Registry.validate_config(bundled?: false, documents: [document])
   end
 
-  test "ref cycles fail document set validation" do
+  test "ref cycles are accepted as recursive Lexicon graphs" do
     document =
       lexicon("example.app.cycle", %{
         "main" => %{"type" => "object", "properties" => %{"next" => %{"type" => "ref", "ref" => "#node"}}},
         "node" => %{"type" => "object", "properties" => %{"next" => %{"type" => "ref", "ref" => "#node"}}}
       })
 
-    assert {:error, {:ref_cycle, ["example.app.cycle#node", "example.app.cycle#node"]}} =
-             Document.validate_documents([document])
+    assert :ok = Document.validate_documents([document])
   end
 
   test "deep refs fail document set validation when they exceed loader limits" do

@@ -48,6 +48,34 @@ defmodule Tempest.Xrpc.Identity do
     end
   end
 
+  def sign_plc_operation(conn, params, _method) do
+    account = conn.assigns.auth_context.account
+
+    with token when is_binary(token) and token != "" <- Map.get(params, "token"),
+         operation_fields = Map.take(params, ["rotationKeys", "alsoKnownAs", "verificationMethods", "services"]),
+         {:ok, signed_operation} <- Identity.sign_plc_operation(account, token, operation_fields) do
+      {:ok, %{"operation" => signed_operation}}
+    else
+      nil -> {:error, 400, "InvalidRequest", "token is required"}
+      "" -> {:error, 400, "InvalidRequest", "token is required"}
+      {:error, reason} -> plc_operation_error(reason)
+      _other -> {:error, 400, "InvalidRequest", "token is required"}
+    end
+  end
+
+  def submit_plc_operation(conn, params, _method) do
+    account = conn.assigns.auth_context.account
+
+    with operation when is_map(operation) <- Map.get(params, "operation"),
+         :ok <- Identity.submit_plc_operation(account, operation) do
+      {:ok, %{}}
+    else
+      nil -> {:error, 400, "InvalidRequest", "operation is required"}
+      {:error, reason} -> plc_operation_error(reason)
+      _other -> {:error, 400, "InvalidRequest", "operation is required"}
+    end
+  end
+
   defp identity_error(:invalid_handle_syntax), do: {:error, 400, "InvalidRequest", "handle is invalid"}
   defp identity_error(:invalid_did_syntax), do: {:error, 400, "InvalidRequest", "resolved DID is invalid"}
 
@@ -65,4 +93,24 @@ defmodule Tempest.Xrpc.Identity do
   defp identity_error(:handle_not_found), do: {:error, 400, "HandleNotFound", "handle could not be resolved"}
   defp identity_error(:did_not_found), do: {:error, 400, "InvalidRequest", "DID document could not be resolved"}
   defp identity_error(_reason), do: {:error, 400, "InvalidRequest", "identity verification failed"}
+
+  defp plc_operation_error(:invalid_token),
+    do: {:error, 401, "AuthenticationRequired", "PLC operation token is invalid"}
+
+  defp plc_operation_error(:service_diversion),
+    do: {:error, 400, "InvalidRequest", "PLC operation must point at this PDS"}
+
+  defp plc_operation_error(:unrecoverable_operation),
+    do: {:error, 400, "InvalidRequest", "PLC operation must preserve account recovery"}
+
+  defp plc_operation_error(:missing_signature),
+    do: {:error, 400, "InvalidRequest", "signed PLC operation is required"}
+
+  defp plc_operation_error({:plc_status, _status}),
+    do: {:error, 502, "UpstreamFailure", "PLC directory rejected the operation"}
+
+  defp plc_operation_error({:plc_request_failed, _reason}),
+    do: {:error, 502, "UpstreamFailure", "PLC directory request failed"}
+
+  defp plc_operation_error(_reason), do: {:error, 400, "InvalidRequest", "PLC operation is invalid"}
 end

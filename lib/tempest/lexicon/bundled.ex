@@ -10,17 +10,34 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 53,
+    "document_count" => 70,
     "document_ids" => [
+      "app.bsky.actor.defs",
       "app.bsky.actor.getPreferences",
       "app.bsky.actor.profile",
       "app.bsky.actor.putPreferences",
+      "app.bsky.embed.defs",
+      "app.bsky.embed.external",
+      "app.bsky.embed.images",
+      "app.bsky.embed.record",
+      "app.bsky.embed.recordWithMedia",
+      "app.bsky.embed.video",
+      "app.bsky.feed.defs",
+      "app.bsky.feed.postgate",
+      "app.bsky.feed.threadgate",
+      "app.bsky.graph.defs",
+      "app.bsky.labeler.defs",
+      "app.bsky.notification.defs",
+      "app.bsky.richtext.facet",
       "com.atproto.identity.getRecommendedDidCredentials",
       "com.atproto.identity.requestPlcOperationSignature",
       "com.atproto.identity.resolveHandle",
+      "com.atproto.identity.signPlcOperation",
+      "com.atproto.identity.submitPlcOperation",
       "com.atproto.identity.updateHandle",
       "com.atproto.label.defs",
       "com.atproto.lexicon.schema",
+      "com.atproto.moderation.defs",
       "com.atproto.repo.applyWrites",
       "com.atproto.repo.createRecord",
       "com.atproto.repo.defs",
@@ -36,12 +53,8 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.server.activateAccount",
       "com.atproto.server.checkAccountStatus",
       "com.atproto.server.confirmEmail",
-      "com.atproto.server.requestEmailConfirmation",
-      "com.atproto.server.requestEmailUpdate",
-      "com.atproto.server.requestPasswordReset",
-      "com.atproto.server.resetPassword",
-      "com.atproto.server.updateEmail",
       "com.atproto.server.createAccount",
+      "com.atproto.server.createAppPassword",
       "com.atproto.server.createSession",
       "com.atproto.server.deactivateAccount",
       "com.atproto.server.deleteAccount",
@@ -49,12 +62,16 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.server.describeServer",
       "com.atproto.server.getServiceAuth",
       "com.atproto.server.getSession",
+      "com.atproto.server.listAppPasswords",
       "com.atproto.server.refreshSession",
       "com.atproto.server.requestAccountDelete",
+      "com.atproto.server.requestEmailConfirmation",
+      "com.atproto.server.requestEmailUpdate",
+      "com.atproto.server.requestPasswordReset",
       "com.atproto.server.reserveSigningKey",
-      "com.atproto.server.listAppPasswords",
-      "com.atproto.server.createAppPassword",
+      "com.atproto.server.resetPassword",
       "com.atproto.server.revokeAppPassword",
+      "com.atproto.server.updateEmail",
       "com.atproto.sync.getBlob",
       "com.atproto.sync.getBlocks",
       "com.atproto.sync.getLatestCommit",
@@ -66,136 +83,710 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.sync.requestCrawl",
       "com.atproto.sync.subscribeRepos"
     ],
-    "generated_at" => "2026-05-29T00:00:00Z",
-    "source_commit" => "22de65eea4c5573480b3a3755db1ece3db75ae18",
+    "generated_at" => "2026-06-13T00:00:00Z",
+    "source_commit" => "6b4f57f49dd113d891bba38c89dada2b8547689b",
     "source_repo" => "https://github.com/bluesky-social/atproto"
   }
 
   @documents [
     %{
       "defs" => %{
-        "main" => %{
-          "description" => "Confirm an email using a token from com.atproto.server.requestEmailConfirmation.",
-          "errors" => [
-            %{"name" => "AccountNotFound"},
-            %{"name" => "ExpiredToken"},
-            %{"name" => "InvalidToken"},
-            %{"name" => "InvalidEmail"}
-          ],
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"email" => %{"type" => "string"}, "token" => %{"type" => "string"}},
-              "required" => ["email", "token"],
-              "type" => "object"
+        "profileAssociatedChat" => %{
+          "properties" => %{
+            "allowGroupInvites" => %{
+              "knownValues" => ["all", "none", "following"],
+              "type" => "string"
+            },
+            "allowIncoming" => %{
+              "knownValues" => ["all", "none", "following"],
+              "type" => "string"
             }
           },
-          "type" => "procedure"
+          "required" => ["allowIncoming"],
+          "type" => "object"
+        },
+        "knownFollowers" => %{
+          "description" => "The subject's followers whom you also follow",
+          "properties" => %{
+            "count" => %{"type" => "integer"},
+            "followers" => %{
+              "items" => %{"ref" => "#profileViewBasic", "type" => "ref"},
+              "maxLength" => 5,
+              "minLength" => 0,
+              "type" => "array"
+            }
+          },
+          "required" => ["count", "followers"],
+          "type" => "object"
+        },
+        "hiddenPostsPref" => %{
+          "properties" => %{
+            "items" => %{
+              "description" => "A list of URIs of posts the account owner has hidden.",
+              "items" => %{"format" => "at-uri", "type" => "string"},
+              "type" => "array"
+            }
+          },
+          "required" => ["items"],
+          "type" => "object"
+        },
+        "savedFeedsPref" => %{
+          "properties" => %{
+            "pinned" => %{
+              "items" => %{"format" => "at-uri", "type" => "string"},
+              "type" => "array"
+            },
+            "saved" => %{
+              "items" => %{"format" => "at-uri", "type" => "string"},
+              "type" => "array"
+            },
+            "timelineIndex" => %{"type" => "integer"}
+          },
+          "required" => ["pinned", "saved"],
+          "type" => "object"
+        },
+        "bskyAppProgressGuide" => %{
+          "description" =>
+            "If set, an active progress guide. Once completed, can be set to undefined. Should have unspecced fields tracking progress.",
+          "properties" => %{"guide" => %{"maxLength" => 100, "type" => "string"}},
+          "required" => ["guide"],
+          "type" => "object"
+        },
+        "personalDetailsPref" => %{
+          "properties" => %{
+            "birthDate" => %{
+              "description" => "The birth date of account owner.",
+              "format" => "datetime",
+              "type" => "string"
+            }
+          },
+          "type" => "object"
+        },
+        "bskyAppStatePref" => %{
+          "description" =>
+            "A grab bag of state that's specific to the bsky.app program. Third-party apps shouldn't use this.",
+          "properties" => %{
+            "activeProgressGuide" => %{
+              "ref" => "#bskyAppProgressGuide",
+              "type" => "ref"
+            },
+            "nuxs" => %{
+              "description" => "Storage for NUXs the user has encountered.",
+              "items" => %{"ref" => "app.bsky.actor.defs#nux", "type" => "ref"},
+              "maxLength" => 100,
+              "type" => "array"
+            },
+            "queuedNudges" => %{
+              "description" =>
+                "An array of tokens which identify nudges (modals, popups, tours, highlight dots) that should be shown to the user.",
+              "items" => %{"maxLength" => 100, "type" => "string"},
+              "maxLength" => 1000,
+              "type" => "array"
+            }
+          },
+          "type" => "object"
+        },
+        "mutedWord" => %{
+          "description" => "A word that the account owner has muted.",
+          "properties" => %{
+            "actorTarget" => %{
+              "default" => "all",
+              "description" => "Groups of users to apply the muted word to. If undefined, applies to all users.",
+              "knownValues" => ["all", "exclude-following"],
+              "type" => "string"
+            },
+            "expiresAt" => %{
+              "description" => "The date and time at which the muted word will expire and no longer be applied.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "id" => %{"type" => "string"},
+            "targets" => %{
+              "description" => "The intended targets of the muted word.",
+              "items" => %{
+                "ref" => "app.bsky.actor.defs#mutedWordTarget",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "value" => %{
+              "description" => "The muted word itself.",
+              "maxGraphemes" => 1000,
+              "maxLength" => 10000,
+              "type" => "string"
+            }
+          },
+          "required" => ["value", "targets"],
+          "type" => "object"
+        },
+        "feedViewPref" => %{
+          "properties" => %{
+            "feed" => %{
+              "description" => "The URI of the feed, or an identifier which describes the feed.",
+              "type" => "string"
+            },
+            "hideQuotePosts" => %{
+              "description" => "Hide quote posts in the feed.",
+              "type" => "boolean"
+            },
+            "hideReplies" => %{
+              "description" => "Hide replies in the feed.",
+              "type" => "boolean"
+            },
+            "hideRepliesByLikeCount" => %{
+              "description" => "Hide replies in the feed if they do not have this number of likes.",
+              "type" => "integer"
+            },
+            "hideRepliesByUnfollowed" => %{
+              "default" => true,
+              "description" => "Hide replies in the feed if they are not by followed users.",
+              "type" => "boolean"
+            },
+            "hideReposts" => %{
+              "description" => "Hide reposts in the feed.",
+              "type" => "boolean"
+            }
+          },
+          "required" => ["feed"],
+          "type" => "object"
+        },
+        "viewerState" => %{
+          "description" =>
+            "Metadata about the requesting account's relationship with the subject account. Only has meaningful content for authed requests.",
+          "properties" => %{
+            "activitySubscription" => %{
+              "description" => "This property is present only in selected cases, as an optimization.",
+              "ref" => "app.bsky.notification.defs#activitySubscription",
+              "type" => "ref"
+            },
+            "blockedBy" => %{"type" => "boolean"},
+            "blocking" => %{"format" => "at-uri", "type" => "string"},
+            "blockingByList" => %{
+              "ref" => "app.bsky.graph.defs#listViewBasic",
+              "type" => "ref"
+            },
+            "followedBy" => %{"format" => "at-uri", "type" => "string"},
+            "following" => %{"format" => "at-uri", "type" => "string"},
+            "knownFollowers" => %{
+              "description" => "This property is present only in selected cases, as an optimization.",
+              "ref" => "#knownFollowers",
+              "type" => "ref"
+            },
+            "muted" => %{"type" => "boolean"},
+            "mutedByList" => %{
+              "ref" => "app.bsky.graph.defs#listViewBasic",
+              "type" => "ref"
+            }
+          },
+          "type" => "object"
+        },
+        "profileView" => %{
+          "properties" => %{
+            "associated" => %{"ref" => "#profileAssociated", "type" => "ref"},
+            "avatar" => %{"format" => "uri", "type" => "string"},
+            "createdAt" => %{"format" => "datetime", "type" => "string"},
+            "debug" => %{
+              "description" => "Debug information for internal development",
+              "type" => "unknown"
+            },
+            "description" => %{
+              "maxGraphemes" => 256,
+              "maxLength" => 2560,
+              "type" => "string"
+            },
+            "did" => %{"format" => "did", "type" => "string"},
+            "displayName" => %{
+              "maxGraphemes" => 64,
+              "maxLength" => 640,
+              "type" => "string"
+            },
+            "handle" => %{"format" => "handle", "type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "pronouns" => %{"type" => "string"},
+            "status" => %{"ref" => "#statusView", "type" => "ref"},
+            "verification" => %{"ref" => "#verificationState", "type" => "ref"},
+            "viewer" => %{"ref" => "#viewerState", "type" => "ref"}
+          },
+          "required" => ["did", "handle"],
+          "type" => "object"
+        },
+        "savedFeedsPrefV2" => %{
+          "properties" => %{
+            "items" => %{
+              "items" => %{
+                "ref" => "app.bsky.actor.defs#savedFeed",
+                "type" => "ref"
+              },
+              "type" => "array"
+            }
+          },
+          "required" => ["items"],
+          "type" => "object"
+        },
+        "profileAssociated" => %{
+          "properties" => %{
+            "activitySubscription" => %{
+              "ref" => "#profileAssociatedActivitySubscription",
+              "type" => "ref"
+            },
+            "chat" => %{"ref" => "#profileAssociatedChat", "type" => "ref"},
+            "feedgens" => %{"type" => "integer"},
+            "germ" => %{"ref" => "#profileAssociatedGerm", "type" => "ref"},
+            "labeler" => %{"type" => "boolean"},
+            "lists" => %{"type" => "integer"},
+            "starterPacks" => %{"type" => "integer"}
+          },
+          "type" => "object"
+        },
+        "threadViewPref" => %{
+          "properties" => %{
+            "sort" => %{
+              "description" => "Sorting mode for threads.",
+              "knownValues" => ["oldest", "newest", "most-likes", "random", "hotness"],
+              "type" => "string"
+            }
+          },
+          "type" => "object"
+        },
+        "contentLabelPref" => %{
+          "properties" => %{
+            "label" => %{"type" => "string"},
+            "labelerDid" => %{
+              "description" => "Which labeler does this preference apply to? If undefined, applies globally.",
+              "format" => "did",
+              "type" => "string"
+            },
+            "visibility" => %{
+              "knownValues" => ["ignore", "show", "warn", "hide"],
+              "type" => "string"
+            }
+          },
+          "required" => ["label", "visibility"],
+          "type" => "object"
+        },
+        "interestsPref" => %{
+          "properties" => %{
+            "tags" => %{
+              "description" =>
+                "A list of tags which describe the account owner's interests gathered during onboarding.",
+              "items" => %{
+                "maxGraphemes" => 64,
+                "maxLength" => 640,
+                "type" => "string"
+              },
+              "maxLength" => 100,
+              "type" => "array"
+            }
+          },
+          "required" => ["tags"],
+          "type" => "object"
+        },
+        "mutedWordsPref" => %{
+          "properties" => %{
+            "items" => %{
+              "description" => "A list of words the account owner has muted.",
+              "items" => %{
+                "ref" => "app.bsky.actor.defs#mutedWord",
+                "type" => "ref"
+              },
+              "type" => "array"
+            }
+          },
+          "required" => ["items"],
+          "type" => "object"
+        },
+        "savedFeed" => %{
+          "properties" => %{
+            "id" => %{"type" => "string"},
+            "pinned" => %{"type" => "boolean"},
+            "type" => %{
+              "knownValues" => ["feed", "list", "timeline"],
+              "type" => "string"
+            },
+            "value" => %{"type" => "string"}
+          },
+          "required" => ["id", "type", "value", "pinned"],
+          "type" => "object"
+        },
+        "verificationPrefs" => %{
+          "description" => "Preferences for how verified accounts appear in the app.",
+          "properties" => %{
+            "hideBadges" => %{
+              "default" => false,
+              "description" => "Hide the blue check badges for verified accounts and trusted verifiers.",
+              "type" => "boolean"
+            }
+          },
+          "required" => [],
+          "type" => "object"
+        },
+        "profileAssociatedGerm" => %{
+          "properties" => %{
+            "messageMeUrl" => %{"format" => "uri", "type" => "string"},
+            "showButtonTo" => %{
+              "knownValues" => ["usersIFollow", "everyone"],
+              "type" => "string"
+            }
+          },
+          "required" => ["showButtonTo", "messageMeUrl"],
+          "type" => "object"
+        },
+        "profileViewDetailed" => %{
+          "properties" => %{
+            "associated" => %{"ref" => "#profileAssociated", "type" => "ref"},
+            "avatar" => %{"format" => "uri", "type" => "string"},
+            "banner" => %{"format" => "uri", "type" => "string"},
+            "createdAt" => %{"format" => "datetime", "type" => "string"},
+            "debug" => %{
+              "description" => "Debug information for internal development",
+              "type" => "unknown"
+            },
+            "description" => %{
+              "maxGraphemes" => 256,
+              "maxLength" => 2560,
+              "type" => "string"
+            },
+            "did" => %{"format" => "did", "type" => "string"},
+            "displayName" => %{
+              "maxGraphemes" => 64,
+              "maxLength" => 640,
+              "type" => "string"
+            },
+            "followersCount" => %{"type" => "integer"},
+            "followsCount" => %{"type" => "integer"},
+            "handle" => %{"format" => "handle", "type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "joinedViaStarterPack" => %{
+              "ref" => "app.bsky.graph.defs#starterPackViewBasic",
+              "type" => "ref"
+            },
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "pinnedPost" => %{
+              "ref" => "com.atproto.repo.strongRef",
+              "type" => "ref"
+            },
+            "postsCount" => %{"type" => "integer"},
+            "pronouns" => %{"type" => "string"},
+            "status" => %{"ref" => "#statusView", "type" => "ref"},
+            "verification" => %{"ref" => "#verificationState", "type" => "ref"},
+            "viewer" => %{"ref" => "#viewerState", "type" => "ref"},
+            "website" => %{"format" => "uri", "type" => "string"}
+          },
+          "required" => ["did", "handle"],
+          "type" => "object"
+        },
+        "adultContentPref" => %{
+          "properties" => %{
+            "enabled" => %{"default" => false, "type" => "boolean"}
+          },
+          "required" => ["enabled"],
+          "type" => "object"
+        },
+        "profileViewBasic" => %{
+          "properties" => %{
+            "associated" => %{"ref" => "#profileAssociated", "type" => "ref"},
+            "avatar" => %{"format" => "uri", "type" => "string"},
+            "createdAt" => %{"format" => "datetime", "type" => "string"},
+            "debug" => %{
+              "description" => "Debug information for internal development",
+              "type" => "unknown"
+            },
+            "did" => %{"format" => "did", "type" => "string"},
+            "displayName" => %{
+              "maxGraphemes" => 64,
+              "maxLength" => 640,
+              "type" => "string"
+            },
+            "handle" => %{"format" => "handle", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "pronouns" => %{"type" => "string"},
+            "status" => %{"ref" => "#statusView", "type" => "ref"},
+            "verification" => %{"ref" => "#verificationState", "type" => "ref"},
+            "viewer" => %{"ref" => "#viewerState", "type" => "ref"}
+          },
+          "required" => ["did", "handle"],
+          "type" => "object"
+        },
+        "labelersPref" => %{
+          "properties" => %{
+            "labelers" => %{
+              "items" => %{"ref" => "#labelerPrefItem", "type" => "ref"},
+              "type" => "array"
+            }
+          },
+          "required" => ["labelers"],
+          "type" => "object"
+        },
+        "liveEventPreferences" => %{
+          "description" => "Preferences for live events.",
+          "properties" => %{
+            "hiddenFeedIds" => %{
+              "description" => "A list of feed IDs that the user has hidden from live events.",
+              "items" => %{"type" => "string"},
+              "type" => "array"
+            },
+            "hideAllFeeds" => %{
+              "default" => false,
+              "description" => "Whether to hide all feeds from live events.",
+              "type" => "boolean"
+            }
+          },
+          "type" => "object"
+        },
+        "verificationView" => %{
+          "description" => "An individual verification for an associated subject.",
+          "properties" => %{
+            "createdAt" => %{
+              "description" => "Timestamp when the verification was created.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "isValid" => %{
+              "description" => "True if the verification passes validation, otherwise false.",
+              "type" => "boolean"
+            },
+            "issuer" => %{
+              "description" => "The user who issued this verification.",
+              "format" => "did",
+              "type" => "string"
+            },
+            "issuerDisplayName" => %{
+              "description" => "The display name of the issuer.",
+              "type" => "string"
+            },
+            "issuerHandle" => %{
+              "description" => "The handle of the issuer.",
+              "format" => "handle",
+              "type" => "string"
+            },
+            "uri" => %{
+              "description" => "The AT-URI of the verification record.",
+              "format" => "at-uri",
+              "type" => "string"
+            }
+          },
+          "required" => ["issuer", "uri", "isValid", "createdAt"],
+          "type" => "object"
+        },
+        "preferences" => %{
+          "items" => %{
+            "refs" => [
+              "#adultContentPref",
+              "#contentLabelPref",
+              "#savedFeedsPref",
+              "#savedFeedsPrefV2",
+              "#personalDetailsPref",
+              "#declaredAgePref",
+              "#feedViewPref",
+              "#threadViewPref",
+              "#interestsPref",
+              "#mutedWordsPref",
+              "#hiddenPostsPref",
+              "#bskyAppStatePref",
+              "#labelersPref",
+              "#postInteractionSettingsPref",
+              "#verificationPrefs",
+              "#liveEventPreferences"
+            ],
+            "type" => "union"
+          },
+          "type" => "array"
+        },
+        "nux" => %{
+          "description" => "A new user experiences (NUX) storage object",
+          "properties" => %{
+            "completed" => %{"default" => false, "type" => "boolean"},
+            "data" => %{
+              "description" =>
+                "Arbitrary data for the NUX. The structure is defined by the NUX itself. Limited to 300 characters.",
+              "maxGraphemes" => 300,
+              "maxLength" => 3000,
+              "type" => "string"
+            },
+            "expiresAt" => %{
+              "description" => "The date and time at which the NUX will expire and should be considered completed.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "id" => %{"maxLength" => 100, "type" => "string"}
+          },
+          "required" => ["id", "completed"],
+          "type" => "object"
+        },
+        "statusView" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "embed" => %{
+              "description" => "An optional embed associated with the status.",
+              "refs" => ["app.bsky.embed.external#view"],
+              "type" => "union"
+            },
+            "expiresAt" => %{
+              "description" =>
+                "The date when this status will expire. The application might choose to no longer return the status after expiration.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "isActive" => %{
+              "description" =>
+                "True if the status is not expired, false if it is expired. Only present if expiration was set.",
+              "type" => "boolean"
+            },
+            "isDisabled" => %{
+              "description" => "True if the user's go-live access has been disabled by a moderator, false otherwise.",
+              "type" => "boolean"
+            },
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "record" => %{"type" => "unknown"},
+            "status" => %{
+              "description" => "The status for the account.",
+              "knownValues" => ["app.bsky.actor.status#live"],
+              "type" => "string"
+            },
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["status", "record"],
+          "type" => "object"
+        },
+        "declaredAgePref" => %{
+          "description" =>
+            "Read-only preference containing value(s) inferred from the user's declared birthdate. Absence of this preference object in the response indicates that the user has not made a declaration.",
+          "properties" => %{
+            "isOverAge13" => %{
+              "description" => "Indicates if the user has declared that they are over 13 years of age.",
+              "type" => "boolean"
+            },
+            "isOverAge16" => %{
+              "description" => "Indicates if the user has declared that they are over 16 years of age.",
+              "type" => "boolean"
+            },
+            "isOverAge18" => %{
+              "description" => "Indicates if the user has declared that they are over 18 years of age.",
+              "type" => "boolean"
+            }
+          },
+          "type" => "object"
+        },
+        "profileAssociatedActivitySubscription" => %{
+          "properties" => %{
+            "allowSubscriptions" => %{
+              "knownValues" => ["followers", "mutuals", "none"],
+              "type" => "string"
+            }
+          },
+          "required" => ["allowSubscriptions"],
+          "type" => "object"
+        },
+        "labelerPrefItem" => %{
+          "properties" => %{"did" => %{"format" => "did", "type" => "string"}},
+          "required" => ["did"],
+          "type" => "object"
+        },
+        "postInteractionSettingsPref" => %{
+          "description" =>
+            "Default post interaction settings for the account. These values should be applied as default values when creating new posts. These refs should mirror the threadgate and postgate records exactly.",
+          "properties" => %{
+            "postgateEmbeddingRules" => %{
+              "description" =>
+                "Matches postgate record. List of rules defining who can embed this users posts. If value is an empty array or is undefined, no particular rules apply and anyone can embed.",
+              "items" => %{
+                "refs" => ["app.bsky.feed.postgate#disableRule"],
+                "type" => "union"
+              },
+              "maxLength" => 5,
+              "type" => "array"
+            },
+            "threadgateAllowRules" => %{
+              "description" =>
+                "Matches threadgate record. List of rules defining who can reply to this users posts. If value is an empty array, no one can reply. If value is undefined, anyone can reply.",
+              "items" => %{
+                "refs" => [
+                  "app.bsky.feed.threadgate#mentionRule",
+                  "app.bsky.feed.threadgate#followerRule",
+                  "app.bsky.feed.threadgate#followingRule",
+                  "app.bsky.feed.threadgate#listRule"
+                ],
+                "type" => "union"
+              },
+              "maxLength" => 5,
+              "type" => "array"
+            }
+          },
+          "required" => [],
+          "type" => "object"
+        },
+        "mutedWordTarget" => %{
+          "knownValues" => ["content", "tag"],
+          "maxGraphemes" => 64,
+          "maxLength" => 640,
+          "type" => "string"
+        },
+        "verificationState" => %{
+          "description" => "Represents the verification information about the user this object is attached to.",
+          "properties" => %{
+            "trustedVerifierStatus" => %{
+              "description" => "The user's status as a trusted verifier.",
+              "knownValues" => ["valid", "invalid", "none"],
+              "type" => "string"
+            },
+            "verifications" => %{
+              "description" =>
+                "All verifications issued by trusted verifiers on behalf of this user. Verifications by untrusted verifiers are not included.",
+              "items" => %{"ref" => "#verificationView", "type" => "ref"},
+              "type" => "array"
+            },
+            "verifiedStatus" => %{
+              "description" => "The user's status as a verified account.",
+              "knownValues" => ["valid", "invalid", "none"],
+              "type" => "string"
+            }
+          },
+          "required" => ["verifications", "verifiedStatus", "trustedVerifierStatus"],
+          "type" => "object"
         }
       },
-      "id" => "com.atproto.server.confirmEmail",
+      "id" => "app.bsky.actor.defs",
       "lexicon" => 1
     },
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Request an email with a code to confirm ownership of email.",
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.requestEmailConfirmation",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Request a token in order to update email.",
+          "description" =>
+            "Get private preferences attached to the current account. Expected use is synchronization between multiple devices, and import/export during account migration. Requires auth.",
           "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"tokenRequired" => %{"type" => "boolean"}},
-              "required" => ["tokenRequired"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.requestEmailUpdate",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Initiate a user account password reset via email.",
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"email" => %{"type" => "string"}},
-              "required" => ["email"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.requestPasswordReset",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Reset a user account password using a token.",
-          "errors" => [%{"name" => "ExpiredToken"}, %{"name" => "InvalidToken"}],
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"password" => %{"type" => "string"}, "token" => %{"type" => "string"}},
-              "required" => ["token", "password"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.resetPassword",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Update an account's email.",
-          "errors" => [%{"name" => "ExpiredToken"}, %{"name" => "InvalidToken"}, %{"name" => "TokenRequired"}],
-          "input" => %{
             "encoding" => "application/json",
             "schema" => %{
               "properties" => %{
-                "email" => %{"type" => "string"},
-                "emailAuthFactor" => %{"type" => "boolean"},
-                "token" => %{
-                  "description" =>
-                    "Requires a token from com.atproto.sever.requestEmailUpdate if the account's email has been confirmed.",
-                  "type" => "string"
+                "preferences" => %{
+                  "ref" => "app.bsky.actor.defs#preferences",
+                  "type" => "ref"
                 }
               },
-              "required" => ["email"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.updateEmail",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Get private preferences attached to the current account.",
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"preferences" => %{"items" => %{"type" => "unknown"}, "type" => "array"}},
               "required" => ["preferences"],
               "type" => "object"
             }
@@ -205,24 +796,6 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "app.bsky.actor.getPreferences",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Set the private preferences attached to the account.",
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"preferences" => %{"items" => %{"type" => "unknown"}, "type" => "array"}},
-              "required" => ["preferences"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "app.bsky.actor.putPreferences",
       "lexicon" => 1
     },
     %{
@@ -288,6 +861,1414 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
+          "description" => "Set the private preferences attached to the account.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "preferences" => %{
+                  "ref" => "app.bsky.actor.defs#preferences",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["preferences"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.actor.putPreferences",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "aspectRatio" => %{
+          "description" =>
+            "width:height represents an aspect ratio. It may be approximate, and may not correspond to absolute dimensions in any given unit.",
+          "properties" => %{
+            "height" => %{"minimum" => 1, "type" => "integer"},
+            "width" => %{"minimum" => 1, "type" => "integer"}
+          },
+          "required" => ["width", "height"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.embed.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "colorRGB" => %{
+          "description" => "RGB color definition, inspired by site.standard.theme.color#rgb",
+          "properties" => %{
+            "b" => %{"maximum" => 255, "minimum" => 0, "type" => "integer"},
+            "g" => %{"maximum" => 255, "minimum" => 0, "type" => "integer"},
+            "r" => %{"maximum" => 255, "minimum" => 0, "type" => "integer"}
+          },
+          "required" => ["r", "g", "b"],
+          "type" => "object"
+        },
+        "external" => %{
+          "properties" => %{
+            "associatedRefs" => %{
+              "description" => "StrongRefs (uri+cid) of the Atmosphere records that backed this view.",
+              "items" => %{"ref" => "com.atproto.repo.strongRef", "type" => "ref"},
+              "type" => "array"
+            },
+            "description" => %{"type" => "string"},
+            "thumb" => %{
+              "accept" => ["image/*"],
+              "maxSize" => 1_000_000,
+              "type" => "blob"
+            },
+            "title" => %{"type" => "string"},
+            "uri" => %{"format" => "uri", "type" => "string"}
+          },
+          "required" => ["uri", "title", "description"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" =>
+            "A representation of some externally linked content (eg, a URL and 'card'), embedded in a Bluesky record (eg, a post).",
+          "properties" => %{
+            "external" => %{"ref" => "#external", "type" => "ref"}
+          },
+          "required" => ["external"],
+          "type" => "object"
+        },
+        "view" => %{
+          "properties" => %{
+            "external" => %{"ref" => "#viewExternal", "type" => "ref"}
+          },
+          "required" => ["external"],
+          "type" => "object"
+        },
+        "viewExternal" => %{
+          "properties" => %{
+            "associatedProfiles" => %{
+              "description" => "Profiles of the owners of the Atmosphere records that backed this view.",
+              "items" => %{
+                "ref" => "app.bsky.actor.defs#profileViewBasic",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "associatedRefs" => %{
+              "description" => "StrongRefs (uri+cid) of the Atmosphere records that backed this view.",
+              "items" => %{"ref" => "com.atproto.repo.strongRef", "type" => "ref"},
+              "type" => "array"
+            },
+            "createdAt" => %{
+              "description" =>
+                "When the external content was created, if available. Example: a publication date, for an article.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "description" => %{"type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "readingTime" => %{
+              "description" => "Estimated reading time in minutes, if applicable and available.",
+              "type" => "integer"
+            },
+            "source" => %{"ref" => "#viewExternalSource", "type" => "ref"},
+            "thumb" => %{"format" => "uri", "type" => "string"},
+            "title" => %{"type" => "string"},
+            "updatedAt" => %{
+              "description" => "When the external content was updated, if available.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "uri" => %{"format" => "uri", "type" => "string"}
+          },
+          "required" => ["uri", "title", "description"],
+          "type" => "object"
+        },
+        "viewExternalSource" => %{
+          "description" => "The source of an external embed, such as a standard.site publication.",
+          "properties" => %{
+            "description" => %{"type" => "string"},
+            "icon" => %{
+              "description" =>
+                "Fully-qualified URL where an icon representing the source can be fetched. For example, CDN location provided by the App View.",
+              "format" => "uri",
+              "type" => "string"
+            },
+            "theme" => %{"ref" => "#viewExternalSourceTheme", "type" => "ref"},
+            "title" => %{"type" => "string"},
+            "uri" => %{
+              "description" =>
+                "URI of the source, if available. Example: the https:// URL of a site.standard.publication record.",
+              "format" => "uri",
+              "type" => "string"
+            }
+          },
+          "required" => ["uri", "title"],
+          "type" => "object"
+        },
+        "viewExternalSourceTheme" => %{
+          "description" =>
+            "The theme colors of an external source, such as a site.standard.publication. These colors may be used when rendering an embed from that source.",
+          "properties" => %{
+            "accentForegroundRGB" => %{"ref" => "#colorRGB", "type" => "ref"},
+            "accentRGB" => %{"ref" => "#colorRGB", "type" => "ref"},
+            "backgroundRGB" => %{"ref" => "#colorRGB", "type" => "ref"},
+            "foregroundRGB" => %{"ref" => "#colorRGB", "type" => "ref"}
+          },
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.embed.external",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "image" => %{
+          "properties" => %{
+            "alt" => %{
+              "description" => "Alt text description of the image, for accessibility.",
+              "type" => "string"
+            },
+            "aspectRatio" => %{
+              "ref" => "app.bsky.embed.defs#aspectRatio",
+              "type" => "ref"
+            },
+            "image" => %{
+              "accept" => ["image/*"],
+              "description" => "The raw image file. May be up to 2 MB, formerly limited to 1 MB.",
+              "maxSize" => 2_000_000,
+              "type" => "blob"
+            }
+          },
+          "required" => ["image", "alt"],
+          "type" => "object"
+        },
+        "main" => %{
+          "properties" => %{
+            "images" => %{
+              "items" => %{"ref" => "#image", "type" => "ref"},
+              "maxLength" => 4,
+              "type" => "array"
+            }
+          },
+          "required" => ["images"],
+          "type" => "object"
+        },
+        "view" => %{
+          "properties" => %{
+            "images" => %{
+              "items" => %{"ref" => "#viewImage", "type" => "ref"},
+              "maxLength" => 4,
+              "type" => "array"
+            }
+          },
+          "required" => ["images"],
+          "type" => "object"
+        },
+        "viewImage" => %{
+          "properties" => %{
+            "alt" => %{
+              "description" => "Alt text description of the image, for accessibility.",
+              "type" => "string"
+            },
+            "aspectRatio" => %{
+              "ref" => "app.bsky.embed.defs#aspectRatio",
+              "type" => "ref"
+            },
+            "fullsize" => %{
+              "description" =>
+                "Fully-qualified URL where a large version of the image can be fetched. May or may not be the exact original blob. For example, CDN location provided by the App View.",
+              "format" => "uri",
+              "type" => "string"
+            },
+            "thumb" => %{
+              "description" =>
+                "Fully-qualified URL where a thumbnail of the image can be fetched. For example, CDN location provided by the App View.",
+              "format" => "uri",
+              "type" => "string"
+            }
+          },
+          "required" => ["thumb", "fullsize", "alt"],
+          "type" => "object"
+        }
+      },
+      "description" => "A set of images embedded in a Bluesky record (eg, a post).",
+      "id" => "app.bsky.embed.images",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "properties" => %{
+            "record" => %{"ref" => "com.atproto.repo.strongRef", "type" => "ref"}
+          },
+          "required" => ["record"],
+          "type" => "object"
+        },
+        "view" => %{
+          "properties" => %{
+            "record" => %{
+              "refs" => [
+                "#viewRecord",
+                "#viewNotFound",
+                "#viewBlocked",
+                "#viewDetached",
+                "app.bsky.feed.defs#generatorView",
+                "app.bsky.graph.defs#listView",
+                "app.bsky.labeler.defs#labelerView",
+                "app.bsky.graph.defs#starterPackViewBasic"
+              ],
+              "type" => "union"
+            }
+          },
+          "required" => ["record"],
+          "type" => "object"
+        },
+        "viewBlocked" => %{
+          "properties" => %{
+            "author" => %{
+              "ref" => "app.bsky.feed.defs#blockedAuthor",
+              "type" => "ref"
+            },
+            "blocked" => %{"const" => true, "type" => "boolean"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "blocked", "author"],
+          "type" => "object"
+        },
+        "viewDetached" => %{
+          "properties" => %{
+            "detached" => %{"const" => true, "type" => "boolean"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "detached"],
+          "type" => "object"
+        },
+        "viewNotFound" => %{
+          "properties" => %{
+            "notFound" => %{"const" => true, "type" => "boolean"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "notFound"],
+          "type" => "object"
+        },
+        "viewRecord" => %{
+          "properties" => %{
+            "author" => %{
+              "ref" => "app.bsky.actor.defs#profileViewBasic",
+              "type" => "ref"
+            },
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "embeds" => %{
+              "items" => %{
+                "refs" => [
+                  "app.bsky.embed.images#view",
+                  "app.bsky.embed.video#view",
+                  "app.bsky.embed.external#view",
+                  "app.bsky.embed.record#view",
+                  "app.bsky.embed.recordWithMedia#view"
+                ],
+                "type" => "union"
+              },
+              "type" => "array"
+            },
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "likeCount" => %{"type" => "integer"},
+            "quoteCount" => %{"type" => "integer"},
+            "replyCount" => %{"type" => "integer"},
+            "repostCount" => %{"type" => "integer"},
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "value" => %{
+              "description" => "The record data itself.",
+              "type" => "unknown"
+            }
+          },
+          "required" => ["uri", "cid", "author", "value", "indexedAt"],
+          "type" => "object"
+        }
+      },
+      "description" =>
+        "A representation of a record embedded in a Bluesky record (eg, a post). For example, a quote-post, or sharing a feed generator record.",
+      "id" => "app.bsky.embed.record",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "properties" => %{
+            "media" => %{
+              "refs" => ["app.bsky.embed.images", "app.bsky.embed.video", "app.bsky.embed.external"],
+              "type" => "union"
+            },
+            "record" => %{"ref" => "app.bsky.embed.record", "type" => "ref"}
+          },
+          "required" => ["record", "media"],
+          "type" => "object"
+        },
+        "view" => %{
+          "properties" => %{
+            "media" => %{
+              "refs" => ["app.bsky.embed.images#view", "app.bsky.embed.video#view", "app.bsky.embed.external#view"],
+              "type" => "union"
+            },
+            "record" => %{"ref" => "app.bsky.embed.record#view", "type" => "ref"}
+          },
+          "required" => ["record", "media"],
+          "type" => "object"
+        }
+      },
+      "description" =>
+        "A representation of a record embedded in a Bluesky record (eg, a post), alongside other compatible embeds. For example, a quote post and image, or a quote post and external URL card.",
+      "id" => "app.bsky.embed.recordWithMedia",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "caption" => %{
+          "properties" => %{
+            "file" => %{
+              "accept" => ["text/vtt"],
+              "maxSize" => 20000,
+              "type" => "blob"
+            },
+            "lang" => %{"format" => "language", "type" => "string"}
+          },
+          "required" => ["lang", "file"],
+          "type" => "object"
+        },
+        "main" => %{
+          "properties" => %{
+            "alt" => %{
+              "description" => "Alt text description of the video, for accessibility.",
+              "maxGraphemes" => 1000,
+              "maxLength" => 10000,
+              "type" => "string"
+            },
+            "aspectRatio" => %{
+              "ref" => "app.bsky.embed.defs#aspectRatio",
+              "type" => "ref"
+            },
+            "captions" => %{
+              "items" => %{"ref" => "#caption", "type" => "ref"},
+              "maxLength" => 20,
+              "type" => "array"
+            },
+            "presentation" => %{
+              "description" => "A hint to the client about how to present the video.",
+              "knownValues" => ["default", "gif"],
+              "type" => "string"
+            },
+            "video" => %{
+              "accept" => ["video/mp4"],
+              "description" => "The mp4 video file. May be up to 100mb, formerly limited to 50mb.",
+              "maxSize" => 100_000_000,
+              "type" => "blob"
+            }
+          },
+          "required" => ["video"],
+          "type" => "object"
+        },
+        "view" => %{
+          "properties" => %{
+            "alt" => %{
+              "maxGraphemes" => 1000,
+              "maxLength" => 10000,
+              "type" => "string"
+            },
+            "aspectRatio" => %{
+              "ref" => "app.bsky.embed.defs#aspectRatio",
+              "type" => "ref"
+            },
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "playlist" => %{"format" => "uri", "type" => "string"},
+            "presentation" => %{
+              "description" => "A hint to the client about how to present the video.",
+              "knownValues" => ["default", "gif"],
+              "type" => "string"
+            },
+            "thumbnail" => %{"format" => "uri", "type" => "string"}
+          },
+          "required" => ["cid", "playlist"],
+          "type" => "object"
+        }
+      },
+      "description" => "A video embedded in a Bluesky record (eg, a post).",
+      "id" => "app.bsky.embed.video",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "blockedAuthor" => %{
+          "properties" => %{
+            "did" => %{"format" => "did", "type" => "string"},
+            "viewer" => %{
+              "ref" => "app.bsky.actor.defs#viewerState",
+              "type" => "ref"
+            }
+          },
+          "required" => ["did"],
+          "type" => "object"
+        },
+        "blockedPost" => %{
+          "properties" => %{
+            "author" => %{"ref" => "#blockedAuthor", "type" => "ref"},
+            "blocked" => %{"const" => true, "type" => "boolean"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "blocked", "author"],
+          "type" => "object"
+        },
+        "clickthroughAuthor" => %{
+          "description" => "User clicked through to the author of the feed item",
+          "type" => "token"
+        },
+        "clickthroughEmbed" => %{
+          "description" => "User clicked through to the embedded content of the feed item",
+          "type" => "token"
+        },
+        "clickthroughItem" => %{
+          "description" => "User clicked through to the feed item",
+          "type" => "token"
+        },
+        "clickthroughReposter" => %{
+          "description" => "User clicked through to the reposter of the feed item",
+          "type" => "token"
+        },
+        "contentModeUnspecified" => %{
+          "description" => "Declares the feed generator returns any types of posts.",
+          "type" => "token"
+        },
+        "contentModeVideo" => %{
+          "description" => "Declares the feed generator returns posts containing app.bsky.embed.video embeds.",
+          "type" => "token"
+        },
+        "feedViewPost" => %{
+          "properties" => %{
+            "feedContext" => %{
+              "description" => "Context provided by feed generator that may be passed back alongside interactions.",
+              "maxLength" => 2000,
+              "type" => "string"
+            },
+            "post" => %{"ref" => "#postView", "type" => "ref"},
+            "reason" => %{
+              "refs" => ["#reasonRepost", "#reasonPin"],
+              "type" => "union"
+            },
+            "reply" => %{"ref" => "#replyRef", "type" => "ref"},
+            "reqId" => %{
+              "description" => "Unique identifier per request that may be passed back alongside interactions.",
+              "maxLength" => 100,
+              "type" => "string"
+            }
+          },
+          "required" => ["post"],
+          "type" => "object"
+        },
+        "generatorView" => %{
+          "properties" => %{
+            "acceptsInteractions" => %{"type" => "boolean"},
+            "avatar" => %{"format" => "uri", "type" => "string"},
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "contentMode" => %{
+              "knownValues" => ["app.bsky.feed.defs#contentModeUnspecified", "app.bsky.feed.defs#contentModeVideo"],
+              "type" => "string"
+            },
+            "creator" => %{
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            },
+            "description" => %{
+              "maxGraphemes" => 300,
+              "maxLength" => 3000,
+              "type" => "string"
+            },
+            "descriptionFacets" => %{
+              "items" => %{"ref" => "app.bsky.richtext.facet", "type" => "ref"},
+              "type" => "array"
+            },
+            "did" => %{"format" => "did", "type" => "string"},
+            "displayName" => %{"type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "likeCount" => %{"minimum" => 0, "type" => "integer"},
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "viewer" => %{"ref" => "#generatorViewerState", "type" => "ref"}
+          },
+          "required" => ["uri", "cid", "did", "creator", "displayName", "indexedAt"],
+          "type" => "object"
+        },
+        "generatorViewerState" => %{
+          "properties" => %{"like" => %{"format" => "at-uri", "type" => "string"}},
+          "type" => "object"
+        },
+        "interaction" => %{
+          "properties" => %{
+            "event" => %{
+              "knownValues" => [
+                "app.bsky.feed.defs#requestLess",
+                "app.bsky.feed.defs#requestMore",
+                "app.bsky.feed.defs#clickthroughItem",
+                "app.bsky.feed.defs#clickthroughAuthor",
+                "app.bsky.feed.defs#clickthroughReposter",
+                "app.bsky.feed.defs#clickthroughEmbed",
+                "app.bsky.feed.defs#interactionSeen",
+                "app.bsky.feed.defs#interactionLike",
+                "app.bsky.feed.defs#interactionRepost",
+                "app.bsky.feed.defs#interactionReply",
+                "app.bsky.feed.defs#interactionQuote",
+                "app.bsky.feed.defs#interactionShare"
+              ],
+              "type" => "string"
+            },
+            "feedContext" => %{
+              "description" =>
+                "Context on a feed item that was originally supplied by the feed generator on getFeedSkeleton.",
+              "maxLength" => 2000,
+              "type" => "string"
+            },
+            "item" => %{"format" => "at-uri", "type" => "string"},
+            "reqId" => %{
+              "description" => "Unique identifier per request that may be passed back alongside interactions.",
+              "maxLength" => 100,
+              "type" => "string"
+            }
+          },
+          "type" => "object"
+        },
+        "interactionLike" => %{
+          "description" => "User liked the feed item",
+          "type" => "token"
+        },
+        "interactionQuote" => %{
+          "description" => "User quoted the feed item",
+          "type" => "token"
+        },
+        "interactionReply" => %{
+          "description" => "User replied to the feed item",
+          "type" => "token"
+        },
+        "interactionRepost" => %{
+          "description" => "User reposted the feed item",
+          "type" => "token"
+        },
+        "interactionSeen" => %{
+          "description" => "Feed item was seen by user",
+          "type" => "token"
+        },
+        "interactionShare" => %{
+          "description" => "User shared the feed item",
+          "type" => "token"
+        },
+        "notFoundPost" => %{
+          "properties" => %{
+            "notFound" => %{"const" => true, "type" => "boolean"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "notFound"],
+          "type" => "object"
+        },
+        "postView" => %{
+          "properties" => %{
+            "author" => %{
+              "ref" => "app.bsky.actor.defs#profileViewBasic",
+              "type" => "ref"
+            },
+            "bookmarkCount" => %{"type" => "integer"},
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "debug" => %{
+              "description" => "Debug information for internal development",
+              "type" => "unknown"
+            },
+            "embed" => %{
+              "refs" => [
+                "app.bsky.embed.images#view",
+                "app.bsky.embed.video#view",
+                "app.bsky.embed.external#view",
+                "app.bsky.embed.record#view",
+                "app.bsky.embed.recordWithMedia#view"
+              ],
+              "type" => "union"
+            },
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "likeCount" => %{"type" => "integer"},
+            "quoteCount" => %{"type" => "integer"},
+            "record" => %{"type" => "unknown"},
+            "replyCount" => %{"type" => "integer"},
+            "repostCount" => %{"type" => "integer"},
+            "threadgate" => %{"ref" => "#threadgateView", "type" => "ref"},
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "viewer" => %{"ref" => "#viewerState", "type" => "ref"}
+          },
+          "required" => ["uri", "cid", "author", "record", "indexedAt"],
+          "type" => "object"
+        },
+        "reasonPin" => %{"properties" => %{}, "type" => "object"},
+        "reasonRepost" => %{
+          "properties" => %{
+            "by" => %{
+              "ref" => "app.bsky.actor.defs#profileViewBasic",
+              "type" => "ref"
+            },
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["by", "indexedAt"],
+          "type" => "object"
+        },
+        "replyRef" => %{
+          "properties" => %{
+            "grandparentAuthor" => %{
+              "description" => "When parent is a reply to another post, this is the author of that post.",
+              "ref" => "app.bsky.actor.defs#profileViewBasic",
+              "type" => "ref"
+            },
+            "parent" => %{
+              "refs" => ["#postView", "#notFoundPost", "#blockedPost"],
+              "type" => "union"
+            },
+            "root" => %{
+              "refs" => ["#postView", "#notFoundPost", "#blockedPost"],
+              "type" => "union"
+            }
+          },
+          "required" => ["root", "parent"],
+          "type" => "object"
+        },
+        "requestLess" => %{
+          "description" => "Request that less content like the given feed item be shown in the feed",
+          "type" => "token"
+        },
+        "requestMore" => %{
+          "description" => "Request that more content like the given feed item be shown in the feed",
+          "type" => "token"
+        },
+        "skeletonFeedPost" => %{
+          "properties" => %{
+            "feedContext" => %{
+              "description" =>
+                "Context that will be passed through to client and may be passed to feed generator back alongside interactions.",
+              "maxLength" => 2000,
+              "type" => "string"
+            },
+            "post" => %{"format" => "at-uri", "type" => "string"},
+            "reason" => %{
+              "refs" => ["#skeletonReasonRepost", "#skeletonReasonPin"],
+              "type" => "union"
+            }
+          },
+          "required" => ["post"],
+          "type" => "object"
+        },
+        "skeletonReasonPin" => %{"properties" => %{}, "type" => "object"},
+        "skeletonReasonRepost" => %{
+          "properties" => %{
+            "repost" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["repost"],
+          "type" => "object"
+        },
+        "threadContext" => %{
+          "description" => "Metadata about this post within the context of the thread it is in.",
+          "properties" => %{
+            "rootAuthorLike" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "type" => "object"
+        },
+        "threadViewPost" => %{
+          "properties" => %{
+            "parent" => %{
+              "refs" => ["#threadViewPost", "#notFoundPost", "#blockedPost"],
+              "type" => "union"
+            },
+            "post" => %{"ref" => "#postView", "type" => "ref"},
+            "replies" => %{
+              "items" => %{
+                "refs" => ["#threadViewPost", "#notFoundPost", "#blockedPost"],
+                "type" => "union"
+              },
+              "type" => "array"
+            },
+            "threadContext" => %{"ref" => "#threadContext", "type" => "ref"}
+          },
+          "required" => ["post"],
+          "type" => "object"
+        },
+        "threadgateView" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "lists" => %{
+              "items" => %{
+                "ref" => "app.bsky.graph.defs#listViewBasic",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "record" => %{"type" => "unknown"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "type" => "object"
+        },
+        "viewerState" => %{
+          "description" =>
+            "Metadata about the requesting account's relationship with the subject content. Only has meaningful content for authed requests.",
+          "properties" => %{
+            "bookmarked" => %{"type" => "boolean"},
+            "embeddingDisabled" => %{"type" => "boolean"},
+            "like" => %{"format" => "at-uri", "type" => "string"},
+            "pinned" => %{"type" => "boolean"},
+            "replyDisabled" => %{"type" => "boolean"},
+            "repost" => %{"format" => "at-uri", "type" => "string"},
+            "threadMuted" => %{"type" => "boolean"}
+          },
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.feed.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "disableRule" => %{
+          "description" => "Disables embedding of this post.",
+          "properties" => %{},
+          "type" => "object"
+        },
+        "main" => %{
+          "description" =>
+            "Record defining interaction rules for a post. The record key (rkey) of the postgate record must match the record key of the post, and that record must be in the same repository.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "detachedEmbeddingUris" => %{
+                "description" => "List of AT-URIs embedding this post that the author has detached from.",
+                "items" => %{"format" => "at-uri", "type" => "string"},
+                "maxLength" => 50,
+                "type" => "array"
+              },
+              "embeddingRules" => %{
+                "description" =>
+                  "List of rules defining who can embed this post. If value is an empty array or is undefined, no particular rules apply and anyone can embed.",
+                "items" => %{"refs" => ["#disableRule"], "type" => "union"},
+                "maxLength" => 5,
+                "type" => "array"
+              },
+              "post" => %{
+                "description" => "Reference (AT-URI) to the post record.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["post", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.feed.postgate",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "followerRule" => %{
+          "description" => "Allow replies from actors who follow you.",
+          "properties" => %{},
+          "type" => "object"
+        },
+        "followingRule" => %{
+          "description" => "Allow replies from actors you follow.",
+          "properties" => %{},
+          "type" => "object"
+        },
+        "listRule" => %{
+          "description" => "Allow replies from actors on a list.",
+          "properties" => %{"list" => %{"format" => "at-uri", "type" => "string"}},
+          "required" => ["list"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" =>
+            "Record defining interaction gating rules for a thread (aka, reply controls). The record key (rkey) of the threadgate record must match the record key of the thread's root post, and that record must be in the same repository.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "allow" => %{
+                "description" =>
+                  "List of rules defining who can reply to this post. If value is an empty array, no one can reply. If value is undefined, anyone can reply.",
+                "items" => %{
+                  "refs" => ["#mentionRule", "#followerRule", "#followingRule", "#listRule"],
+                  "type" => "union"
+                },
+                "maxLength" => 5,
+                "type" => "array"
+              },
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "hiddenReplies" => %{
+                "description" => "List of hidden reply URIs.",
+                "items" => %{"format" => "at-uri", "type" => "string"},
+                "maxLength" => 300,
+                "type" => "array"
+              },
+              "post" => %{
+                "description" => "Reference (AT-URI) to the post record.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["post", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        },
+        "mentionRule" => %{
+          "description" => "Allow replies from actors mentioned in your post.",
+          "properties" => %{},
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.feed.threadgate",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "curatelist" => %{
+          "description" => "A list of actors used for curation purposes such as list feeds or interaction gating.",
+          "type" => "token"
+        },
+        "listItemView" => %{
+          "properties" => %{
+            "subject" => %{
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            },
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "subject"],
+          "type" => "object"
+        },
+        "listPurpose" => %{
+          "knownValues" => [
+            "app.bsky.graph.defs#modlist",
+            "app.bsky.graph.defs#curatelist",
+            "app.bsky.graph.defs#referencelist"
+          ],
+          "type" => "string"
+        },
+        "listView" => %{
+          "properties" => %{
+            "avatar" => %{"format" => "uri", "type" => "string"},
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "creator" => %{
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            },
+            "description" => %{
+              "maxGraphemes" => 300,
+              "maxLength" => 3000,
+              "type" => "string"
+            },
+            "descriptionFacets" => %{
+              "items" => %{"ref" => "app.bsky.richtext.facet", "type" => "ref"},
+              "type" => "array"
+            },
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "listItemCount" => %{"minimum" => 0, "type" => "integer"},
+            "name" => %{"maxLength" => 64, "minLength" => 1, "type" => "string"},
+            "purpose" => %{"ref" => "#listPurpose", "type" => "ref"},
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "viewer" => %{"ref" => "#listViewerState", "type" => "ref"}
+          },
+          "required" => ["uri", "cid", "creator", "name", "purpose", "indexedAt"],
+          "type" => "object"
+        },
+        "listViewBasic" => %{
+          "properties" => %{
+            "avatar" => %{"format" => "uri", "type" => "string"},
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "listItemCount" => %{"minimum" => 0, "type" => "integer"},
+            "name" => %{"maxLength" => 64, "minLength" => 1, "type" => "string"},
+            "purpose" => %{"ref" => "#listPurpose", "type" => "ref"},
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "viewer" => %{"ref" => "#listViewerState", "type" => "ref"}
+          },
+          "required" => ["uri", "cid", "name", "purpose"],
+          "type" => "object"
+        },
+        "listViewerState" => %{
+          "properties" => %{
+            "blocked" => %{"format" => "at-uri", "type" => "string"},
+            "muted" => %{"type" => "boolean"}
+          },
+          "type" => "object"
+        },
+        "modlist" => %{
+          "description" => "A list of actors to apply an aggregate moderation action (mute/block) on.",
+          "type" => "token"
+        },
+        "notFoundActor" => %{
+          "description" => "indicates that a handle or DID could not be resolved",
+          "properties" => %{
+            "actor" => %{"format" => "at-identifier", "type" => "string"},
+            "notFound" => %{"const" => true, "type" => "boolean"}
+          },
+          "required" => ["actor", "notFound"],
+          "type" => "object"
+        },
+        "referencelist" => %{
+          "description" => "A list of actors used for only for reference purposes such as within a starter pack.",
+          "type" => "token"
+        },
+        "relationship" => %{
+          "description" =>
+            "lists the bi-directional graph relationships between one actor (not indicated in the object), and the target actors (the DID included in the object)",
+          "properties" => %{
+            "blockedBy" => %{
+              "description" => "if the actor is blocked by this DID, contains the AT-URI of the block record",
+              "format" => "at-uri",
+              "type" => "string"
+            },
+            "blockedByList" => %{
+              "description" =>
+                "if the actor is blocked by this DID via a block list, contains the AT-URI of the listblock record",
+              "format" => "at-uri",
+              "type" => "string"
+            },
+            "blocking" => %{
+              "description" => "if the actor blocks this DID, this is the AT-URI of the block record",
+              "format" => "at-uri",
+              "type" => "string"
+            },
+            "blockingByList" => %{
+              "description" =>
+                "if the actor blocks this DID via a block list, this is the AT-URI of the listblock record",
+              "format" => "at-uri",
+              "type" => "string"
+            },
+            "did" => %{"format" => "did", "type" => "string"},
+            "followedBy" => %{
+              "description" => "if the actor is followed by this DID, contains the AT-URI of the follow record",
+              "format" => "at-uri",
+              "type" => "string"
+            },
+            "following" => %{
+              "description" => "if the actor follows this DID, this is the AT-URI of the follow record",
+              "format" => "at-uri",
+              "type" => "string"
+            }
+          },
+          "required" => ["did"],
+          "type" => "object"
+        },
+        "starterPackView" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "creator" => %{
+              "ref" => "app.bsky.actor.defs#profileViewBasic",
+              "type" => "ref"
+            },
+            "feeds" => %{
+              "items" => %{
+                "ref" => "app.bsky.feed.defs#generatorView",
+                "type" => "ref"
+              },
+              "maxLength" => 3,
+              "type" => "array"
+            },
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "joinedAllTimeCount" => %{"minimum" => 0, "type" => "integer"},
+            "joinedWeekCount" => %{"minimum" => 0, "type" => "integer"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "list" => %{"ref" => "#listViewBasic", "type" => "ref"},
+            "listItemsSample" => %{
+              "items" => %{"ref" => "#listItemView", "type" => "ref"},
+              "maxLength" => 12,
+              "type" => "array"
+            },
+            "record" => %{"type" => "unknown"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "cid", "record", "creator", "indexedAt"],
+          "type" => "object"
+        },
+        "starterPackViewBasic" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "creator" => %{
+              "ref" => "app.bsky.actor.defs#profileViewBasic",
+              "type" => "ref"
+            },
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "joinedAllTimeCount" => %{"minimum" => 0, "type" => "integer"},
+            "joinedWeekCount" => %{"minimum" => 0, "type" => "integer"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "listItemCount" => %{"minimum" => 0, "type" => "integer"},
+            "record" => %{"type" => "unknown"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "cid", "record", "creator", "indexedAt"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.graph.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "labelerPolicies" => %{
+          "properties" => %{
+            "labelValueDefinitions" => %{
+              "description" =>
+                "Label values created by this labeler and scoped exclusively to it. Labels defined here will override global label definitions for this labeler.",
+              "items" => %{
+                "ref" => "com.atproto.label.defs#labelValueDefinition",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "labelValues" => %{
+              "description" => "The label values which this labeler publishes. May include global or custom labels.",
+              "items" => %{
+                "ref" => "com.atproto.label.defs#labelValue",
+                "type" => "ref"
+              },
+              "type" => "array"
+            }
+          },
+          "required" => ["labelValues"],
+          "type" => "object"
+        },
+        "labelerView" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "creator" => %{
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            },
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "likeCount" => %{"minimum" => 0, "type" => "integer"},
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "viewer" => %{"ref" => "#labelerViewerState", "type" => "ref"}
+          },
+          "required" => ["uri", "cid", "creator", "indexedAt"],
+          "type" => "object"
+        },
+        "labelerViewDetailed" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "creator" => %{
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            },
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "likeCount" => %{"minimum" => 0, "type" => "integer"},
+            "policies" => %{
+              "ref" => "app.bsky.labeler.defs#labelerPolicies",
+              "type" => "ref"
+            },
+            "reasonTypes" => %{
+              "description" =>
+                "The set of report reason 'codes' which are in-scope for this service to review and action. These usually align to policy categories. If not defined (distinct from empty array), all reason types are allowed.",
+              "items" => %{
+                "ref" => "com.atproto.moderation.defs#reasonType",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "subjectCollections" => %{
+              "description" =>
+                "Set of record types (collection NSIDs) which can be reported to this service. If not defined (distinct from empty array), default is any record type.",
+              "items" => %{"format" => "nsid", "type" => "string"},
+              "type" => "array"
+            },
+            "subjectTypes" => %{
+              "description" => "The set of subject types (account, record, etc) this service accepts reports on.",
+              "items" => %{
+                "ref" => "com.atproto.moderation.defs#subjectType",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "viewer" => %{"ref" => "#labelerViewerState", "type" => "ref"}
+          },
+          "required" => ["uri", "cid", "creator", "policies", "indexedAt"],
+          "type" => "object"
+        },
+        "labelerViewerState" => %{
+          "properties" => %{"like" => %{"format" => "at-uri", "type" => "string"}},
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.labeler.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "activitySubscription" => %{
+          "properties" => %{
+            "post" => %{"type" => "boolean"},
+            "reply" => %{"type" => "boolean"}
+          },
+          "required" => ["post", "reply"],
+          "type" => "object"
+        },
+        "chatPreference" => %{
+          "properties" => %{
+            "include" => %{
+              "knownValues" => ["all", "accepted"],
+              "type" => "string"
+            },
+            "push" => %{"type" => "boolean"}
+          },
+          "required" => ["include", "push"],
+          "type" => "object"
+        },
+        "filterablePreference" => %{
+          "properties" => %{
+            "include" => %{
+              "knownValues" => ["all", "follows"],
+              "type" => "string"
+            },
+            "list" => %{"type" => "boolean"},
+            "push" => %{"type" => "boolean"}
+          },
+          "required" => ["include", "list", "push"],
+          "type" => "object"
+        },
+        "preference" => %{
+          "properties" => %{
+            "list" => %{"type" => "boolean"},
+            "push" => %{"type" => "boolean"}
+          },
+          "required" => ["list", "push"],
+          "type" => "object"
+        },
+        "preferences" => %{
+          "properties" => %{
+            "chat" => %{"ref" => "#chatPreference", "type" => "ref"},
+            "follow" => %{"ref" => "#filterablePreference", "type" => "ref"},
+            "like" => %{"ref" => "#filterablePreference", "type" => "ref"},
+            "likeViaRepost" => %{
+              "ref" => "#filterablePreference",
+              "type" => "ref"
+            },
+            "mention" => %{"ref" => "#filterablePreference", "type" => "ref"},
+            "quote" => %{"ref" => "#filterablePreference", "type" => "ref"},
+            "reply" => %{"ref" => "#filterablePreference", "type" => "ref"},
+            "repost" => %{"ref" => "#filterablePreference", "type" => "ref"},
+            "repostViaRepost" => %{
+              "ref" => "#filterablePreference",
+              "type" => "ref"
+            },
+            "starterpackJoined" => %{"ref" => "#preference", "type" => "ref"},
+            "subscribedPost" => %{"ref" => "#preference", "type" => "ref"},
+            "unverified" => %{"ref" => "#preference", "type" => "ref"},
+            "verified" => %{"ref" => "#preference", "type" => "ref"}
+          },
+          "required" => [
+            "chat",
+            "follow",
+            "like",
+            "likeViaRepost",
+            "mention",
+            "quote",
+            "reply",
+            "repost",
+            "repostViaRepost",
+            "starterpackJoined",
+            "subscribedPost",
+            "unverified",
+            "verified"
+          ],
+          "type" => "object"
+        },
+        "recordDeleted" => %{"properties" => %{}, "type" => "object"},
+        "subjectActivitySubscription" => %{
+          "description" => "Object used to store activity subscription data in stash.",
+          "properties" => %{
+            "activitySubscription" => %{
+              "ref" => "#activitySubscription",
+              "type" => "ref"
+            },
+            "subject" => %{"format" => "did", "type" => "string"}
+          },
+          "required" => ["subject", "activitySubscription"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.notification.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "byteSlice" => %{
+          "description" =>
+            "Specifies the sub-string range a facet feature applies to. Start index is inclusive, end index is exclusive. Indices are zero-indexed, counting bytes of the UTF-8 encoded text. NOTE: some languages, like Javascript, use UTF-16 or Unicode codepoints for string slice indexing; in these languages, convert to byte arrays before working with facets.",
+          "properties" => %{
+            "byteEnd" => %{"minimum" => 0, "type" => "integer"},
+            "byteStart" => %{"minimum" => 0, "type" => "integer"}
+          },
+          "required" => ["byteStart", "byteEnd"],
+          "type" => "object"
+        },
+        "link" => %{
+          "description" =>
+            "Facet feature for a URL. The text URL may have been simplified or truncated, but the facet reference should be a complete URL.",
+          "properties" => %{"uri" => %{"format" => "uri", "type" => "string"}},
+          "required" => ["uri"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" => "Annotation of a sub-string within rich text.",
+          "properties" => %{
+            "features" => %{
+              "items" => %{
+                "refs" => ["#mention", "#link", "#tag"],
+                "type" => "union"
+              },
+              "type" => "array"
+            },
+            "index" => %{"ref" => "#byteSlice", "type" => "ref"}
+          },
+          "required" => ["index", "features"],
+          "type" => "object"
+        },
+        "mention" => %{
+          "description" =>
+            "Facet feature for mention of another account. The text is usually a handle, including a '@' prefix, but the facet reference is a DID.",
+          "properties" => %{"did" => %{"format" => "did", "type" => "string"}},
+          "required" => ["did"],
+          "type" => "object"
+        },
+        "tag" => %{
+          "description" =>
+            "Facet feature for a hashtag. The text usually includes a '#' prefix, but the facet reference should not (except in the case of 'double hash tags').",
+          "properties" => %{
+            "tag" => %{
+              "maxGraphemes" => 64,
+              "maxLength" => 640,
+              "type" => "string"
+            }
+          },
+          "required" => ["tag"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.richtext.facet",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Describe the credentials that should be included in the DID doc of an account that is migrating to this service.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "alsoKnownAs" => %{
+                  "items" => %{"type" => "string"},
+                  "type" => "array"
+                },
+                "rotationKeys" => %{
+                  "description" =>
+                    "Recommended rotation keys for PLC dids. Should be undefined (or ignored) for did:webs.",
+                  "items" => %{"type" => "string"},
+                  "type" => "array"
+                },
+                "services" => %{"type" => "unknown"},
+                "verificationMethods" => %{"type" => "unknown"}
+              },
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.identity.getRecommendedDidCredentials",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Request an email with a code to in order to request a signed PLC operation. Requires Auth.",
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.identity.requestPlcOperationSignature",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
           "description" =>
             "Resolves an atproto handle (hostname) to a DID. Does not necessarily bi-directionally verify against the the DID document.",
           "errors" => [
@@ -324,6 +2305,70 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
+          "description" => "Signs a PLC operation to update some value(s) in the requesting DID's document.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "alsoKnownAs" => %{
+                  "items" => %{"type" => "string"},
+                  "type" => "array"
+                },
+                "rotationKeys" => %{
+                  "items" => %{"type" => "string"},
+                  "type" => "array"
+                },
+                "services" => %{"type" => "unknown"},
+                "token" => %{
+                  "description" => "A token received through com.atproto.identity.requestPlcOperationSignature",
+                  "type" => "string"
+                },
+                "verificationMethods" => %{"type" => "unknown"}
+              },
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "operation" => %{
+                  "description" => "A signed DID PLC operation.",
+                  "type" => "unknown"
+                }
+              },
+              "required" => ["operation"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.identity.signPlcOperation",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Validates a PLC operation to ensure that it doesn't violate a service's constraints or get the identity into a bad state, then submits it to the PLC registry",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"operation" => %{"type" => "unknown"}},
+              "required" => ["operation"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.identity.submitPlcOperation",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
           "description" =>
             "Updates the current account's handle. Verifies handle validity, and updates did:plc document if necessary. Implemented by PDS, and requires auth.",
           "input" => %{
@@ -344,67 +2389,6 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.identity.updateHandle",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Returns recommended DID PLC credentials for the authenticated account.",
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{
-                "did" => %{"format" => "did", "type" => "string"},
-                "handle" => %{"format" => "handle", "type" => "string"},
-                "signingKey" => %{"type" => "string"},
-                "rotationKeys" => %{"items" => %{"type" => "string"}, "type" => "array"},
-                "verificationMethods" => %{"type" => "unknown"},
-                "alsoKnownAs" => %{"items" => %{"type" => "string"}, "type" => "array"},
-                "services" => %{"type" => "unknown"}
-              },
-              "required" => [
-                "did",
-                "handle",
-                "signingKey",
-                "rotationKeys",
-                "verificationMethods",
-                "alsoKnownAs",
-                "services"
-              ],
-              "type" => "object"
-            }
-          },
-          "type" => "query"
-        }
-      },
-      "id" => "com.atproto.identity.getRecommendedDidCredentials",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Requests a short-lived token for signing a PLC operation after password reauthentication.",
-          "errors" => [%{"name" => "AuthenticationRequired"}, %{"name" => "InvalidRequest"}],
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"password" => %{"type" => "string"}},
-              "required" => ["password"],
-              "type" => "object"
-            }
-          },
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"token" => %{"type" => "string"}},
-              "required" => ["token"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.identity.requestPlcOperationSignature",
       "lexicon" => 1
     },
     %{
@@ -581,6 +2565,103 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.lexicon.schema",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "reasonAppeal" => %{
+          "description" => "Appeal a previously taken moderation action",
+          "type" => "token"
+        },
+        "reasonMisleading" => %{
+          "description" =>
+            "Misleading identity, affiliation, or content. Prefer new lexicon definition `tools.ozone.report.defs#reasonMisleadingOther`.",
+          "type" => "token"
+        },
+        "reasonOther" => %{
+          "description" =>
+            "Reports not falling under another report category. Prefer new lexicon definition `tools.ozone.report.defs#reasonOther`.",
+          "type" => "token"
+        },
+        "reasonRude" => %{
+          "description" =>
+            "Rude, harassing, explicit, or otherwise unwelcoming behavior. Prefer new lexicon definition `tools.ozone.report.defs#reasonHarassmentOther`.",
+          "type" => "token"
+        },
+        "reasonSexual" => %{
+          "description" =>
+            "Unwanted or mislabeled sexual content. Prefer new lexicon definition `tools.ozone.report.defs#reasonSexualUnlabeled`.",
+          "type" => "token"
+        },
+        "reasonSpam" => %{
+          "description" =>
+            "Spam: frequent unwanted promotion, replies, mentions. Prefer new lexicon definition `tools.ozone.report.defs#reasonMisleadingSpam`.",
+          "type" => "token"
+        },
+        "reasonType" => %{
+          "knownValues" => [
+            "com.atproto.moderation.defs#reasonSpam",
+            "com.atproto.moderation.defs#reasonViolation",
+            "com.atproto.moderation.defs#reasonMisleading",
+            "com.atproto.moderation.defs#reasonSexual",
+            "com.atproto.moderation.defs#reasonRude",
+            "com.atproto.moderation.defs#reasonOther",
+            "com.atproto.moderation.defs#reasonAppeal",
+            "tools.ozone.report.defs#reasonAppeal",
+            "tools.ozone.report.defs#reasonOther",
+            "tools.ozone.report.defs#reasonViolenceAnimal",
+            "tools.ozone.report.defs#reasonViolenceThreats",
+            "tools.ozone.report.defs#reasonViolenceGraphicContent",
+            "tools.ozone.report.defs#reasonViolenceGlorification",
+            "tools.ozone.report.defs#reasonViolenceExtremistContent",
+            "tools.ozone.report.defs#reasonViolenceTrafficking",
+            "tools.ozone.report.defs#reasonViolenceOther",
+            "tools.ozone.report.defs#reasonSexualAbuseContent",
+            "tools.ozone.report.defs#reasonSexualNCII",
+            "tools.ozone.report.defs#reasonSexualDeepfake",
+            "tools.ozone.report.defs#reasonSexualAnimal",
+            "tools.ozone.report.defs#reasonSexualUnlabeled",
+            "tools.ozone.report.defs#reasonSexualOther",
+            "tools.ozone.report.defs#reasonChildSafetyCSAM",
+            "tools.ozone.report.defs#reasonChildSafetyGroom",
+            "tools.ozone.report.defs#reasonChildSafetyPrivacy",
+            "tools.ozone.report.defs#reasonChildSafetyHarassment",
+            "tools.ozone.report.defs#reasonChildSafetyOther",
+            "tools.ozone.report.defs#reasonHarassmentTroll",
+            "tools.ozone.report.defs#reasonHarassmentTargeted",
+            "tools.ozone.report.defs#reasonHarassmentHateSpeech",
+            "tools.ozone.report.defs#reasonHarassmentDoxxing",
+            "tools.ozone.report.defs#reasonHarassmentOther",
+            "tools.ozone.report.defs#reasonMisleadingBot",
+            "tools.ozone.report.defs#reasonMisleadingImpersonation",
+            "tools.ozone.report.defs#reasonMisleadingSpam",
+            "tools.ozone.report.defs#reasonMisleadingScam",
+            "tools.ozone.report.defs#reasonMisleadingElections",
+            "tools.ozone.report.defs#reasonMisleadingOther",
+            "tools.ozone.report.defs#reasonRuleSiteSecurity",
+            "tools.ozone.report.defs#reasonRuleProhibitedSales",
+            "tools.ozone.report.defs#reasonRuleBanEvasion",
+            "tools.ozone.report.defs#reasonRuleOther",
+            "tools.ozone.report.defs#reasonSelfHarmContent",
+            "tools.ozone.report.defs#reasonSelfHarmED",
+            "tools.ozone.report.defs#reasonSelfHarmStunts",
+            "tools.ozone.report.defs#reasonSelfHarmSubstances",
+            "tools.ozone.report.defs#reasonSelfHarmOther"
+          ],
+          "type" => "string"
+        },
+        "reasonViolation" => %{
+          "description" =>
+            "Direct violation of server rules, laws, terms of service. Prefer new lexicon definition `tools.ozone.report.defs#reasonRuleOther`.",
+          "type" => "token"
+        },
+        "subjectType" => %{
+          "description" => "Tag describing a type of subject that might be reported.",
+          "knownValues" => ["account", "record", "chat"],
+          "type" => "string"
+        }
+      },
+      "id" => "com.atproto.moderation.defs",
       "lexicon" => 1
     },
     %{
@@ -963,6 +3044,67 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
+          "description" => "Import a repository CAR for the authenticated account.",
+          "errors" => [%{"name" => "InvalidRequest"}],
+          "input" => %{"encoding" => "application/vnd.ipld.car"},
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cid" => %{"format" => "cid", "type" => "string"},
+                "recordCount" => %{"type" => "integer"},
+                "rev" => %{"format" => "tid", "type" => "string"}
+              },
+              "required" => ["cid", "rev"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.repo.importRepo",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "List blob CIDs referenced by the authenticated repo but missing from local storage.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "blobs" => %{
+                  "items" => %{
+                    "properties" => %{
+                      "cid" => %{"format" => "cid", "type" => "string"}
+                    },
+                    "required" => ["cid"],
+                    "type" => "object"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"}
+              },
+              "required" => ["blobs"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{"maximum" => 1000, "minimum" => 1, "type" => "integer"}
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.repo.listMissingBlobs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
           "description" =>
             "List a range of records in a repository, matching a specific collection. Does not require auth.",
           "output" => %{
@@ -1137,6 +3279,79 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
+          "description" => "Activate the authenticated account after migration checks pass.",
+          "errors" => [%{"name" => "InvalidRequest"}],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.activateAccount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get status information about the authenticated account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "active" => %{"type" => "boolean"},
+                "blobCount" => %{"type" => "integer"},
+                "did" => %{"format" => "did", "type" => "string"},
+                "migrationReady" => %{"type" => "boolean"},
+                "missingBlobCount" => %{"type" => "integer"},
+                "recordCount" => %{"type" => "integer"},
+                "repoCount" => %{"type" => "integer"},
+                "status" => %{"type" => "string"}
+              },
+              "required" => ["did", "active"],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.server.checkAccountStatus",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Confirm an email using a token from com.atproto.server.requestEmailConfirmation.",
+          "errors" => [
+            %{"name" => "AccountNotFound"},
+            %{"name" => "ExpiredToken"},
+            %{"name" => "InvalidToken"},
+            %{"name" => "InvalidEmail"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "email" => %{"type" => "string"},
+                "token" => %{"type" => "string"}
+              },
+              "required" => ["email", "token"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.confirmEmail",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
           "description" => "Create an account. Implemented by PDS.",
           "errors" => [
             %{"name" => "InvalidHandle"},
@@ -1215,6 +3430,43 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
+          "description" => "Create an app password. The secret is returned once.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "name" => %{"type" => "string"},
+                "scope" => %{"type" => "string"}
+              },
+              "required" => ["name"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "createdAt" => %{"format" => "datetime", "type" => "string"},
+                "id" => %{"type" => "integer"},
+                "lastUsedAt" => %{"format" => "datetime", "type" => "string"},
+                "name" => %{"type" => "string"},
+                "password" => %{"type" => "string"},
+                "revoked" => %{"type" => "boolean"},
+                "scope" => %{"type" => "string"}
+              },
+              "required" => ["id", "name", "scope", "createdAt", "revoked", "password"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.createAppPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
           "description" => "Create an authentication session.",
           "errors" => [
             %{"name" => "AccountTakedown"},
@@ -1268,6 +3520,42 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.server.createSession",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Deactivate the authenticated account and suppress public repo/blob serving.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.deactivateAccount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Mark the authenticated account deleted and revoke active sessions.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.deleteAccount",
       "lexicon" => 1
     },
     %{
@@ -1339,6 +3627,36 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
+          "description" => "Get a short-lived service-auth token for a constrained audience and Lexicon method.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"token" => %{"type" => "string"}},
+              "required" => ["token"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "aud" => %{"description" => "Token audience.", "type" => "string"},
+              "lxm" => %{
+                "description" => "Lexicon method this token may be used with.",
+                "format" => "nsid",
+                "type" => "string"
+              }
+            },
+            "required" => ["aud", "lxm"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.server.getServiceAuth",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
           "description" => "Get information about the current auth session. Requires auth.",
           "output" => %{
             "encoding" => "application/json",
@@ -1366,6 +3684,41 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.server.getSession",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "appPassword" => %{
+          "properties" => %{
+            "createdAt" => %{"format" => "datetime", "type" => "string"},
+            "id" => %{"type" => "integer"},
+            "lastUsedAt" => %{"format" => "datetime", "type" => "string"},
+            "name" => %{"type" => "string"},
+            "revoked" => %{"type" => "boolean"},
+            "scope" => %{"type" => "string"}
+          },
+          "required" => ["id", "name", "scope", "createdAt", "revoked"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" => "List app passwords for the authenticated account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "passwords" => %{
+                  "items" => %{"ref" => "#appPassword", "type" => "ref"},
+                  "type" => "array"
+                }
+              },
+              "required" => ["passwords"],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.server.listAppPasswords",
       "lexicon" => 1
     },
     %{
@@ -1405,6 +3758,171 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.server.refreshSession",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Record an authenticated account deletion request.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestAccountDelete",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Request an email with a code to confirm ownership of email.",
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestEmailConfirmation",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Request a token in order to update email.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"tokenRequired" => %{"type" => "boolean"}},
+              "required" => ["tokenRequired"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestEmailUpdate",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Initiate a user account password reset via email.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"email" => %{"type" => "string"}},
+              "required" => ["email"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.requestPasswordReset",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Reserve or return stable signing-key material for the authenticated account.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "signingKey" => %{"type" => "string"},
+                "verificationMethod" => %{"type" => "string"}
+              },
+              "required" => ["did", "signingKey", "verificationMethod"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.reserveSigningKey",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Reset a user account password using a token.",
+          "errors" => [%{"name" => "ExpiredToken"}, %{"name" => "InvalidToken"}],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "password" => %{"type" => "string"},
+                "token" => %{"type" => "string"}
+              },
+              "required" => ["token", "password"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.resetPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Revoke an app password by id.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"id" => %{"type" => "integer"}},
+              "required" => ["id"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.revokeAppPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Update an account's email.",
+          "errors" => [
+            %{"name" => "ExpiredToken"},
+            %{"name" => "InvalidToken"},
+            %{"name" => "TokenRequired"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "email" => %{"type" => "string"},
+                "emailAuthFactor" => %{"type" => "boolean"},
+                "token" => %{
+                  "description" =>
+                    "Requires a token from com.atproto.sever.requestEmailUpdate if the account's email has been confirmed.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["email"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.server.updateEmail",
       "lexicon" => 1
     },
     %{
@@ -1975,268 +4493,6 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.sync.subscribeRepos",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "List app passwords for the authenticated account.",
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"passwords" => %{"items" => %{"type" => "unknown"}, "type" => "array"}},
-              "required" => ["passwords"],
-              "type" => "object"
-            }
-          },
-          "type" => "query"
-        }
-      },
-      "id" => "com.atproto.server.listAppPasswords",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Create an app password. The secret is returned once.",
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"name" => %{"type" => "string"}, "scope" => %{"type" => "string"}},
-              "required" => ["name"],
-              "type" => "object"
-            }
-          },
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{
-                "createdAt" => %{"format" => "datetime", "type" => "string"},
-                "id" => %{"type" => "integer"},
-                "lastUsedAt" => %{"format" => "datetime", "type" => "string"},
-                "name" => %{"type" => "string"},
-                "password" => %{"type" => "string"},
-                "revoked" => %{"type" => "boolean"},
-                "scope" => %{"type" => "string"}
-              },
-              "required" => ["id", "name", "scope", "createdAt", "revoked", "password"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.createAppPassword",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Import a repository CAR for the authenticated account.",
-          "errors" => [%{"name" => "InvalidRequest"}],
-          "input" => %{"encoding" => "application/vnd.ipld.car"},
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{
-                "cid" => %{"format" => "cid", "type" => "string"},
-                "recordCount" => %{"type" => "integer"},
-                "rev" => %{"format" => "tid", "type" => "string"}
-              },
-              "required" => ["cid", "rev"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.repo.importRepo",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "List blob CIDs referenced by the authenticated repo but missing from local storage.",
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{
-                "blobs" => %{
-                  "items" => %{
-                    "properties" => %{"cid" => %{"format" => "cid", "type" => "string"}},
-                    "required" => ["cid"],
-                    "type" => "object"
-                  },
-                  "type" => "array"
-                },
-                "cursor" => %{"type" => "string"}
-              },
-              "required" => ["blobs"],
-              "type" => "object"
-            }
-          },
-          "parameters" => %{
-            "properties" => %{
-              "cursor" => %{"type" => "string"},
-              "limit" => %{"maximum" => 1000, "minimum" => 1, "type" => "integer"}
-            },
-            "type" => "params"
-          },
-          "type" => "query"
-        }
-      },
-      "id" => "com.atproto.repo.listMissingBlobs",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Activate the authenticated account after migration checks pass.",
-          "errors" => [%{"name" => "InvalidRequest"}],
-          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.activateAccount",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Deactivate the authenticated account and suppress public repo/blob serving.",
-          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.deactivateAccount",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Mark the authenticated account deleted and revoke active sessions.",
-          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.deleteAccount",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Record an authenticated account deletion request.",
-          "input" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.requestAccountDelete",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Get status information about the authenticated account.",
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{
-                "active" => %{"type" => "boolean"},
-                "blobCount" => %{"type" => "integer"},
-                "did" => %{"format" => "did", "type" => "string"},
-                "migrationReady" => %{"type" => "boolean"},
-                "missingBlobCount" => %{"type" => "integer"},
-                "recordCount" => %{"type" => "integer"},
-                "repoCount" => %{"type" => "integer"},
-                "status" => %{"type" => "string"}
-              },
-              "required" => ["did", "active"],
-              "type" => "object"
-            }
-          },
-          "type" => "query"
-        }
-      },
-      "id" => "com.atproto.server.checkAccountStatus",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Get a short-lived service-auth token for a constrained audience and Lexicon method.",
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"token" => %{"type" => "string"}},
-              "required" => ["token"],
-              "type" => "object"
-            }
-          },
-          "parameters" => %{
-            "properties" => %{
-              "aud" => %{"description" => "Token audience.", "type" => "string"},
-              "lxm" => %{
-                "description" => "Lexicon method this token may be used with.",
-                "format" => "nsid",
-                "type" => "string"
-              }
-            },
-            "required" => ["aud", "lxm"],
-            "type" => "params"
-          },
-          "type" => "query"
-        }
-      },
-      "id" => "com.atproto.server.getServiceAuth",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Reserve or return stable signing-key material for the authenticated account.",
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
-          },
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{
-                "did" => %{"format" => "did", "type" => "string"},
-                "signingKey" => %{"type" => "string"},
-                "verificationMethod" => %{"type" => "string"}
-              },
-              "required" => ["did", "signingKey", "verificationMethod"],
-              "type" => "object"
-            }
-          },
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.reserveSigningKey",
-      "lexicon" => 1
-    },
-    %{
-      "defs" => %{
-        "main" => %{
-          "description" => "Revoke an app password by id.",
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{"id" => %{"type" => "integer"}},
-              "required" => ["id"],
-              "type" => "object"
-            }
-          },
-          "output" => %{"encoding" => "application/json", "schema" => %{"properties" => %{}, "type" => "object"}},
-          "type" => "procedure"
-        }
-      },
-      "id" => "com.atproto.server.revokeAppPassword",
       "lexicon" => 1
     }
   ]

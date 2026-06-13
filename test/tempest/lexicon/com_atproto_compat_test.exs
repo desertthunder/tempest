@@ -180,16 +180,11 @@ defmodule Tempest.Lexicon.OfficialComAtprotoCompatibilityTest do
 
     for method <- [
           "com.atproto.identity.getRecommendedDidCredentials",
-          "com.atproto.identity.requestPlcOperationSignature"
-        ] do
-      assert %{status: "implemented"} = Enum.find(endpoints, &(&1.method == method))
-    end
-
-    for method <- [
+          "com.atproto.identity.requestPlcOperationSignature",
           "com.atproto.identity.signPlcOperation",
           "com.atproto.identity.submitPlcOperation"
         ] do
-      assert %{status: "planned"} = Enum.find(endpoints, &(&1.method == method))
+      assert %{status: "implemented"} = Enum.find(endpoints, &(&1.method == method))
     end
   end
 end

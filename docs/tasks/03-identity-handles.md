@@ -26,13 +26,13 @@ correctness for hosted DIDs is tracked in Milestone 11.
 The internal PLC client boundary exists, but public PLC identity XRPC endpoints
 remain follow-up work:
 
-- [ ] Add `com.atproto.identity.getRecommendedDidCredentials` with response-shape,
+- [x] Add `com.atproto.identity.getRecommendedDidCredentials` with response-shape,
       auth, and fake-PLC/key-store tests.
-- [ ] Add `com.atproto.identity.requestPlcOperationSignature` with strong reauth,
+- [x] Add `com.atproto.identity.requestPlcOperationSignature` with strong reauth,
       single-use token, audit-log, and error-shape tests.
-- [ ] Add `com.atproto.identity.signPlcOperation` with operation validation tests
+- [x] Add `com.atproto.identity.signPlcOperation` with operation validation tests
       that reject service-diverting or unrecoverable PLC operations.
-- [ ] Add `com.atproto.identity.submitPlcOperation` with fake PLC submission,
+- [x] Add `com.atproto.identity.submitPlcOperation` with fake PLC submission,
       failure, idempotency, and migration event-ordering tests.
 - [ ] Create, sign, and submit PLC operations correctly end-to-end.
 - [ ] Fetch existing PLC state before building update operations.

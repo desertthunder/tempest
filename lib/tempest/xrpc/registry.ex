@@ -245,6 +245,24 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["AuthenticationRequired", "InvalidRequest"]
     },
     %Method{
+      nsid: "com.atproto.identity.signPlcOperation",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Identity, :sign_plc_operation},
+      errors: ["AuthenticationRequired", "InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.identity.submitPlcOperation",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Identity, :submit_plc_operation},
+      errors: ["InvalidRequest", "UpstreamFailure"]
+    },
+    %Method{
       nsid: "com.atproto.repo.createRecord",
       kind: :procedure,
       auth: :bearer,
