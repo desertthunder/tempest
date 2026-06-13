@@ -10,6 +10,7 @@ defmodule Tempest.Xrpc.Server do
 
     {:ok,
      %{
+       did: "did:web:#{config.hostname}",
        availableUserDomains: [available_user_domain(config.hostname)],
        inviteCodeRequired: false,
        links: %{

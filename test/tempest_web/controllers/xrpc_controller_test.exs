@@ -7,6 +7,7 @@ defmodule TempestWeb.XrpcControllerTest do
 
     assert get_resp_header(conn, "content-type") == ["application/json; charset=utf-8"]
     assert get_resp_header(conn, "access-control-allow-origin") == ["*"]
+    assert response["did"] == "did:web:localhost"
     assert response["availableUserDomains"] == [".localhost"]
     assert response["inviteCodeRequired"] == false
     assert response["links"]["privacyPolicy"] == nil

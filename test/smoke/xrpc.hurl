@@ -8,6 +8,7 @@ GET {{base_url}}/xrpc/com.atproto.server.describeServer
 HTTP 200
 [Asserts]
 header "content-type" contains "application/json"
+jsonpath "$.did" exists
 jsonpath "$.availableUserDomains" exists
 jsonpath "$.inviteCodeRequired" == false
 jsonpath "$.links.privacyPolicy" exists
