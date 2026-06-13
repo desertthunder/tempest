@@ -32,6 +32,7 @@ Subsystem specifications live in this directory.
 16. [PDS Compatibility Against Reference Surface](./pds-compatibility.md)
 17. [Public Stats Dashboard](./public-stats-dashboard.md)
 18. [Documentation Viewer](./doc-viewer.md)
+19. [Personal Account Backups](./personal-backups.md)
 
 ## Source Baseline
 
@@ -51,6 +52,7 @@ Research was checked on 2026-05-07 against:
 - AT Protocol OAuth scopes guide: <https://atproto.com/guides/scopes>
 - AT Protocol account migration guide: <https://atproto.com/guides/account-migration>
 - Reference PDS implementation: <https://github.com/bluesky-social/atproto/tree/main/packages/pds>
+- Cocoon PDS: <https://github.com/haileyok/cocoon>
 
 ## Documentation Rules
 

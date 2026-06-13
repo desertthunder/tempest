@@ -56,12 +56,15 @@ Tempest uses these layers together:
 - `test/smoke/operator-account-ux.hurl`: account operator UI checks
 - `test/smoke/tempest_basic.hurl`: end-to-end baseline PDS flow
 - `test/smoke/tempest_compat.hurl`: compatibility hardening checks
+- `test/smoke/deployment.hurl`: non-destructive deployed HTTPS smoke checks
 - `test/smoke/deployed/crawlers.hurl`: deployed relay crawler fan-out checks
 
 Run suites that create accounts or depend on event order with `--jobs 1`. Use
 fresh account variables for every run. `accounts.hurl` and `identity.hurl` both
 use `account_handle`, so run them separately or give the full directory run a
 fresh database/handle plan if both files create accounts in the same pass.
+Do not include `test/smoke/deployment.hurl` in local wildcard runs; it requires
+a deployed HTTPS hostname and an admin token.
 
 ## Hurl rules
 
@@ -118,20 +121,18 @@ firehose observation.
 `test/smoke/deployed/crawlers.hurl` covers `requestCrawl` against configured
 relays. Run it only against a publicly reachable deployment, because real relays
 such as `bsky.network` and `vsky.network` reject `localhost` and private hostnames.
+The full deployed relay/AppView procedure lives in
+[`deployment-observability`](./deployment-observability.md#relay-and-appview-crawl-verification).
 
 ## Verification
 
 ```bash
 mix test
-suffix="$(date +%s)"
-hurl --test --jobs 1 \
-  --variable base_url=http://localhost:4000 \
-  --variable suffix="${suffix}" \
-  --variable account_handle="smoke-${suffix}.test" \
-  --variable account_email="smoke-${suffix}@example.com" \
-  --variable account_password="correct horse battery staple" \
-  test/smoke/*.hurl
+test/smoke/local-pds-compat.sh http://localhost:4000
 ```
+
+For broader local smoke runs, list local files explicitly. Do not use
+`test/smoke/*.hurl`, because `test/smoke/deployment.hurl` is deployed-only.
 
 Deployed crawler check:
 
@@ -140,6 +141,15 @@ hurl --test --jobs 1 \
   --variable base_url=https://tempest.example.com \
   --variable crawler_hostname=tempest.example.com \
   test/smoke/deployed/crawlers.hurl
+```
+
+Deployed HTTPS smoke check:
+
+```bash
+hurl --test --jobs 1 \
+  --variable base_url=https://tempest.example.com \
+  --variable admin_token="$ADMIN_TOKEN" \
+  test/smoke/deployment.hurl
 ```
 
 ## Sources

@@ -47,3 +47,6 @@ hurl --test --jobs 1 \
   --variable base_url=http://localhost:4000 \
   test/smoke/identity-correctness.hurl
 ```
+
+For deployed public verification, use the runbook in
+[`deployment-observability`](./deployment-observability.md#public-identity-verification).

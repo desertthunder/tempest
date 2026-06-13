@@ -22,6 +22,7 @@ title: Milestone Tasks
 16. [Deployment and Post-deployment Verification](./15-deployment-verification.md)
 17. [Public Stats Dashboard](./16-public-stats-dashboard.md)
 18. [Doc Viewer](./17-doc-viewer.md)
+19. [Personal Account Backups](./18-personal-backups.md)
 
 Each file in this directory is a milestone. Each task is intended to be the
 smallest useful unit of work: one focused implementation change, test, or

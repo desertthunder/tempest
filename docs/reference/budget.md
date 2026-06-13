@@ -7,6 +7,8 @@ This page describes the lowest-cost hosted shape for a single-user Tempest PDS:
 Railway Hobby for compute and durable SQLite state, plus Cloudflare R2 Standard
 storage for blob objects and backup uploads. The target is \< $10 a month.
 
+For the step-by-step deploy flow, use [Deployment Guide](./deployment.md).
+
 Provider prices and limits change.
 
 The numbers below were checked on 2026-06-12 against the public Railway and
@@ -198,6 +200,9 @@ mix pds.backup.restore --input /path/to/extracted-backup --target /var/lib/tempe
 Do not count R2 blob storage as a complete backup by itself. The SQLite files
 and repo databases are the authoritative state tying accounts, repo commits,
 and blob metadata together.
+
+The full deployment restore runbook lives in
+[`deployment observability`](./deployment-observability.md#restore-drill).
 
 ## Cost controls
 
