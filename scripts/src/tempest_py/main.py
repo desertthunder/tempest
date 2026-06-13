@@ -226,9 +226,11 @@ def bearer(token: str) -> dict[str, str]:
 
 
 def access_from_session(settings: Settings) -> str:
-    explicit = env("OLD_ACCESS")
-    if explicit:
-        return explicit
+    if not settings.old_session_path.exists():
+        explicit = env("OLD_ACCESS")
+        if explicit:
+            return explicit
+        raise CliError(f"{settings.old_session_path} does not exist; run login-source or set OLD_ACCESS")
 
     data = read_json(settings.old_session_path)
     session_host = data.get("_tempest_old_login_pds") or data.get("_tempest_old_auth_pds")
@@ -265,9 +267,11 @@ def service_auth_token(settings: Settings) -> str:
 
 
 def tempest_access_token(settings: Settings) -> str:
-    explicit = env("TEMPEST_ACCESS")
-    if explicit:
-        return explicit
+    if not settings.create_account_path.exists():
+        explicit = env("TEMPEST_ACCESS")
+        if explicit:
+            return explicit
+        raise CliError(f"{settings.create_account_path} does not exist; run create-account or set TEMPEST_ACCESS")
 
     data = read_json(settings.create_account_path)
     token = data.get("accessJwt")
@@ -277,9 +281,11 @@ def tempest_access_token(settings: Settings) -> str:
 
 
 def tempest_refresh_token(settings: Settings) -> str:
-    explicit = env("TEMPEST_REFRESH")
-    if explicit:
-        return explicit
+    if not settings.create_account_path.exists():
+        explicit = env("TEMPEST_REFRESH")
+        if explicit:
+            return explicit
+        raise CliError(f"{settings.create_account_path} does not exist; run create-account or set TEMPEST_REFRESH")
 
     data = read_json(settings.create_account_path)
     token = data.get("refreshJwt")
@@ -555,12 +561,16 @@ def plc_request_token(settings: Settings) -> None:
                 "The source session itself is valid, but this old-PDS endpoint is refusing its scope."
             )
 
-    data = expect_json(status, raw, url)
+    if 200 <= status <= 299 and raw.strip() == b"":
+        data = {"requested": True, "delivery": "email"}
+    else:
+        data = expect_json(status, raw, url)
+
     write_json(settings.plc_token_path, data)
     print_json_summary("saved PLC operation token response", data)
     log(f"wrote {settings.plc_token_path}")
     if "token" not in data:
-        log("No token field was returned. If the old PDS emails a token/code, export it as PLC_TOKEN before plc-sign.")
+        log("Check the source account email for the PLC token/code, then export it as PLC_TOKEN before plc-sign.")
 
 
 def plc_sign(settings: Settings) -> None:
