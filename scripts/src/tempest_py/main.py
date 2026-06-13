@@ -45,6 +45,11 @@ class Command(StrEnum):
     STATUS = "status"
     MISSING_BLOBS = "missing-blobs"
     UPLOAD_MISSING_BLOBS = "upload-missing-blobs"
+    PLC_RECOMMENDED = "plc-recommended"
+    PLC_REQUEST_TOKEN = "plc-request-token"
+    PLC_SIGN = "plc-sign"
+    PLC_SUBMIT = "plc-submit"
+    ACTIVATE = "activate"
 
 
 @dataclass(frozen=True)
@@ -66,6 +71,11 @@ class Settings:
     import_repo_path: Path
     status_path: Path
     missing_blobs_path: Path
+    plc_recommended_path: Path
+    plc_token_path: Path
+    plc_signed_path: Path
+    plc_submit_path: Path
+    activate_path: Path
 
 
 def env(name: str, default: str | None = None) -> str | None:
@@ -105,6 +115,11 @@ def settings_from_env(args: argparse.Namespace) -> Settings:
         import_repo_path=path_from_env("TEMPEST_IMPORT_REPO_JSON", artifact_dir / "tempest_import_repo.json"),
         status_path=path_from_env("TEMPEST_STATUS_JSON", artifact_dir / "tempest_account_status.json"),
         missing_blobs_path=path_from_env("TEMPEST_MISSING_BLOBS_JSON", artifact_dir / "tempest_missing_blobs.json"),
+        plc_recommended_path=path_from_env("PLC_RECOMMENDED_JSON", artifact_dir / "plc_recommended.json"),
+        plc_token_path=path_from_env("PLC_TOKEN_JSON", artifact_dir / "plc_token.json"),
+        plc_signed_path=path_from_env("PLC_SIGNED_OPERATION_JSON", artifact_dir / "plc_signed_operation.json"),
+        plc_submit_path=path_from_env("PLC_SUBMIT_JSON", artifact_dir / "plc_submit.json"),
+        activate_path=path_from_env("TEMPEST_ACTIVATE_JSON", artifact_dir / "tempest_activate_account.json"),
     )
 
 
@@ -253,11 +268,26 @@ def tempest_refresh_token(settings: Settings) -> str:
     return token
 
 
+def plc_operation_token(settings: Settings) -> str:
+    explicit = env("PLC_TOKEN")
+    if explicit:
+        return explicit
+
+    data = read_json(settings.plc_token_path)
+    token = data.get("token")
+    if not isinstance(token, str) or not token:
+        raise CliError(f"{settings.plc_token_path} does not contain token; set PLC_TOKEN from the emailed code/token if needed")
+    return token
+
+
 def login_source(settings: Settings) -> None:
     step("source session")
     password = require_env(settings, "OLD_PASSWORD", settings.old_password)
     url = f"{settings.old_pds}/xrpc/com.atproto.server.createSession"
     payload = {"identifier": settings.handle, "password": password}
+    auth_factor_token = env("OLD_AUTH_FACTOR_TOKEN")
+    if auth_factor_token:
+        payload["authFactorToken"] = auth_factor_token
     status, _headers, raw = request("POST", url, json_body=payload)
     data = expect_json(status, raw, url)
     write_json(settings.old_session_path, data)
@@ -435,6 +465,82 @@ def upload_missing_blobs(settings: Settings) -> None:
         print_json_summary(f"uploaded cid={cid}", result)
 
 
+def plc_recommended(settings: Settings) -> None:
+    step("recommended PLC credentials from Tempest")
+    url = f"{settings.tempest}/xrpc/com.atproto.identity.getRecommendedDidCredentials"
+    status, _headers, raw = request("GET", url, headers=bearer(tempest_access_token(settings)))
+    data = expect_json(status, raw, url)
+    write_json(settings.plc_recommended_path, data)
+    print_json_summary("saved recommended PLC credentials", data)
+    log(f"wrote {settings.plc_recommended_path}")
+
+
+def plc_request_token(settings: Settings) -> None:
+    step("request PLC operation token from old PDS")
+    url = f"{settings.old_pds}/xrpc/com.atproto.identity.requestPlcOperationSignature"
+    status, _headers, raw = request("POST", url, headers=bearer(access_from_session(settings)))
+
+    if status == 400 and settings.old_password:
+        status, _headers, raw = request(
+            "POST",
+            url,
+            headers=bearer(access_from_session(settings)),
+            json_body={"password": settings.old_password},
+        )
+
+    data = expect_json(status, raw, url)
+    write_json(settings.plc_token_path, data)
+    print_json_summary("saved PLC operation token response", data)
+    log(f"wrote {settings.plc_token_path}")
+    if "token" not in data:
+        log("No token field was returned. If the old PDS emails a token/code, export it as PLC_TOKEN before plc-sign.")
+
+
+def plc_sign(settings: Settings) -> None:
+    step("sign PLC operation on old PDS")
+    recommended = read_json(settings.plc_recommended_path)
+    payload = {
+        key: recommended[key]
+        for key in ("rotationKeys", "alsoKnownAs", "verificationMethods", "services")
+        if key in recommended
+    }
+    payload["token"] = plc_operation_token(settings)
+
+    url = f"{settings.old_pds}/xrpc/com.atproto.identity.signPlcOperation"
+    status, _headers, raw = request("POST", url, headers=bearer(access_from_session(settings)), json_body=payload)
+    data = expect_json(status, raw, url)
+    write_json(settings.plc_signed_path, data)
+    operation = data.get("operation") if isinstance(data.get("operation"), dict) else {}
+    service = operation.get("services", {}).get("atproto_pds", {}) if isinstance(operation.get("services"), dict) else {}
+    log(f"signed operation service_endpoint={service.get('endpoint', '<unknown>')}")
+    log(f"wrote {settings.plc_signed_path}")
+
+
+def plc_submit(settings: Settings) -> None:
+    step("submit PLC operation through Tempest")
+    data = read_json(settings.plc_signed_path)
+    operation = data.get("operation")
+    if not isinstance(operation, dict):
+        raise CliError(f"{settings.plc_signed_path} does not contain operation")
+
+    url = f"{settings.tempest}/xrpc/com.atproto.identity.submitPlcOperation"
+    status, _headers, raw = request("POST", url, headers=bearer(tempest_access_token(settings)), json_body={"operation": operation})
+    result = expect_json(status, raw, url)
+    write_json(settings.plc_submit_path, result)
+    print_json_summary("saved PLC submit result", result)
+    log(f"wrote {settings.plc_submit_path}")
+
+
+def activate_account(settings: Settings) -> None:
+    step("activate Tempest account")
+    url = f"{settings.tempest}/xrpc/com.atproto.server.activateAccount"
+    status, _headers, raw = request("POST", url, headers=bearer(tempest_access_token(settings)), json_body={})
+    data = expect_json(status, raw, url)
+    write_json(settings.activate_path, data)
+    print_json_summary("saved activation result", data)
+    log(f"wrote {settings.activate_path}")
+
+
 def full(settings: Settings) -> None:
     started = time.monotonic()
     log("Tempest migration CLI")
@@ -504,6 +610,16 @@ def run_command(command: Command, settings: Settings) -> None:
             list_missing_blobs(settings)
         case Command.UPLOAD_MISSING_BLOBS:
             upload_missing_blobs(settings)
+        case Command.PLC_RECOMMENDED:
+            plc_recommended(settings)
+        case Command.PLC_REQUEST_TOKEN:
+            plc_request_token(settings)
+        case Command.PLC_SIGN:
+            plc_sign(settings)
+        case Command.PLC_SUBMIT:
+            plc_submit(settings)
+        case Command.ACTIVATE:
+            activate_account(settings)
 
 
 def main(argv: list[str] | None = None) -> int:

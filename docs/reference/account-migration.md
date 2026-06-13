@@ -58,6 +58,11 @@ export EMAIL="operator@example.com"
 read -s OLD_PASSWORD
 read -s TEMPEST_PASSWORD
 
+# Optional, only if the source PDS requires an auth-factor token/code during
+# createSession.
+read -s OLD_AUTH_FACTOR_TOKEN
+export OLD_AUTH_FACTOR_TOKEN
+
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest
 ```
 
@@ -75,6 +80,11 @@ UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest import-repo
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest status
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest missing-blobs
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest upload-missing-blobs
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-recommended
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-sign
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-submit
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest activate
 ```
 
 The same project also exposes the admin-token Argon2 helper as
@@ -151,7 +161,56 @@ Update identity so the account DID document points `#atproto_pds` at
 `signPlcOperation`, and `submitPlcOperation` to build, sign, and submit the PLC
 operation through Tempest's PLC client boundary.
 
+For the current `did:plc` migration, use the CLI helpers:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-recommended
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+```
+
+`plc-request-token` writes `.sandbox/plc_token.json` when the source PDS returns
+a token directly. Some PDS implementations email a one-time code instead; in
+that case export it before signing:
+
+```bash
+export PLC_TOKEN="code-from-email"
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-sign
+```
+
+If `plc-request-token` returns `Bad token scope`, refresh the source session with
+the main account password rather than an app password. If the source PDS requires
+an auth-factor token/code for high-risk account operations, set
+`OLD_AUTH_FACTOR_TOKEN` and rerun `login-source`, then rerun `plc-request-token`.
+
+Before submitting, inspect the signed operation. The PDS service endpoint must
+be Tempest:
+
+```bash
+jq '.operation.services.atproto_pds.endpoint' .sandbox/plc_signed_operation.json
+```
+
+Then submit the signed PLC operation through Tempest:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-submit
+curl -fsS "https://plc.directory/$DID" | jq '.service'
+```
+
+The resolved DID document should include `#atproto_pds` with
+`serviceEndpoint` equal to `https://tempest.desertthunder.dev` for the current
+deployment.
+
 Activate the account:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest activate
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest status
+```
+
+The equivalent curl call is:
 
 ```bash
 curl -X POST "$TEMPEST/xrpc/com.atproto.server.activateAccount" \

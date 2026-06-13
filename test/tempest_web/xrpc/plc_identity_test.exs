@@ -74,6 +74,26 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
            }
   end
 
+  test "getRecommendedDidCredentials allows deactivated migration accounts", %{conn: conn} do
+    account = create_account!(conn, "plc-inactive-creds.test", "plc-inactive-creds@example.com")
+
+    account["did"]
+    |> account_by_did!()
+    |> Ecto.Changeset.change(active: false, status: "deactivated")
+    |> Repo.update!()
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials")
+
+    response = json_response(conn, 200)
+
+    assert response["did"] == account["did"]
+    assert get_in(response, ["services", "atproto_pds", "endpoint"]) == "http://localhost:4002"
+  end
+
   test "getRecommendedDidCredentials is consistent with fake PLC publication boundary", %{conn: conn} do
     put_identity_test_config()
 
@@ -526,6 +546,8 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
     })
     |> json_response(200)
   end
+
+  defp account_by_did!(did), do: Repo.get_by!(Account, did: did)
 
   defp create_app_password!(conn, access_jwt) do
     conn
