@@ -9,6 +9,7 @@ defmodule Tempest.RepoCore.Commit do
 
   alias Tempest.RepoCore.{Cid, Did, Drisl, Tid}
   alias Tempest.RepoCore.Drisl.Bytes
+  alias Tempest.Identity.Multikey
 
   @version 3
   @secp256k1_order 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
@@ -329,10 +330,11 @@ defmodule Tempest.RepoCore.Commit do
   end
 
   defp decode_public_key_multibase("u" <> encoded) do
-    case Base.url_decode64(encoded, padding: false) do
-      {:ok, public_key} -> normalize_public_key(public_key)
-      :error -> {:error, :invalid_public_key}
-    end
+    Multikey.decode_secp256k1_public_key("u" <> encoded)
+  end
+
+  defp decode_public_key_multibase("z" <> encoded) do
+    Multikey.decode_secp256k1_public_key("z" <> encoded)
   end
 
   defp decode_public_key_multibase(_value), do: {:error, :unsupported_key}

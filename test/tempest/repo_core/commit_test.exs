@@ -91,6 +91,24 @@ defmodule Tempest.RepoCore.CommitTest do
       assert Commit.verify_with_did_document(signed, document) == {:ok, true}
     end
 
+    test "verifies with PLC base58btc Multikey publicKeyMultibase shape" do
+      {public_key, private_key} = :crypto.generate_key(:ecdh, :secp256k1)
+      assert {:ok, signed} = Commit.sign(unsigned_commit(), private_key)
+
+      document = %{
+        "verificationMethod" => [
+          %{
+            "id" => @did <> "#atproto",
+            "type" => "Multikey",
+            "controller" => @did,
+            "publicKeyMultibase" => "z" <> base58btc_encode(<<0xE7, 0x01, public_key::binary>>)
+          }
+        ]
+      }
+
+      assert Commit.verify_with_did_document(signed, document) == {:ok, true}
+    end
+
     test "rejects unsigned commits and invalid key material" do
       commit = unsigned_commit()
       assert Commit.encode(commit) == {:error, :unsigned_commit}
@@ -116,5 +134,26 @@ defmodule Tempest.RepoCore.CommitTest do
 
     {:ok, root} = Mst.root_cid(mst)
     root
+  end
+
+  defp base58btc_encode(bytes) do
+    alphabet = ~c"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    value = :binary.decode_unsigned(bytes)
+    encoded = encode_base58_value(value, alphabet, [])
+
+    leading_zeroes =
+      bytes
+      |> :binary.bin_to_list()
+      |> Enum.take_while(&(&1 == 0))
+      |> length()
+
+    List.to_string(List.duplicate(?1, leading_zeroes) ++ encoded)
+  end
+
+  defp encode_base58_value(0, _alphabet, []), do: [?1]
+  defp encode_base58_value(0, _alphabet, acc), do: acc
+
+  defp encode_base58_value(value, alphabet, acc) do
+    encode_base58_value(div(value, 58), alphabet, [Enum.at(alphabet, rem(value, 58)) | acc])
   end
 end
