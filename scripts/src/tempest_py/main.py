@@ -40,6 +40,7 @@ class Command(StrEnum):
     LIST_SOURCE_BLOBS = "list-source-blobs"
     DOWNLOAD_SOURCE_BLOBS = "download-source-blobs"
     CREATE_ACCOUNT = "create-account"
+    REFRESH_SESSION = "refresh-session"
     IMPORT_REPO = "import-repo"
     STATUS = "status"
     MISSING_BLOBS = "missing-blobs"
@@ -240,6 +241,18 @@ def tempest_access_token(settings: Settings) -> str:
     return token
 
 
+def tempest_refresh_token(settings: Settings) -> str:
+    explicit = env("TEMPEST_REFRESH")
+    if explicit:
+        return explicit
+
+    data = read_json(settings.create_account_path)
+    token = data.get("refreshJwt")
+    if not isinstance(token, str) or not token:
+        raise CliError(f"{settings.create_account_path} does not contain refreshJwt")
+    return token
+
+
 def login_source(settings: Settings) -> None:
     step("source session")
     password = require_env(settings, "OLD_PASSWORD", settings.old_password)
@@ -333,6 +346,16 @@ def create_account(settings: Settings) -> None:
     data = expect_json(status, raw, url)
     write_json(settings.create_account_path, data)
     print_json_summary("saved Tempest account", data)
+    log(f"wrote {settings.create_account_path}")
+
+
+def refresh_tempest_session(settings: Settings) -> None:
+    step("refresh Tempest session")
+    url = f"{settings.tempest}/xrpc/com.atproto.server.refreshSession"
+    status, _headers, raw = request("POST", url, headers=bearer(tempest_refresh_token(settings)))
+    data = expect_json(status, raw, url)
+    write_json(settings.create_account_path, data)
+    print_json_summary("saved refreshed Tempest account", data)
     log(f"wrote {settings.create_account_path}")
 
 
@@ -471,6 +494,8 @@ def run_command(command: Command, settings: Settings) -> None:
             download_source_blobs(settings)
         case Command.CREATE_ACCOUNT:
             create_account(settings)
+        case Command.REFRESH_SESSION:
+            refresh_tempest_session(settings)
         case Command.IMPORT_REPO:
             import_repo(settings)
         case Command.STATUS:

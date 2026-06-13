@@ -288,7 +288,7 @@ defmodule Tempest.Accounts do
         revoke_session_family!(session.family_id, now)
         {:error, :expired_token}
 
-      not session.account.active or session.account.status != "active" ->
+      not refresh_allowed_for_account?(session.account) ->
         {:error, :inactive_account}
 
       true ->
@@ -297,6 +297,10 @@ defmodule Tempest.Accounts do
   end
 
   def authenticate_refresh(_token), do: {:error, :invalid_token}
+
+  defp refresh_allowed_for_account?(%Account{active: true, status: "active"}), do: true
+  defp refresh_allowed_for_account?(%Account{active: false, status: "deactivated"}), do: true
+  defp refresh_allowed_for_account?(%Account{}), do: false
 
   def list_app_passwords(%AuthContext{token_type: :access, account: account}) do
     {:ok, %{"passwords" => AppPasswords.list(account)}}

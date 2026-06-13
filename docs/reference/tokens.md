@@ -136,6 +136,14 @@ UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest ar --only-hash
 - Revoke or rotate the app password after migration.
 - Treat `serviceAuth` as short-lived migration material. Regenerate it if the
   migration attempt is delayed.
+- Treat Tempest `accessJwt` as short-lived. If migration commands return
+  `Bearer token is invalid` or `Bearer token is expired`, refresh the saved
+  Tempest session:
+
+  ```bash
+  UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
+  ```
+
 - Keep the old PDS account active until Tempest passes repo, blob, firehose,
   crawler, DID, and real-client checks.
 

@@ -70,6 +70,7 @@ UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest export-car
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest list-source-blobs
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest download-source-blobs
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest create-account
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest import-repo
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest status
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest missing-blobs
@@ -208,4 +209,5 @@ Compatibility tracking:
 
 - [Migration and Account Lifecycle](./migration-lifecycle.md)
 - [PDS Compatibility Matrix](./pds-compatibility.md)
+- [CAR and DRISL](./car-drisl.md)
 - [Identity Troubleshooting](./identity-troubleshooting.md)

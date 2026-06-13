@@ -272,6 +272,48 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     assert migrated["status"] == "deactivated"
   end
 
+  test "refreshSession rotates tokens for deactivated migrated accounts", %{conn: conn} do
+    did = "did:plc:" <> (:crypto.strong_rand_bytes(16) |> Base.encode32(case: :lower, padding: false))
+
+    {service_auth, did_document} =
+      remote_service_auth(did, "did:web:tempest.test", "com.atproto.server.createAccount",
+        include_kid?: false,
+        include_sub?: false,
+        public_key_encoding: :base58btc_compressed_multikey,
+        lifetime_seconds: 60
+      )
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.request_path == "/#{did}"
+      Req.Test.json(req_conn, did_document)
+    end)
+
+    migrated =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.createAccount", %{
+        "did" => did,
+        "handle" => "migrated-refresh.test",
+        "email" => "migrated-refresh@example.com",
+        "password" => @password,
+        "serviceAuth" => service_auth
+      })
+      |> json_response(200)
+
+    refreshed =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{migrated["refreshJwt"]}")
+      |> post(~p"/xrpc/com.atproto.server.refreshSession")
+      |> json_response(200)
+
+    assert refreshed["did"] == did
+    assert refreshed["active"] == false
+    assert refreshed["status"] == "deactivated"
+    assert refreshed["accessJwt"] != migrated["accessJwt"]
+    assert refreshed["refreshJwt"] != migrated["refreshJwt"]
+  end
+
   test "migrated did:web account stays private until activation emits ordered events", %{conn: conn} do
     did = "did:web:migrated-#{System.unique_integer([:positive])}.example.com"
 
