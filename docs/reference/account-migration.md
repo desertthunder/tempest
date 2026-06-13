@@ -50,27 +50,37 @@ to the full migration-in sequence:
 
 ```bash
 export OLD_PDS="https://jellybaby.us-east.host.bsky.network"
+export OLD_AUTH_PDS="$OLD_PDS"
+export OLD_LOGIN_PDS="$OLD_AUTH_PDS"
 export HANDLE="tempestpds.bsky.social"
 export DID="did:plc:oga6ppys7zwxlheuqmcm7dac"
 export TEMPEST="https://tempest.desertthunder.dev"
 export TEMPEST_SERVICE_DID="did:web:tempest.desertthunder.dev"
 export EMAIL="operator@example.com"
-read -s OLD_PASSWORD
-read -s TEMPEST_PASSWORD
+export OLD_IDENTIFIER="$HANDLE"
+read -rs OLD_PASSWORD
+export OLD_PASSWORD
+read -rs TEMPEST_PASSWORD
+export TEMPEST_PASSWORD
 
 # Optional, only if the source PDS requires an auth-factor token/code during
 # createSession.
-read -s OLD_AUTH_FACTOR_TOKEN
+read -rs OLD_AUTH_FACTOR_TOKEN
 export OLD_AUTH_FACTOR_TOKEN
 
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest
 ```
+
+Use `read -rs` or single quotes for passwords. Unquoted shell assignments can
+expand characters like `$`, so a password containing `$N` will not be passed
+literally.
 
 Run individual steps when resuming or inspecting a failure:
 
 ```bash
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest service-auth
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest source-session-status
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest export-car
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest list-source-blobs
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest download-source-blobs
@@ -183,6 +193,31 @@ If `plc-request-token` returns `Bad token scope`, refresh the source session wit
 the main account password rather than an app password. If the source PDS requires
 an auth-factor token/code for high-risk account operations, set
 `OLD_AUTH_FACTOR_TOKEN` and rerun `login-source`, then rerun `plc-request-token`.
+If handle login returns `Invalid identifier or password`, set `OLD_IDENTIFIER`
+to the account email address and retry `login-source`.
+
+If the account's repository host rejects main-password login even though the
+credentials work in Bluesky, keep `OLD_PDS` pointed at the repository host for
+CAR/blob export, keep `OLD_AUTH_PDS` pointed at the old PDS for authenticated
+PLC operations, and set `OLD_LOGIN_PDS` to the Bluesky entryway:
+
+```bash
+export OLD_PDS="https://jellybaby.us-east.host.bsky.network"
+export OLD_AUTH_PDS="$OLD_PDS"
+export OLD_LOGIN_PDS="https://bsky.social"
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+```
+
+If login succeeds but `plc-request-token` still returns `Bad token scope`, check
+that the saved token works for ordinary old-PDS auth:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest source-session-status
+```
+
+If `source-session-status` succeeds while `plc-request-token` fails, the source
+session is valid but the old PDS is refusing that session scope for PLC signing.
 
 Before submitting, inspect the signed operation. The PDS service endpoint must
 be Tempest:
@@ -253,6 +288,15 @@ defines a high-assurance delegated scope. Configure `TEMPEST_PLC_ROTATION_KEY`
 with private rotation-key material; optionally configure `TEMPEST_PLC_RECOVERY_KEY`
 for an operator recovery key. Tempest derives public `did:key` rotation keys from
 that material and does not reuse repository signing keys as PLC rotation keys.
+
+The vendored lexicon files for this flow live in `priv/lexicons/official`:
+
+- `com/atproto/identity/requestPlcOperationSignature.json`: no input body; asks
+  the old PDS to email a PLC operation code.
+- `com/atproto/identity/signPlcOperation.json`: takes the emailed `token` plus
+  `rotationKeys`, `alsoKnownAs`, `verificationMethods`, and `services`.
+- `com/atproto/server/createSession.json`: takes `identifier`, `password`, and
+  optional `authFactorToken`.
 
 ## Verification
 

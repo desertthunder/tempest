@@ -36,6 +36,7 @@ class Command(StrEnum):
     FULL = "full"
     LOGIN_SOURCE = "login-source"
     SERVICE_AUTH = "service-auth"
+    SOURCE_SESSION_STATUS = "source-session-status"
     EXPORT_CAR = "export-car"
     LIST_SOURCE_BLOBS = "list-source-blobs"
     DOWNLOAD_SOURCE_BLOBS = "download-source-blobs"
@@ -56,6 +57,8 @@ class Command(StrEnum):
 class Settings:
     artifact_dir: Path
     old_pds: str
+    old_login_pds: str
+    old_auth_pds: str
     tempest: str
     tempest_service_did: str
     did: str
@@ -100,6 +103,8 @@ def settings_from_env(args: argparse.Namespace) -> Settings:
     return Settings(
         artifact_dir=artifact_dir,
         old_pds=env("OLD_PDS", DEFAULT_OLD_PDS).rstrip("/"),
+        old_auth_pds=env("OLD_AUTH_PDS", env("OLD_PDS", DEFAULT_OLD_PDS)).rstrip("/"),
+        old_login_pds=env("OLD_LOGIN_PDS", env("OLD_AUTH_PDS", env("OLD_PDS", DEFAULT_OLD_PDS))).rstrip("/"),
         tempest=env("TEMPEST", DEFAULT_TEMPEST).rstrip("/"),
         tempest_service_did=env("TEMPEST_SERVICE_DID", DEFAULT_TEMPEST_SERVICE_DID),
         did=env("DID", DEFAULT_DID),
@@ -226,6 +231,21 @@ def access_from_session(settings: Settings) -> str:
         return explicit
 
     data = read_json(settings.old_session_path)
+    session_host = data.get("_tempest_old_login_pds") or data.get("_tempest_old_auth_pds")
+    if isinstance(session_host, str) and session_host != settings.old_login_pds:
+        raise CliError(
+            f"{settings.old_session_path} was created for {session_host}, "
+            f"but OLD_LOGIN_PDS is {settings.old_login_pds}; rerun login-source successfully"
+        )
+
+    session_identifier = data.get("_tempest_old_identifier")
+    current_identifier = env("OLD_IDENTIFIER", settings.handle)
+    if isinstance(session_identifier, str) and session_identifier != current_identifier:
+        raise CliError(
+            f"{settings.old_session_path} was created for identifier {session_identifier}, "
+            f"but OLD_IDENTIFIER is {current_identifier}; rerun login-source successfully"
+        )
+
     token = data.get("accessJwt")
     if not isinstance(token, str) or not token:
         raise CliError(f"{settings.old_session_path} does not contain accessJwt")
@@ -283,13 +303,25 @@ def plc_operation_token(settings: Settings) -> str:
 def login_source(settings: Settings) -> None:
     step("source session")
     password = require_env(settings, "OLD_PASSWORD", settings.old_password)
-    url = f"{settings.old_pds}/xrpc/com.atproto.server.createSession"
-    payload = {"identifier": settings.handle, "password": password}
+    url = f"{settings.old_login_pds}/xrpc/com.atproto.server.createSession"
+    identifier = env("OLD_IDENTIFIER", settings.handle)
+    payload = {"identifier": identifier, "password": password}
     auth_factor_token = env("OLD_AUTH_FACTOR_TOKEN")
     if auth_factor_token:
         payload["authFactorToken"] = auth_factor_token
+    log(
+        "login context: "
+        f"old_login_pds={settings.old_login_pds} "
+        f"old_auth_pds={settings.old_auth_pds} "
+        f"identifier={identifier} "
+        f"has_old_password={bool(password)} "
+        f"has_old_auth_factor_token={bool(auth_factor_token)}"
+    )
     status, _headers, raw = request("POST", url, json_body=payload)
     data = expect_json(status, raw, url)
+    data["_tempest_old_login_pds"] = settings.old_login_pds
+    data["_tempest_old_auth_pds"] = settings.old_auth_pds
+    data["_tempest_old_identifier"] = identifier
     write_json(settings.old_session_path, data)
     print_json_summary("saved source session", data)
     log(f"wrote {settings.old_session_path}")
@@ -305,6 +337,14 @@ def get_service_auth(settings: Settings) -> None:
     print_json_summary("saved service auth", data)
     log(f"aud={settings.tempest_service_did} lxm={CREATE_ACCOUNT_LXM}")
     log(f"wrote {settings.service_auth_path}")
+
+
+def source_session_status(settings: Settings) -> None:
+    step("source session status")
+    url = f"{settings.old_auth_pds}/xrpc/com.atproto.server.getSession"
+    status, _headers, raw = request("GET", url, headers=bearer(access_from_session(settings)))
+    data = expect_json(status, raw, url)
+    print_json_summary("source session is accepted", data)
 
 
 def export_car(settings: Settings) -> None:
@@ -477,16 +517,43 @@ def plc_recommended(settings: Settings) -> None:
 
 def plc_request_token(settings: Settings) -> None:
     step("request PLC operation token from old PDS")
-    url = f"{settings.old_pds}/xrpc/com.atproto.identity.requestPlcOperationSignature"
+    url = f"{settings.old_auth_pds}/xrpc/com.atproto.identity.requestPlcOperationSignature"
     status, _headers, raw = request("POST", url, headers=bearer(access_from_session(settings)))
 
-    if status == 400 and settings.old_password:
+    first_error: dict[str, Any] = {}
+    if not 200 <= status <= 299:
+        try:
+            decoded = json.loads(raw.decode("utf-8"))
+            first_error = decoded if isinstance(decoded, dict) else {}
+        except json.JSONDecodeError:
+            first_error = {}
+
+    first_message = first_error.get("message")
+    first_error_name = first_error.get("error")
+
+    if status == 400 and settings.old_password and first_message == "password is required":
         status, _headers, raw = request(
             "POST",
             url,
             headers=bearer(access_from_session(settings)),
             json_body={"password": settings.old_password},
         )
+
+    if not 200 <= status <= 299:
+        try:
+            decoded = json.loads(raw.decode("utf-8"))
+            data = decoded if isinstance(decoded, dict) else {}
+        except json.JSONDecodeError:
+            data = first_error
+
+        message = data.get("message") or first_message
+        error_name = data.get("error") or first_error_name
+        if message == "Bad token scope":
+            raise CliError(
+                "source PDS rejected the fresh session for PLC operation signatures: "
+                f"{error_name or 'InvalidRequest'}: {message}. "
+                "The source session itself is valid, but this old-PDS endpoint is refusing its scope."
+            )
 
     data = expect_json(status, raw, url)
     write_json(settings.plc_token_path, data)
@@ -506,7 +573,7 @@ def plc_sign(settings: Settings) -> None:
     }
     payload["token"] = plc_operation_token(settings)
 
-    url = f"{settings.old_pds}/xrpc/com.atproto.identity.signPlcOperation"
+    url = f"{settings.old_auth_pds}/xrpc/com.atproto.identity.signPlcOperation"
     status, _headers, raw = request("POST", url, headers=bearer(access_from_session(settings)), json_body=payload)
     data = expect_json(status, raw, url)
     write_json(settings.plc_signed_path, data)
@@ -545,6 +612,8 @@ def full(settings: Settings) -> None:
     started = time.monotonic()
     log("Tempest migration CLI")
     log(f"old_pds={settings.old_pds}")
+    log(f"old_login_pds={settings.old_login_pds}")
+    log(f"old_auth_pds={settings.old_auth_pds}")
     log(f"tempest={settings.tempest}")
     log(f"tempest_service_did={settings.tempest_service_did}")
     log(f"did={settings.did}")
@@ -592,6 +661,8 @@ def run_command(command: Command, settings: Settings) -> None:
             login_source(settings)
         case Command.SERVICE_AUTH:
             get_service_auth(settings)
+        case Command.SOURCE_SESSION_STATUS:
+            source_session_status(settings)
         case Command.EXPORT_CAR:
             export_car(settings)
         case Command.LIST_SOURCE_BLOBS:

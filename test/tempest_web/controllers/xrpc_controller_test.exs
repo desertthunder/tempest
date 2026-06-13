@@ -6,10 +6,36 @@ defmodule TempestWeb.XrpcControllerTest do
     response = json_response(conn, 200)
 
     assert get_resp_header(conn, "content-type") == ["application/json; charset=utf-8"]
+    assert get_resp_header(conn, "access-control-allow-origin") == ["*"]
     assert response["availableUserDomains"] == [".localhost"]
     assert response["inviteCodeRequired"] == false
     assert response["links"]["privacyPolicy"] == nil
     assert response["links"]["termsOfService"] == nil
+  end
+
+  test "XRPC preflight permits browser ATProto client headers", %{conn: conn} do
+    conn =
+      conn
+      |> put_req_header("origin", "https://pdsmoover.com")
+      |> put_req_header("access-control-request-method", "GET")
+      |> put_req_header(
+        "access-control-request-headers",
+        "authorization,content-type,dpop,atproto-proxy,atproto-accept-labelers"
+      )
+      |> options(~p"/xrpc/com.atproto.server.describeServer")
+
+    assert response(conn, 204) == ""
+    assert get_resp_header(conn, "access-control-allow-origin") == ["*"]
+    assert get_resp_header(conn, "access-control-allow-methods") == ["GET, POST, OPTIONS"]
+    assert get_resp_header(conn, "access-control-expose-headers") == ["dpop-nonce"]
+
+    [allow_headers] = get_resp_header(conn, "access-control-allow-headers")
+    assert allow_headers =~ "authorization"
+    assert allow_headers =~ "content-type"
+    assert allow_headers =~ "dpop"
+    assert allow_headers =~ "atproto-proxy"
+    assert allow_headers =~ "atproto-accept-labelers"
+    assert allow_headers =~ "x-atproto-accept-labelers"
   end
 
   test "unknown XRPC method returns JSON error", %{conn: conn} do

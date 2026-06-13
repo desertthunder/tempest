@@ -33,22 +33,42 @@ example:
 
 ```bash
 export OLD_PDS="https://jellybaby.us-east.host.bsky.network"
+export OLD_AUTH_PDS="$OLD_PDS"
+export OLD_LOGIN_PDS="$OLD_AUTH_PDS"
 export HANDLE="tempestpds.bsky.social"
+export OLD_IDENTIFIER="$HANDLE"
 export TEMPEST="https://tempest.desertthunder.dev"
 export TEMPEST_SERVICE_DID="did:web:tempest.desertthunder.dev"
 
-read -s OLD_PASSWORD
+read -rs OLD_PASSWORD
+export OLD_PASSWORD
 ```
 
 Use the main account password for PLC operation signing. App passwords can be
 useful for ordinary source-PDS access, but they may produce a session that cannot
 request a PLC operation signature.
 
+Do not assign passwords with unquoted shell syntax. Characters like `$`, `!`,
+backticks, and backslashes can be expanded or interpreted by the shell. Prefer
+silent input:
+
+```bash
+unset OLD_PASSWORD
+read -rs OLD_PASSWORD
+export OLD_PASSWORD
+```
+
+If assigning directly, use single quotes:
+
+```bash
+export OLD_PASSWORD='literal-password-with-$N'
+```
+
 If the source PDS asks for an auth-factor token/code during login, pass it to
 the CLI as `OLD_AUTH_FACTOR_TOKEN`:
 
 ```bash
-read -s OLD_AUTH_FACTOR_TOKEN
+read -rs OLD_AUTH_FACTOR_TOKEN
 export OLD_AUTH_FACTOR_TOKEN
 ```
 
@@ -157,7 +177,7 @@ source PDS emails a code instead, keep it out of shell history when possible and
 export it only for the signing step:
 
 ```bash
-read -s PLC_TOKEN
+read -rs PLC_TOKEN
 export PLC_TOKEN
 UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-sign
 ```
@@ -173,7 +193,42 @@ For this deployment the value must be `https://tempest.desertthunder.dev`.
 
 If `plc-request-token` returns `Bad token scope`, the source session is not
 authorized for PLC signing. Re-run `login-source` with the main account password
-and any required `OLD_AUTH_FACTOR_TOKEN`, then retry `plc-request-token`.
+and any required `OLD_AUTH_FACTOR_TOKEN`, then retry `plc-request-token`. If
+handle login returns `Invalid identifier or password`, set `OLD_IDENTIFIER` to
+the source account email address and retry `login-source`.
+
+After a successful `login-source`, verify whether the same token works for
+ordinary old-PDS auth:
+
+```bash
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest source-session-status
+```
+
+If that succeeds while `plc-request-token` fails, the saved source session is
+valid and the source PDS is specifically refusing PLC signing for that token
+scope.
+
+Local lexicon references:
+
+- `priv/lexicons/official/com/atproto/identity/requestPlcOperationSignature.json`
+  defines this as an authenticated no-input procedure that requests an emailed
+  code.
+- `priv/lexicons/official/com/atproto/identity/signPlcOperation.json` defines
+  the `token` field consumed by signing.
+- `priv/lexicons/official/com/atproto/server/createSession.json` defines the
+  optional `authFactorToken` used during session creation.
+
+If the repository host rejects main-password login, try a separate source login
+host while leaving `OLD_PDS` unchanged for repo and blob export and
+`OLD_AUTH_PDS` unchanged for authenticated old-PDS operations:
+
+```bash
+export OLD_PDS="https://jellybaby.us-east.host.bsky.network"
+export OLD_AUTH_PDS="$OLD_PDS"
+export OLD_LOGIN_PDS="https://bsky.social"
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
+UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+```
 
 ## Safety Notes
 

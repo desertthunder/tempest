@@ -32,8 +32,8 @@ defmodule TempestWeb.Router do
   end
 
   pipeline :xrpc do
-    plug :accepts, ["json"]
     plug :put_xrpc_cors_headers
+    plug :accepts, ["json"]
     plug TempestWeb.Plugs.XrpcAuth
   end
 
@@ -119,6 +119,11 @@ defmodule TempestWeb.Router do
     conn
     |> Plug.Conn.put_resp_header("access-control-allow-origin", "*")
     |> Plug.Conn.put_resp_header("access-control-allow-methods", "GET, POST, OPTIONS")
-    |> Plug.Conn.put_resp_header("access-control-allow-headers", "authorization, content-type")
+    |> Plug.Conn.put_resp_header(
+      "access-control-allow-headers",
+      "authorization, content-type, dpop, atproto-proxy, atproto-accept-labelers, x-atproto-accept-labelers"
+    )
+    |> Plug.Conn.put_resp_header("access-control-expose-headers", "dpop-nonce")
+    |> Plug.Conn.put_resp_header("access-control-max-age", "86400")
   end
 end
