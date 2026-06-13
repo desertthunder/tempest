@@ -26,12 +26,12 @@ Reference documentation: [Migration and Account Lifecycle](../reference/migratio
 
 ## Follow-up PLC Migration Endpoint Coverage
 
-- [ ] Cover migration-out through `com.atproto.identity.getRecommendedDidCredentials`,
+- [x] Cover migration-out through `com.atproto.identity.getRecommendedDidCredentials`,
       `requestPlcOperationSignature`, `signPlcOperation`, and
       `submitPlcOperation` using a fake PLC service.
-- [ ] Prove PLC operations cannot activate or migrate accounts unless the DID
+- [x] Prove PLC operations cannot activate or migrate accounts unless the DID
       document preserves recoverability and points `#atproto_pds` at the intended
       service endpoint.
-- [ ] Add black-box tests for PLC endpoint auth: session bearer allowed with
+- [x] Add black-box tests for PLC endpoint auth: session bearer allowed with
       strong reauth; app passwords, ordinary OAuth tokens, admin tokens, and
       missing credentials denied.

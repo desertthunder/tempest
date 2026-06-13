@@ -5,23 +5,34 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
   import Plug.Conn
 
   alias Tempest.Accounts.Account
+  alias Tempest.AdminAuth
   alias Tempest.Identity.PlcOperation
   alias Tempest.Identity.SigningKey
   alias Tempest.Repo
   alias Tempest.Security
+  alias Tempest.OAuth.Dpop
   alias Tempest.Security.SecurityEvent
   alias Tempest.Sequencer
 
   @password "correct horse battery staple"
+  @client_id "did:web:plc-identity-client.example.com"
+  @redirect_uri "https://plc-identity-client.example.com/cb"
 
   setup context do
     Req.Test.set_req_test_from_context(context)
     Req.Test.verify_on_exit!(context)
 
     old_identity_config = Application.get_env(:tempest, Tempest.Identity, [])
+    old_admin_hash = Application.get_env(:tempest, :admin_token_hash)
 
     on_exit(fn ->
       Application.put_env(:tempest, Tempest.Identity, old_identity_config)
+
+      if old_admin_hash do
+        Application.put_env(:tempest, :admin_token_hash, old_admin_hash)
+      else
+        Application.delete_env(:tempest, :admin_token_hash)
+      end
     end)
 
     :ok
@@ -138,6 +149,147 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
       |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(operation, token))
 
     assert %{"operation" => %{"prev" => "bafy-old-plc-op"}} = json_response(conn, 200)
+  end
+
+  test "migration-out PLC endpoint chain builds signs and submits through fake PLC", %{conn: conn} do
+    account = create_account!(conn, "plc-migration-out.test", "plc-migration-out@example.com")
+    {:ok, seq_before} = Sequencer.current_seq()
+
+    credentials =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials")
+      |> json_response(200)
+
+    token = request_plc_token!(conn, account["accessJwt"])
+
+    sign_input =
+      credentials
+      |> Map.take(["rotationKeys", "alsoKnownAs", "verificationMethods", "services"])
+      |> Map.put("token", token)
+
+    signed_operation =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_input)
+      |> json_response(200)
+      |> Map.fetch!("operation")
+
+    put_identity_test_config()
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.method == "POST"
+      assert req_conn.request_path == "/" <> URI.encode(account["did"])
+
+      {:ok, body, req_conn} = Plug.Conn.read_body(req_conn)
+      submitted = Jason.decode!(body)
+
+      assert submitted == signed_operation
+      assert submitted["services"]["atproto_pds"]["endpoint"] == "http://localhost:4002"
+      assert [rotation_key] = submitted["rotationKeys"]
+      assert String.starts_with?(rotation_key, "did:key:u")
+      refute rotation_key == submitted["verificationMethods"]["atproto"]
+
+      send_resp(req_conn, 200, Jason.encode!(%{"ok" => true}))
+    end)
+
+    assert %{} =
+             conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+             |> put_req_header("content-type", "application/json")
+             |> post(~p"/xrpc/com.atproto.identity.submitPlcOperation", %{"operation" => signed_operation})
+             |> json_response(200)
+
+    assert {:ok, events} = Sequencer.list_after(seq_before, did: account["did"], type: "#identity")
+    assert Enum.any?(events, &(&1.payload["action"] == "plc.submit"))
+  end
+
+  test "PLC operation endpoints enforce auth matrix for migration-sensitive actions", %{conn: conn} do
+    account = create_account!(conn, "plc-auth-matrix.test", "plc-auth-matrix@example.com")
+    stored_account = Repo.get_by!(Account, did: account["did"])
+    operation = PlcOperation.for_account(stored_account)
+
+    assert %{"token" => token} =
+             conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+             |> put_req_header("content-type", "application/json")
+             |> post(~p"/xrpc/com.atproto.identity.requestPlcOperationSignature", %{"password" => @password})
+             |> json_response(200)
+
+    signed_operation =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(operation, token))
+      |> json_response(200)
+      |> Map.fetch!("operation")
+
+    put_identity_test_config()
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      send_resp(req_conn, 200, Jason.encode!(%{"ok" => true}))
+    end)
+
+    assert %{} =
+             conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+             |> put_req_header("content-type", "application/json")
+             |> post(~p"/xrpc/com.atproto.identity.submitPlcOperation", %{"operation" => signed_operation})
+             |> json_response(200)
+
+    assert_error(
+      get(conn, ~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials"),
+      401,
+      "AuthenticationRequired",
+      "Bearer token is required"
+    )
+
+    app_password = create_app_password!(conn, account["accessJwt"])
+
+    assert_error(
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{app_password}")
+      |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials"),
+      403,
+      "AuthScopeInsufficient",
+      "Bearer token scope is insufficient"
+    )
+
+    oauth_access = issue_oauth_access_token!(conn, account)
+
+    assert_error(
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{oauth_access}")
+      |> put_req_header(
+        "dpop",
+        dpop("GET", "http://localhost:4000/xrpc/com.atproto.identity.getRecommendedDidCredentials", Dpop.issue_nonce())
+      )
+      |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials"),
+      403,
+      "AuthScopeInsufficient",
+      "Bearer token scope is insufficient"
+    )
+
+    Application.put_env(:tempest, :admin_token_hash, AdminAuth.hash_token("admin-secret-token"))
+
+    assert_error(
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer admin-secret-token")
+      |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials"),
+      401,
+      "InvalidToken",
+      "Bearer token is invalid"
+    )
   end
 
   test "requestPlcOperationSignature requires bearer auth and JSON error shape", %{conn: conn} do
@@ -375,6 +527,58 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
     |> json_response(200)
   end
 
+  defp create_app_password!(conn, access_jwt) do
+    conn
+    |> recycle()
+    |> put_req_header("authorization", "Bearer #{access_jwt}")
+    |> put_req_header("content-type", "application/json")
+    |> post(~p"/xrpc/com.atproto.server.createAppPassword", %{"name" => "plc-auth", "scope" => "atproto"})
+    |> json_response(200)
+    |> Map.fetch!("password")
+  end
+
+  defp issue_oauth_access_token!(conn, account) do
+    par_conn =
+      conn
+      |> recycle()
+      |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/par", Dpop.issue_nonce()))
+      |> post(~p"/oauth/par", %{
+        "client_id" => @client_id,
+        "redirect_uri" => @redirect_uri,
+        "scope" => "atproto",
+        "response_type" => "code",
+        "code_challenge" => code_challenge("verifier"),
+        "code_challenge_method" => "S256"
+      })
+
+    %{"request_uri" => request_uri} = json_response(par_conn, 200)
+
+    authorize_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/authorize", %{
+        "request_uri" => request_uri,
+        "identifier" => account["handle"],
+        "password" => @password
+      })
+
+    [location] = get_resp_header(authorize_conn, "location")
+    code = location |> URI.parse() |> Map.fetch!(:query) |> URI.decode_query() |> Map.fetch!("code")
+
+    conn
+    |> recycle()
+    |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/token", Dpop.issue_nonce()))
+    |> post(~p"/oauth/token", %{
+      "grant_type" => "authorization_code",
+      "client_id" => @client_id,
+      "redirect_uri" => @redirect_uri,
+      "code" => code,
+      "code_verifier" => "verifier"
+    })
+    |> json_response(200)
+    |> Map.fetch!("access_token")
+  end
+
   defp request_plc_token!(conn, access_jwt) do
     conn
     |> recycle()
@@ -421,6 +625,19 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
   end
 
   defp multibase64(key), do: "u" <> Base.url_encode64(key, padding: false)
+
+  defp dpop(method, url, nonce), do: Tempest.DpopProof.proof(method, url, nonce)
+
+  defp code_challenge(verifier) do
+    :crypto.hash(:sha256, verifier) |> Base.url_encode64(padding: false)
+  end
+
+  defp assert_error(conn, status, error, message) do
+    response = json_response(conn, status)
+
+    assert get_resp_header(conn, "content-type") == ["application/json; charset=utf-8"]
+    assert response == %{"error" => error, "message" => message}
+  end
 
   defp audit_event_count(%Account{} = account, event_type) do
     SecurityEvent
