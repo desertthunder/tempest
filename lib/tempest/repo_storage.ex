@@ -651,7 +651,8 @@ defmodule Tempest.RepoStorage do
     cid_value = Cid.to_string(cid)
 
     with {:ok, bytes} <- Map.fetch(blocks_by_cid, cid_value),
-         {:ok, record} <- Drisl.decode(bytes) do
+         {:ok, record} <- Drisl.decode(bytes),
+         {:ok, record} <- json_safe_record(record) do
       {:ok,
        %{
          collection: collection,
@@ -665,6 +666,42 @@ defmodule Tempest.RepoStorage do
       {:error, reason} -> {:error, {:invalid_import_record, reason}}
     end
   end
+
+  defp json_safe_record(%Cid{} = cid), do: {:ok, %{"$link" => Cid.to_string(cid)}}
+
+  defp json_safe_record(%Drisl.Bytes{bytes: bytes}) do
+    {:ok, Base.url_encode64(bytes, padding: false)}
+  end
+
+  defp json_safe_record(map) when is_map(map) do
+    Enum.reduce_while(map, {:ok, %{}}, fn {key, value}, {:ok, acc} ->
+      with true <- is_binary(key),
+           {:ok, value} <- json_safe_record(value) do
+        {:cont, {:ok, Map.put(acc, key, value)}}
+      else
+        false -> {:halt, {:error, :invalid_import_record}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp json_safe_record(list) when is_list(list) do
+    Enum.reduce_while(list, {:ok, []}, fn value, {:ok, acc} ->
+      case json_safe_record(value) do
+        {:ok, value} -> {:cont, {:ok, [value | acc]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, values} -> {:ok, Enum.reverse(values)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp json_safe_record(value) when is_binary(value) or is_integer(value) or is_boolean(value) or is_nil(value),
+    do: {:ok, value}
+
+  defp json_safe_record(_value), do: {:error, :invalid_import_record}
 
   defp clear_repo(conn) do
     [

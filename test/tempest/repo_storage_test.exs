@@ -4,7 +4,7 @@ defmodule Tempest.RepoStorageTest do
   alias Tempest.{Accounts, Config, RepoStorage}
   alias Tempest.Accounts.Account
   alias Tempest.Identity.KeyStore
-  alias Tempest.RepoCore.{Car, Cid, Commit, Tid}
+  alias Tempest.RepoCore.{Car, CarVerifier, Cid, Commit, Tid}
 
   @password "correct horse battery staple"
 
@@ -101,6 +101,55 @@ defmodule Tempest.RepoStorageTest do
     assert {:ok, car} = Car.decode(bytes)
     assert car.roots == [Cid.parse!(metadata["current_commit_cid"])]
     assert Enum.map(car.blocks, &Cid.to_string(&1.cid)) == stored_cids
+  end
+
+  test "imported records normalize DRISL CID links before storing JSON" do
+    assert {:ok, source_created} =
+             Accounts.create_account(%{
+               "handle" => "repo-import-source.test",
+               "email" => "repo-import-source@example.com",
+               "password" => @password
+             })
+
+    assert {:ok, target_created} =
+             Accounts.create_account(%{
+               "handle" => "repo-import-target.test",
+               "email" => "repo-import-target@example.com",
+               "password" => @password
+             })
+
+    source = Repo.get_by!(Account, did: source_created["did"])
+    source_key = KeyStore.active_key_for_account(source)
+    target = Repo.get_by!(Account, did: target_created["did"])
+
+    blob_cid = Cid.for_raw("avatar bytes")
+
+    assert {:ok, _record} =
+             RepoStorage.create_record(source, source_key, %{
+               collection: "app.bsky.actor.profile",
+               rkey: "self",
+               swap_commit: nil,
+               record: %{
+                 "$type" => "app.bsky.actor.profile",
+                 "avatar" => %{
+                   "$type" => "blob",
+                   "ref" => %{"$link" => Cid.to_string(blob_cid)},
+                   "mimeType" => "image/png",
+                   "size" => 12
+                 }
+               }
+             })
+
+    assert {:ok, %{bytes: bytes}} = RepoStorage.export_car(source.did)
+    assert {:ok, verified} = CarVerifier.verify_repo_car(bytes, did: source.did)
+    verified = %{verified | commit: %{verified.commit | did: target.did}}
+
+    assert {:ok, %{record_count: 1}} = RepoStorage.import_verified_car(target, verified)
+
+    target_path = Config.load!() |> Config.repo_db_path(target.did)
+    [[record_json]] = fetch_all(target_path, "SELECT record_json FROM records")
+    assert %{"avatar" => %{"ref" => %{"$link" => cid}}} = Jason.decode!(record_json)
+    assert cid == Cid.to_string(blob_cid)
   end
 
   defp table_names(path) do
