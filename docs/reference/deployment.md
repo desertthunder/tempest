@@ -38,9 +38,7 @@ Generate secrets from a trusted local machine:
 
 ```bash
 mix phx.gen.secret
-ADMIN_TOKEN="$(openssl rand -base64 48)"
-ADMIN_TOKEN="$ADMIN_TOKEN" \
-  mix run -e 'IO.puts Tempest.AdminAuth.hash_token(System.fetch_env!("ADMIN_TOKEN"))'
+scripts/ar.py
 ```
 
 Store the raw `ADMIN_TOKEN` in a password manager. Railway gets only
