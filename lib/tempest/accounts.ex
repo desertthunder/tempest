@@ -159,11 +159,23 @@ defmodule Tempest.Accounts do
 
   def check_account_status(%AuthContext{account: account}) do
     with {:ok, repo_counts} <- RepoStorage.status_counts(account.did),
-         {:ok, blob_counts} <- Tempest.Blobs.status_counts(account.did, repo_counts.referenced_blob_cids) do
+         {:ok, blob_counts} <- Tempest.Blobs.status_counts(account.did, repo_counts.referenced_blob_cids),
+         {:ok, repo_head} <- account_repo_head(account.did, repo_counts.repo_count) do
+      activated? = account.active and account.status == "active"
+
       {:ok,
        %{
+         "activated" => activated?,
+         "validDid" => true,
+         "repoCommit" => repo_head.cid,
+         "repoRev" => repo_head.rev,
+         "repoBlocks" => repo_counts.block_count,
+         "indexedRecords" => repo_counts.record_count,
+         "privateStateValues" => 0,
+         "expectedBlobs" => repo_counts.referenced_blob_count,
+         "importedBlobs" => blob_counts.blob_count,
          "did" => account.did,
-         "active" => account.active and account.status == "active",
+         "active" => activated?,
          "status" => account.status,
          "repoCount" => repo_counts.repo_count,
          "recordCount" => repo_counts.record_count,
@@ -173,6 +185,12 @@ defmodule Tempest.Accounts do
        }}
     end
   end
+
+  defp account_repo_head(did, repo_count) when repo_count > 0 do
+    RepoStorage.latest_commit(did)
+  end
+
+  defp account_repo_head(_did, _repo_count), do: {:ok, %{cid: "", rev: ""}}
 
   def get_service_auth(%AuthContext{account: account}, params) when is_map(params) do
     audience = Map.get(params, "aud") || Map.get(params, "audience")

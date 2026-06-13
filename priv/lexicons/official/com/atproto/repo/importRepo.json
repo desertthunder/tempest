@@ -4,21 +4,10 @@
   "defs": {
     "main": {
       "type": "procedure",
-      "description": "Import a repository CAR for the authenticated account.",
-      "input": { "encoding": "application/vnd.ipld.car" },
-      "output": {
-        "encoding": "application/json",
-        "schema": {
-          "type": "object",
-          "required": ["cid", "rev"],
-          "properties": {
-            "cid": { "type": "string", "format": "cid" },
-            "rev": { "type": "string", "format": "tid" },
-            "recordCount": { "type": "integer" }
-          }
-        }
-      },
-      "errors": [{ "name": "InvalidRequest" }]
+      "description": "Import a repo in the form of a CAR file. Requires Content-Length HTTP header to be set.",
+      "input": {
+        "encoding": "application/vnd.ipld.car"
+      }
     }
   }
 }

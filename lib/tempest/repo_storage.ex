@@ -423,10 +423,13 @@ defmodule Tempest.RepoStorage do
       result =
         with {:ok, records} <- scalar_count(conn, "SELECT COUNT(*) FROM records", []),
              {:ok, commits} <- scalar_count(conn, "SELECT COUNT(*) FROM commits", []),
+             {:ok, blocks} <- scalar_count(conn, "SELECT COUNT(*) FROM blocks", []),
              {:ok, referenced_cids} <- referenced_blob_cids_from_db(conn) do
           {:ok,
            %{
              repo_count: if(commits > 0, do: 1, else: 0),
+             block_count: blocks,
+             commit_count: commits,
              record_count: records,
              referenced_blob_count: length(referenced_cids),
              referenced_blob_cids: referenced_cids

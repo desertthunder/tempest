@@ -4,10 +4,7 @@
   "defs": {
     "main": {
       "type": "procedure",
-      "description": "Activate the authenticated account after migration checks pass.",
-      "input": { "encoding": "application/json", "schema": { "type": "object", "properties": {} } },
-      "output": { "encoding": "application/json", "schema": { "type": "object", "properties": {} } },
-      "errors": [{ "name": "InvalidRequest" }]
+      "description": "Activates a currently deactivated account. Used to finalize account migration after the account's repo is imported and identity is setup."
     }
   }
 }

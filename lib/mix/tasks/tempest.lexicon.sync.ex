@@ -38,6 +38,7 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     app/bsky/actor/putPreferences.json
     app/bsky/embed/defs.json
     app/bsky/embed/external.json
+    app/bsky/embed/gallery.json
     app/bsky/embed/images.json
     app/bsky/embed/record.json
     app/bsky/embed/recordWithMedia.json

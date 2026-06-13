@@ -4,9 +4,7 @@
   "defs": {
     "main": {
       "type": "procedure",
-      "description": "Record an authenticated account deletion request.",
-      "input": { "encoding": "application/json", "schema": { "type": "object", "properties": {} } },
-      "output": { "encoding": "application/json", "schema": { "type": "object", "properties": {} } }
+      "description": "Initiate a user account deletion via email."
     }
   }
 }

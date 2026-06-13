@@ -10,7 +10,7 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 70,
+    "document_count" => 71,
     "document_ids" => [
       "app.bsky.actor.defs",
       "app.bsky.actor.getPreferences",
@@ -18,6 +18,7 @@ defmodule Tempest.Lexicon.Bundled do
       "app.bsky.actor.putPreferences",
       "app.bsky.embed.defs",
       "app.bsky.embed.external",
+      "app.bsky.embed.gallery",
       "app.bsky.embed.images",
       "app.bsky.embed.record",
       "app.bsky.embed.recordWithMedia",
@@ -1041,6 +1042,86 @@ defmodule Tempest.Lexicon.Bundled do
             },
             "image" => %{
               "accept" => ["image/*"],
+              "maxSize" => 2_000_000,
+              "type" => "blob"
+            }
+          },
+          "required" => ["image", "alt", "aspectRatio"],
+          "type" => "object"
+        },
+        "main" => %{
+          "properties" => %{
+            "items" => %{
+              "description" =>
+                "The schema-level maxLength of 20 is a future-proof ceiling. Clients should currently enforce a soft limit of 10 items in authoring UIs.",
+              "items" => %{
+                "description" =>
+                  "The media items in the gallery. Each item may be of a different type, but all types must be supported by the client.",
+                "refs" => ["#image"],
+                "type" => "union"
+              },
+              "maxLength" => 20,
+              "type" => "array"
+            }
+          },
+          "required" => ["items"],
+          "type" => "object"
+        },
+        "view" => %{
+          "properties" => %{
+            "items" => %{
+              "items" => %{"refs" => ["#viewImage"], "type" => "union"},
+              "type" => "array"
+            }
+          },
+          "required" => ["items"],
+          "type" => "object"
+        },
+        "viewImage" => %{
+          "properties" => %{
+            "alt" => %{
+              "description" => "Alt text description of the image, for accessibility.",
+              "type" => "string"
+            },
+            "aspectRatio" => %{
+              "ref" => "app.bsky.embed.defs#aspectRatio",
+              "type" => "ref"
+            },
+            "fullsize" => %{
+              "description" =>
+                "Fully-qualified URL where a large version of the image can be fetched. May or may not be the exact original blob. For example, CDN location provided by the App View.",
+              "format" => "uri",
+              "type" => "string"
+            },
+            "thumbnail" => %{
+              "description" =>
+                "Fully-qualified URL where a thumbnail of the image can be fetched. For example, CDN location provided by the App View.",
+              "format" => "uri",
+              "type" => "string"
+            }
+          },
+          "required" => ["thumbnail", "fullsize", "alt", "aspectRatio"],
+          "type" => "object"
+        }
+      },
+      "description" => "An assortment of media embedded in a Bluesky record (eg, a post).",
+      "id" => "app.bsky.embed.gallery",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "image" => %{
+          "properties" => %{
+            "alt" => %{
+              "description" => "Alt text description of the image, for accessibility.",
+              "type" => "string"
+            },
+            "aspectRatio" => %{
+              "ref" => "app.bsky.embed.defs#aspectRatio",
+              "type" => "ref"
+            },
+            "image" => %{
+              "accept" => ["image/*"],
               "description" => "The raw image file. May be up to 2 MB, formerly limited to 1 MB.",
               "maxSize" => 2_000_000,
               "type" => "blob"
@@ -1170,6 +1251,7 @@ defmodule Tempest.Lexicon.Bundled do
                 "refs" => [
                   "app.bsky.embed.images#view",
                   "app.bsky.embed.video#view",
+                  "app.bsky.embed.gallery#view",
                   "app.bsky.embed.external#view",
                   "app.bsky.embed.record#view",
                   "app.bsky.embed.recordWithMedia#view"
@@ -1210,7 +1292,12 @@ defmodule Tempest.Lexicon.Bundled do
         "main" => %{
           "properties" => %{
             "media" => %{
-              "refs" => ["app.bsky.embed.images", "app.bsky.embed.video", "app.bsky.embed.external"],
+              "refs" => [
+                "app.bsky.embed.images",
+                "app.bsky.embed.video",
+                "app.bsky.embed.gallery",
+                "app.bsky.embed.external"
+              ],
               "type" => "union"
             },
             "record" => %{"ref" => "app.bsky.embed.record", "type" => "ref"}
@@ -1221,7 +1308,12 @@ defmodule Tempest.Lexicon.Bundled do
         "view" => %{
           "properties" => %{
             "media" => %{
-              "refs" => ["app.bsky.embed.images#view", "app.bsky.embed.video#view", "app.bsky.embed.external#view"],
+              "refs" => [
+                "app.bsky.embed.images#view",
+                "app.bsky.embed.video#view",
+                "app.bsky.embed.gallery#view",
+                "app.bsky.embed.external#view"
+              ],
               "type" => "union"
             },
             "record" => %{"ref" => "app.bsky.embed.record#view", "type" => "ref"}
@@ -1502,6 +1594,7 @@ defmodule Tempest.Lexicon.Bundled do
               "refs" => [
                 "app.bsky.embed.images#view",
                 "app.bsky.embed.video#view",
+                "app.bsky.embed.gallery#view",
                 "app.bsky.embed.external#view",
                 "app.bsky.embed.record#view",
                 "app.bsky.embed.recordWithMedia#view"
@@ -3044,21 +3137,8 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Import a repository CAR for the authenticated account.",
-          "errors" => [%{"name" => "InvalidRequest"}],
+          "description" => "Import a repo in the form of a CAR file. Requires Content-Length HTTP header to be set.",
           "input" => %{"encoding" => "application/vnd.ipld.car"},
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{
-              "properties" => %{
-                "cid" => %{"format" => "cid", "type" => "string"},
-                "recordCount" => %{"type" => "integer"},
-                "rev" => %{"format" => "tid", "type" => "string"}
-              },
-              "required" => ["cid", "rev"],
-              "type" => "object"
-            }
-          },
           "type" => "procedure"
         }
       },
@@ -3068,19 +3148,14 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "List blob CIDs referenced by the authenticated repo but missing from local storage.",
+          "description" =>
+            "Returns a list of missing blobs for the requesting account. Intended to be used in the account migration flow.",
           "output" => %{
             "encoding" => "application/json",
             "schema" => %{
               "properties" => %{
                 "blobs" => %{
-                  "items" => %{
-                    "properties" => %{
-                      "cid" => %{"format" => "cid", "type" => "string"}
-                    },
-                    "required" => ["cid"],
-                    "type" => "object"
-                  },
+                  "items" => %{"ref" => "#recordBlob", "type" => "ref"},
                   "type" => "array"
                 },
                 "cursor" => %{"type" => "string"}
@@ -3092,11 +3167,24 @@ defmodule Tempest.Lexicon.Bundled do
           "parameters" => %{
             "properties" => %{
               "cursor" => %{"type" => "string"},
-              "limit" => %{"maximum" => 1000, "minimum" => 1, "type" => "integer"}
+              "limit" => %{
+                "default" => 500,
+                "maximum" => 1000,
+                "minimum" => 1,
+                "type" => "integer"
+              }
             },
             "type" => "params"
           },
           "type" => "query"
+        },
+        "recordBlob" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "recordUri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["cid", "recordUri"],
+          "type" => "object"
         }
       },
       "id" => "com.atproto.repo.listMissingBlobs",
@@ -3279,16 +3367,8 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Activate the authenticated account after migration checks pass.",
-          "errors" => [%{"name" => "InvalidRequest"}],
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
-          },
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
-          },
+          "description" =>
+            "Activates a currently deactivated account. Used to finalize account migration after the account's repo is imported and identity is setup.",
           "type" => "procedure"
         }
       },
@@ -3298,21 +3378,33 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Get status information about the authenticated account.",
+          "description" =>
+            "Returns the status of an account, especially as pertaining to import or recovery. Can be called many times over the course of an account migration. Requires auth and can only be called pertaining to oneself.",
           "output" => %{
             "encoding" => "application/json",
             "schema" => %{
               "properties" => %{
-                "active" => %{"type" => "boolean"},
-                "blobCount" => %{"type" => "integer"},
-                "did" => %{"format" => "did", "type" => "string"},
-                "migrationReady" => %{"type" => "boolean"},
-                "missingBlobCount" => %{"type" => "integer"},
-                "recordCount" => %{"type" => "integer"},
-                "repoCount" => %{"type" => "integer"},
-                "status" => %{"type" => "string"}
+                "activated" => %{"type" => "boolean"},
+                "expectedBlobs" => %{"type" => "integer"},
+                "importedBlobs" => %{"type" => "integer"},
+                "indexedRecords" => %{"type" => "integer"},
+                "privateStateValues" => %{"type" => "integer"},
+                "repoBlocks" => %{"type" => "integer"},
+                "repoCommit" => %{"format" => "cid", "type" => "string"},
+                "repoRev" => %{"type" => "string"},
+                "validDid" => %{"type" => "boolean"}
               },
-              "required" => ["did", "active"],
+              "required" => [
+                "activated",
+                "validDid",
+                "repoCommit",
+                "repoRev",
+                "repoBlocks",
+                "indexedRecords",
+                "privateStateValues",
+                "expectedBlobs",
+                "importedBlobs"
+              ],
               "type" => "object"
             }
           },
@@ -3525,14 +3617,21 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Deactivate the authenticated account and suppress public repo/blob serving.",
+          "description" =>
+            "Deactivates a currently active account. Stops serving of repo, and future writes to repo until reactivated. Used to finalize account migration with the old host after the account has been activated on the new host.",
           "input" => %{
             "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
-          },
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
+            "schema" => %{
+              "properties" => %{
+                "deleteAfter" => %{
+                  "description" =>
+                    "A recommendation to server as to how long they should hold onto the deactivated account before deleting.",
+                  "format" => "datetime",
+                  "type" => "string"
+                }
+              },
+              "type" => "object"
+            }
           },
           "type" => "procedure"
         }
@@ -3543,14 +3642,20 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Mark the authenticated account deleted and revoke active sessions.",
+          "description" =>
+            "Delete an actor's account with a token and password. Can only be called after requesting a deletion token. Requires auth.",
+          "errors" => [%{"name" => "ExpiredToken"}, %{"name" => "InvalidToken"}],
           "input" => %{
             "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
-          },
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "password" => %{"type" => "string"},
+                "token" => %{"type" => "string"}
+              },
+              "required" => ["did", "password", "token"],
+              "type" => "object"
+            }
           },
           "type" => "procedure"
         }
@@ -3627,7 +3732,14 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Get a short-lived service-auth token for a constrained audience and Lexicon method.",
+          "description" => "Get a signed token on behalf of the requesting DID for the requested service.",
+          "errors" => [
+            %{
+              "description" =>
+                "Indicates that the requested expiration date is not a valid. May be in the past or may be reliant on the requested scopes.",
+              "name" => "BadExpiration"
+            }
+          ],
           "output" => %{
             "encoding" => "application/json",
             "schema" => %{
@@ -3638,14 +3750,24 @@ defmodule Tempest.Lexicon.Bundled do
           },
           "parameters" => %{
             "properties" => %{
-              "aud" => %{"description" => "Token audience.", "type" => "string"},
+              "aud" => %{
+                "description" =>
+                  "The DID or `did#serviceId` reference of the service that the token will be used to authenticate with.",
+                "maxLength" => 2048,
+                "type" => "string"
+              },
+              "exp" => %{
+                "description" =>
+                  "The time in Unix Epoch seconds that the JWT expires. Defaults to 60 seconds in the future. The service may enforce certain time bounds on tokens depending on the requested scope.",
+                "type" => "integer"
+              },
               "lxm" => %{
-                "description" => "Lexicon method this token may be used with.",
+                "description" => "Lexicon (XRPC) method to bind the requested token to",
                 "format" => "nsid",
                 "type" => "string"
               }
             },
-            "required" => ["aud", "lxm"],
+            "required" => ["aud"],
             "type" => "params"
           },
           "type" => "query"
@@ -3763,15 +3885,7 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Record an authenticated account deletion request.",
-          "input" => %{
-            "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
-          },
-          "output" => %{
-            "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
-          },
+          "description" => "Initiate a user account deletion via email.",
           "type" => "procedure"
         }
       },
@@ -3827,20 +3941,31 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
-          "description" => "Reserve or return stable signing-key material for the authenticated account.",
+          "description" =>
+            "Reserve a repo signing key, for use with account creation. Necessary so that a DID PLC update operation can be constructed during an account migraiton. Public and does not require auth; implemented by PDS. NOTE: this endpoint may change when full account migration is implemented.",
           "input" => %{
             "encoding" => "application/json",
-            "schema" => %{"properties" => %{}, "type" => "object"}
+            "schema" => %{
+              "properties" => %{
+                "did" => %{
+                  "description" => "The DID to reserve a key for.",
+                  "format" => "did",
+                  "type" => "string"
+                }
+              },
+              "type" => "object"
+            }
           },
           "output" => %{
             "encoding" => "application/json",
             "schema" => %{
               "properties" => %{
-                "did" => %{"format" => "did", "type" => "string"},
-                "signingKey" => %{"type" => "string"},
-                "verificationMethod" => %{"type" => "string"}
+                "signingKey" => %{
+                  "description" => "The public key for the reserved signing key, in did:key serialization.",
+                  "type" => "string"
+                }
               },
-              "required" => ["did", "signingKey", "verificationMethod"],
+              "required" => ["signingKey"],
               "type" => "object"
             }
           },

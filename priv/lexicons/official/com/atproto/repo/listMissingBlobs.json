@@ -4,11 +4,16 @@
   "defs": {
     "main": {
       "type": "query",
-      "description": "List blob CIDs referenced by the authenticated repo but missing from local storage.",
+      "description": "Returns a list of missing blobs for the requesting account. Intended to be used in the account migration flow.",
       "parameters": {
         "type": "params",
         "properties": {
-          "limit": { "type": "integer", "minimum": 1, "maximum": 1000 },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 500
+          },
           "cursor": { "type": "string" }
         }
       },
@@ -18,17 +23,21 @@
           "type": "object",
           "required": ["blobs"],
           "properties": {
+            "cursor": { "type": "string" },
             "blobs": {
               "type": "array",
-              "items": {
-                "type": "object",
-                "required": ["cid"],
-                "properties": { "cid": { "type": "string", "format": "cid" } }
-              }
-            },
-            "cursor": { "type": "string" }
+              "items": { "type": "ref", "ref": "#recordBlob" }
+            }
           }
         }
+      }
+    },
+    "recordBlob": {
+      "type": "object",
+      "required": ["cid", "recordUri"],
+      "properties": {
+        "cid": { "type": "string", "format": "cid" },
+        "recordUri": { "type": "string", "format": "at-uri" }
       }
     }
   }
