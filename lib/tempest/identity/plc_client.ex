@@ -42,7 +42,7 @@ defmodule Tempest.Identity.PlcClient do
 
     case Req.post(opts) do
       {:ok, %{status: status}} when status in 200..299 ->
-        Logger.info("Published PLC operation",
+        Logger.info("Published PLC operation did=#{did} plc_url=#{url} plc_status=#{status}",
           did: did,
           plc_url: url,
           plc_status: status
@@ -51,20 +51,25 @@ defmodule Tempest.Identity.PlcClient do
         :ok
 
       {:ok, %{status: status, body: body}} ->
-        Logger.error("PLC directory rejected operation",
+        response_body = response_body_snippet(body)
+
+        Logger.error(
+          "PLC directory rejected operation did=#{did} plc_url=#{url} plc_status=#{status} plc_response_body=#{response_body}",
           did: did,
           plc_url: url,
           plc_status: status,
-          plc_response_body: response_body_snippet(body)
+          plc_response_body: response_body
         )
 
         {:error, {:plc_status, status}}
 
       {:error, reason} ->
-        Logger.error("PLC directory request failed",
+        request_error = inspect(reason)
+
+        Logger.error("PLC directory request failed did=#{did} plc_url=#{url} plc_request_error=#{request_error}",
           did: did,
           plc_url: url,
-          plc_request_error: inspect(reason)
+          plc_request_error: request_error
         )
 
         {:error, {:plc_request_failed, reason}}

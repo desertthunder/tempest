@@ -4,7 +4,7 @@ defmodule Tempest.Identity.PlcOperation do
   """
 
   alias Tempest.Accounts.Account
-  alias Tempest.Identity.KeyStore
+  alias Tempest.Identity.{KeyStore, Multikey}
 
   @secp256k1_order 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
   @half_secp256k1_order div(@secp256k1_order, 2)
@@ -16,7 +16,7 @@ defmodule Tempest.Identity.PlcOperation do
       "type" => "plc_operation",
       "prev" => Keyword.get(opts, :prev),
       "rotationKeys" => rotation_keys(),
-      "verificationMethods" => %{"atproto" => signing_key.public_key_multibase},
+      "verificationMethods" => %{"atproto" => Multikey.encode_secp256k1_did_key!(signing_key.public_key_multibase)},
       "alsoKnownAs" => ["at://#{account.handle}"],
       "services" => %{
         "atproto_pds" => %{
@@ -101,7 +101,7 @@ defmodule Tempest.Identity.PlcOperation do
   defp public_did_key!(private_key_material) when is_binary(private_key_material) do
     private_key = decode_private_key!(private_key_material)
     {public_key, _private_key} = :crypto.generate_key(:ecdh, :secp256k1, private_key)
-    "did:key:" <> multibase64(public_key)
+    Multikey.encode_secp256k1_did_key!(public_key)
   end
 
   defp decode_private_key!("u" <> encoded), do: Base.url_decode64!(encoded, padding: false)

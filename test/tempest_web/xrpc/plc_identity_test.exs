@@ -6,6 +6,7 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
 
   alias Tempest.Accounts.Account
   alias Tempest.AdminAuth
+  alias Tempest.Identity.Multikey
   alias Tempest.Identity.PlcOperation
   alias Tempest.Identity.SigningKey
   alias Tempest.Repo
@@ -56,14 +57,15 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
       |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials")
 
     response = json_response(conn, 200)
+    expected_signing_key = Multikey.encode_secp256k1_did_key!(signing_key.public_key_multibase)
 
     assert response["did"] == account["did"]
     assert response["handle"] == "plc-creds.test"
-    assert response["signingKey"] == signing_key.public_key_multibase
-    assert response["verificationMethods"] == %{"atproto" => signing_key.public_key_multibase}
+    assert response["signingKey"] == expected_signing_key
+    assert response["verificationMethods"] == %{"atproto" => expected_signing_key}
     assert [rotation_key] = response["rotationKeys"]
-    assert String.starts_with?(rotation_key, "did:key:u")
-    refute rotation_key == signing_key.public_key_multibase
+    assert String.starts_with?(rotation_key, "did:key:z")
+    refute rotation_key == expected_signing_key
     assert response["alsoKnownAs"] == ["at://plc-creds.test"]
 
     assert response["services"] == %{
@@ -106,7 +108,7 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
       decoded = Jason.decode!(body)
 
       assert [rotation_key] = decoded["rotationKeys"]
-      assert String.starts_with?(rotation_key, "did:key:u")
+      assert String.starts_with?(rotation_key, "did:key:z")
       refute rotation_key == decoded["verificationMethods"]["atproto"]
       assert decoded["services"]["atproto_pds"]["endpoint"] == "http://localhost:4002"
 
@@ -210,7 +212,7 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
       assert submitted == signed_operation
       assert submitted["services"]["atproto_pds"]["endpoint"] == "http://localhost:4002"
       assert [rotation_key] = submitted["rotationKeys"]
-      assert String.starts_with?(rotation_key, "did:key:u")
+      assert String.starts_with?(rotation_key, "did:key:z")
       refute rotation_key == submitted["verificationMethods"]["atproto"]
 
       send_resp(req_conn, 200, Jason.encode!(%{"ok" => true}))
@@ -643,7 +645,7 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
 
   defp public_did_key(private_key) do
     {public_key, _private_key} = :crypto.generate_key(:ecdh, :secp256k1, private_key)
-    "did:key:" <> multibase64(public_key)
+    Multikey.encode_secp256k1_did_key!(public_key)
   end
 
   defp multibase64(key), do: "u" <> Base.url_encode64(key, padding: false)

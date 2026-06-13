@@ -7,6 +7,26 @@ defmodule Tempest.Identity.Multikey do
   @secp256k1_pub_multicodec <<0xE7, 0x01>>
   @secp256k1_p 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
 
+  def encode_secp256k1_did_key(public_key) when is_binary(public_key) do
+    with {:ok, multikey} <- encode_secp256k1_public_key(public_key) do
+      {:ok, "did:key:" <> multikey}
+    end
+  end
+
+  def encode_secp256k1_did_key!(public_key) do
+    case encode_secp256k1_did_key(public_key) do
+      {:ok, did_key} -> did_key
+      {:error, reason} -> raise ArgumentError, "invalid secp256k1 public key: #{inspect(reason)}"
+    end
+  end
+
+  def encode_secp256k1_public_key(public_key) when is_binary(public_key) do
+    with {:ok, key} <- decode_or_normalize_public_key(public_key),
+         {:ok, compressed_key} <- compress_secp256k1_public_key(key) do
+      {:ok, "z" <> base58btc_encode(@secp256k1_pub_multicodec <> compressed_key)}
+    end
+  end
+
   def decode_secp256k1_public_key(multibase, opts \\ [])
 
   def decode_secp256k1_public_key(multibase, opts) when is_binary(multibase) do
@@ -23,6 +43,11 @@ defmodule Tempest.Identity.Multikey do
   end
 
   def decode_secp256k1_public_key(_multibase, _opts), do: {:error, :invalid_public_key}
+
+  defp decode_or_normalize_public_key("did:key:" <> multibase), do: decode_multibase(multibase)
+  defp decode_or_normalize_public_key("u" <> _rest = multibase), do: decode_multibase(multibase)
+  defp decode_or_normalize_public_key("z" <> _rest = multibase), do: decode_multibase(multibase)
+  defp decode_or_normalize_public_key(public_key), do: normalize_secp256k1_public_key(public_key)
 
   defp decode_multibase("u" <> encoded), do: Base.url_decode64(encoded, padding: false)
 
@@ -41,6 +66,15 @@ defmodule Tempest.Identity.Multikey do
   defp normalize_secp256k1_public_key(<<2, _rest::binary-size(32)>> = public_key), do: {:ok, public_key}
   defp normalize_secp256k1_public_key(<<3, _rest::binary-size(32)>> = public_key), do: {:ok, public_key}
   defp normalize_secp256k1_public_key(_key), do: {:error, :invalid_public_key}
+
+  defp compress_secp256k1_public_key(<<prefix, _rest::binary-size(32)>> = public_key) when prefix in [2, 3] do
+    {:ok, public_key}
+  end
+
+  defp compress_secp256k1_public_key(<<4, x::binary-size(32), y::binary-size(32)>>) do
+    prefix = if rem(:binary.decode_unsigned(y), 2) == 0, do: 2, else: 3
+    {:ok, <<prefix, x::binary>>}
+  end
 
   defp uncompress_secp256k1_public_key(<<4, _rest::binary-size(64)>> = public_key), do: {:ok, public_key}
 
@@ -82,6 +116,28 @@ defmodule Tempest.Identity.Multikey do
       nil -> :error
       index -> {:ok, index}
     end
+  end
+
+  defp base58btc_encode(bytes) when is_binary(bytes) do
+    leading_zero_count =
+      bytes
+      |> :binary.bin_to_list()
+      |> Enum.take_while(&(&1 == 0))
+      |> length()
+
+    encoded =
+      bytes
+      |> :binary.decode_unsigned()
+      |> do_base58btc_encode("")
+
+    String.duplicate("1", leading_zero_count) <> encoded
+  end
+
+  defp do_base58btc_encode(0, acc), do: acc
+
+  defp do_base58btc_encode(value, acc) do
+    char = @base58btc_alphabet |> Enum.at(rem(value, 58)) |> then(&<<&1>>)
+    do_base58btc_encode(div(value, 58), char <> acc)
   end
 
   defp modular_pow(_base, 0, modulus), do: rem(1, modulus)
