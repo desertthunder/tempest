@@ -12,7 +12,9 @@ defmodule Tempest.Permissions do
                                 "com.atproto.server.refreshSession",
                                 "com.atproto.server.deleteSession",
                                 "com.atproto.server.getSession",
-                                "com.atproto.identity.updateHandle"
+                                "com.atproto.identity.updateHandle",
+                                "com.atproto.identity.getRecommendedDidCredentials",
+                                "com.atproto.identity.requestPlcOperationSignature"
                               ])
 
   def allowed?(%AuthContext{token_type: token_type}, _method_nsid, _params)

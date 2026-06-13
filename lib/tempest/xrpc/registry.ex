@@ -227,6 +227,24 @@ defmodule Tempest.Xrpc.Registry do
       errors: ["HandleNotFound", "InvalidRequest"]
     },
     %Method{
+      nsid: "com.atproto.identity.getRecommendedDidCredentials",
+      kind: :query,
+      auth: :bearer,
+      input: nil,
+      output: @json,
+      handler: {Tempest.Xrpc.Identity, :get_recommended_did_credentials},
+      errors: ["InvalidRequest"]
+    },
+    %Method{
+      nsid: "com.atproto.identity.requestPlcOperationSignature",
+      kind: :procedure,
+      auth: :bearer,
+      input: @json,
+      output: @json,
+      handler: {Tempest.Xrpc.Identity, :request_plc_operation_signature},
+      errors: ["AuthenticationRequired", "InvalidRequest"]
+    },
+    %Method{
       nsid: "com.atproto.repo.createRecord",
       kind: :procedure,
       auth: :bearer,

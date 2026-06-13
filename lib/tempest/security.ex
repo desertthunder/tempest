@@ -7,10 +7,22 @@ defmodule Tempest.Security do
 
   alias Tempest.Accounts.{Account, AppPassword, Password, Session}
   alias Tempest.OAuth.Token
-  alias Tempest.Security.{BackupCode, DelegatedAccessGrant, EmailToken, MfaCredential, RateLimiter, SecurityEvent, Totp}
+
+  alias Tempest.Security.{
+    BackupCode,
+    DelegatedAccessGrant,
+    EmailToken,
+    MfaCredential,
+    PlcOperationToken,
+    RateLimiter,
+    SecurityEvent,
+    Totp
+  }
+
   alias Tempest.Repo
 
   @email_token_ttl_seconds 30 * 60
+  @plc_operation_token_ttl_seconds 10 * 60
 
   def log_event(%Account{} = account, event_type, metadata \\ %{}) do
     attrs = %{
@@ -255,6 +267,54 @@ defmodule Tempest.Security do
     |> limit(^limit)
     |> Repo.all()
   end
+
+  def verify_account_password(%Account{} = account, password) when is_binary(password) do
+    if Password.verify(password, account.password_hash), do: :ok, else: {:error, :invalid_password}
+  end
+
+  def verify_account_password(%Account{} = account, _password) do
+    Password.verify(nil, account.password_hash)
+    {:error, :invalid_password}
+  end
+
+  def issue_plc_operation_token(%Account{} = account) do
+    raw = random_token(32)
+
+    attrs = %{
+      account_id: account.id,
+      token_hash: hash(raw),
+      expires_at: DateTime.add(now(), @plc_operation_token_ttl_seconds, :second)
+    }
+
+    with {:ok, token} <- %PlcOperationToken{} |> PlcOperationToken.changeset(attrs) |> Repo.insert(),
+         {:ok, _event} <- log_event(account, "plc_operation_signature.requested", %{token_id: token.id}) do
+      {:ok, %{token: raw, plc_operation_token: token}}
+    end
+  end
+
+  def consume_plc_operation_token(%Account{} = account, raw) when is_binary(raw) do
+    now = now()
+
+    Repo.transaction(fn ->
+      token =
+        PlcOperationToken
+        |> where([t], t.account_id == ^account.id and t.token_hash == ^hash(raw))
+        |> where([t], is_nil(t.used_at) and t.expires_at > ^now)
+        |> Repo.one()
+
+      case token do
+        nil ->
+          Repo.rollback(:invalid_token)
+
+        %PlcOperationToken{} = token ->
+          token |> Ecto.Changeset.change(%{used_at: now}) |> Repo.update!()
+          log_event(account, "plc_operation_signature.token_consumed", %{token_id: token.id})
+          token
+      end
+    end)
+  end
+
+  def consume_plc_operation_token(%Account{} = _account, _raw), do: {:error, :invalid_token}
 
   def request_password_reset(identifier) do
     identifier = identifier |> to_string() |> String.trim() |> String.downcase()

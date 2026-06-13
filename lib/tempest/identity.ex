@@ -38,6 +38,20 @@ defmodule Tempest.Identity do
 
   def create_initial_signing_key(%Account{} = account), do: KeyStore.create_initial_key(account)
 
+  def recommended_did_credentials(%Account{} = account) do
+    operation = PlcOperation.for_account(account)
+
+    %{
+      "did" => account.did,
+      "handle" => account.handle,
+      "signingKey" => get_in(operation, ["verificationMethods", "atproto"]),
+      "rotationKeys" => operation["rotationKeys"],
+      "verificationMethods" => operation["verificationMethods"],
+      "alsoKnownAs" => operation["alsoKnownAs"],
+      "services" => operation["services"]
+    }
+  end
+
   def publish_plc_operation(%Account{} = account) do
     with true <- String.starts_with?(account.did, "did:plc:"),
          :ok <- Correctness.check_local(account),

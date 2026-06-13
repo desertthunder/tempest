@@ -5,6 +5,7 @@ defmodule Tempest.Xrpc.Identity do
 
   alias Tempest.Accounts
   alias Tempest.Identity
+  alias Tempest.Security
 
   def resolve_handle(_conn, params, _method) do
     params
@@ -25,6 +26,25 @@ defmodule Tempest.Xrpc.Identity do
 
       {:error, reason} ->
         identity_error(reason)
+    end
+  end
+
+  def get_recommended_did_credentials(conn, _params, _method) do
+    {:ok, Identity.recommended_did_credentials(conn.assigns.auth_context.account)}
+  end
+
+  def request_plc_operation_signature(conn, params, _method) do
+    account = conn.assigns.auth_context.account
+
+    with password when is_binary(password) and password != "" <- Map.get(params, "password"),
+         :ok <- Security.verify_account_password(account, password),
+         {:ok, %{token: token}} <- Security.issue_plc_operation_token(account) do
+      {:ok, %{"token" => token}}
+    else
+      nil -> {:error, 400, "InvalidRequest", "password is required"}
+      "" -> {:error, 400, "InvalidRequest", "password is required"}
+      {:error, :invalid_password} -> {:error, 401, "AuthenticationRequired", "password is invalid"}
+      {:error, _reason} -> {:error, 400, "InvalidRequest", "could not create PLC operation signature token"}
     end
   end
 

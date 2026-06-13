@@ -10,11 +10,13 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 51,
+    "document_count" => 53,
     "document_ids" => [
       "app.bsky.actor.getPreferences",
       "app.bsky.actor.profile",
       "app.bsky.actor.putPreferences",
+      "com.atproto.identity.getRecommendedDidCredentials",
+      "com.atproto.identity.requestPlcOperationSignature",
       "com.atproto.identity.resolveHandle",
       "com.atproto.identity.updateHandle",
       "com.atproto.label.defs",
@@ -342,6 +344,67 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.identity.updateHandle",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Returns recommended DID PLC credentials for the authenticated account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "handle" => %{"format" => "handle", "type" => "string"},
+                "signingKey" => %{"type" => "string"},
+                "rotationKeys" => %{"items" => %{"type" => "string"}, "type" => "array"},
+                "verificationMethods" => %{"type" => "unknown"},
+                "alsoKnownAs" => %{"items" => %{"type" => "string"}, "type" => "array"},
+                "services" => %{"type" => "unknown"}
+              },
+              "required" => [
+                "did",
+                "handle",
+                "signingKey",
+                "rotationKeys",
+                "verificationMethods",
+                "alsoKnownAs",
+                "services"
+              ],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.identity.getRecommendedDidCredentials",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Requests a short-lived token for signing a PLC operation after password reauthentication.",
+          "errors" => [%{"name" => "AuthenticationRequired"}, %{"name" => "InvalidRequest"}],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"password" => %{"type" => "string"}},
+              "required" => ["password"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"token" => %{"type" => "string"}},
+              "required" => ["token"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.identity.requestPlcOperationSignature",
       "lexicon" => 1
     },
     %{

@@ -34,5 +34,13 @@ remain follow-up work:
       that reject service-diverting or unrecoverable PLC operations.
 - [ ] Add `com.atproto.identity.submitPlcOperation` with fake PLC submission,
       failure, idempotency, and migration event-ordering tests.
+- [ ] Create, sign, and submit PLC operations correctly end-to-end.
+- [ ] Fetch existing PLC state before building update operations.
+- [ ] Introduce a stable `TEMPEST_PLC_ROTATION_KEY` configuration path.
+- [ ] Support an optional account/operator recovery key.
+- [ ] Derive public `did:key` rotation keys from configured/private key material.
+- [ ] Ensure repository signing keys are never used as PLC rotation keys.
+- [ ] Verify `getRecommendedDidCredentials` returns the correct recommended DID
+      credential shape once dedicated rotation-key material exists.
 - [ ] Refresh bundled Lexicons and the PDS compatibility matrix when the handlers
       are registered.
