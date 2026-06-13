@@ -5,6 +5,10 @@
   background: var(--win-desktop);
 }
 
+.tempest-home {
+  padding-block-start: calc(2.7rem + clamp(0.75rem, 2vw, 1.35rem));
+}
+
 .tempest-home__desktop,
 .operator-account__desktop {
   display: grid;
@@ -14,22 +18,46 @@
   padding-bottom: 3rem;
 }
 
+.tempest-home__workarea {
+  display: block;
+}
+
+.tempest-home__windows {
+  display: grid;
+  gap: var(--space-4);
+  margin-inline: 6.5rem 11.5rem;
+}
+
 .operator-account__desktop {
   width: min(74rem, 100%);
 }
 
-.tempest-home__grid,
-.status-grid {
+.tempest-home__top-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.tempest-home__grid {
   display: grid;
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
 }
 
+.status-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
 .desktop-icons {
-  display: flex;
-  flex-wrap: wrap;
+  position: fixed;
+  inset-block-start: calc(2.7rem + clamp(0.75rem, 2vw, 1.35rem));
+  inset-inline-start: clamp(0.75rem, 2vw, 1.35rem);
+  z-index: 10;
+  display: grid;
   gap: var(--space-3);
-  align-items: flex-start;
+  align-content: start;
+  justify-items: center;
 }
 
 .desktop-icon {
@@ -60,9 +88,13 @@
 }
 
 .tempest-home__hero {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  align-items: stretch;
   gap: var(--space-5);
+}
+
+.tempest-home__intro {
+  align-self: center;
 }
 
 .tempest-home__brand {
@@ -84,7 +116,7 @@
 }
 
 .tempest-home__subtitle,
-.tempest-home__stamp,
+.tempest-home__server-card,
 .status-card p,
 .facts-list,
 .endpoint-list__row,
@@ -94,13 +126,11 @@
   font-size: var(--step--1);
 }
 
-.tempest-home__stamp {
+.tempest-home__server-card {
   display: grid;
-  align-content: start;
-  gap: var(--space-2);
-  min-width: max-content;
-  padding: var(--space-2);
-  background: var(--accent-soft);
+  align-content: center;
+  padding: var(--space-3);
+  background: var(--surface-raised);
   box-shadow: var(--border-in);
 }
 
@@ -109,8 +139,18 @@
   box-shadow: var(--border-out), var(--shadow-window);
 }
 
+.tempest-home__windows > .resource-strip {
+  position: fixed;
+  inset-block-start: calc(2.7rem + clamp(0.75rem, 2vw, 1.35rem));
+  inset-inline-end: clamp(0.75rem, 2vw, 1.35rem);
+  z-index: 8;
+  width: min(10rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 6rem);
+  overflow: hidden auto;
+}
+
 .win-window--hero {
-  margin-block-start: var(--space-2);
+  margin-block-start: 0;
 }
 
 .win-window__titlebar {
@@ -139,11 +179,8 @@
   width: 3.4rem;
   height: 0.95rem;
   background-image:
-    url("/images/icons/minimize.svg"),
-    url("/images/icons/maximize.svg"),
-    url("/images/icons/close.svg"),
-    linear-gradient(var(--surface), var(--surface)),
-    linear-gradient(var(--surface), var(--surface)),
+    url("/images/icons/minimize.svg"), url("/images/icons/maximize.svg"), url("/images/icons/close.svg"),
+    linear-gradient(var(--surface), var(--surface)), linear-gradient(var(--surface), var(--surface)),
     linear-gradient(var(--surface), var(--surface));
   background-position:
     0.15rem 50%,
@@ -270,6 +307,10 @@
   overflow-wrap: anywhere;
 }
 
+.facts-list--compact {
+  gap: var(--space-1) var(--space-3);
+}
+
 .endpoint-list {
   display: grid;
   padding: var(--space-2);
@@ -351,14 +392,22 @@
   padding: var(--space-3);
   background: var(--accent-soft);
   border: 2px dotted var(--accent);
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 0.2);
 }
 
 .resource-strip__title {
-  margin-block-end: var(--space-2);
-  font-size: 1rem;
+  margin-block-end: var(--space-3);
+  font-size: 0.8rem;
+  line-height: var(--leading-tight);
+  text-align: center;
+  text-transform: uppercase;
 }
 
-.resource-strip__links,
+.resource-strip__links {
+  display: grid;
+  gap: var(--space-2);
+}
+
 .operator-account__nav {
   display: flex;
   flex-wrap: wrap;
@@ -370,6 +419,16 @@
   font-weight: 700;
 }
 
+.resource-strip__links a {
+  display: block;
+  color: var(--text);
+  font-size: 0.78rem;
+  line-height: var(--leading-tight);
+  text-align: left;
+  text-decoration-style: dotted;
+  overflow-wrap: anywhere;
+}
+
 .resource-strip__links a::before,
 .operator-account__nav a::before {
   content: "▶ ";
@@ -379,15 +438,17 @@
 .taskbar {
   position: fixed;
   inset-inline: 0;
-  bottom: 0;
-  z-index: 20;
+  top: 0;
+  z-index: 6;
   display: flex;
   gap: var(--space-2);
   align-items: center;
   min-height: 2.2rem;
   padding: 0.25rem;
   background: var(--surface);
-  box-shadow: inset 0 1px 0 var(--win-light);
+  box-shadow:
+    inset 0 -1px 0 var(--win-dark),
+    inset 0 1px 0 var(--win-light);
 }
 
 .taskbar__start {
@@ -409,10 +470,17 @@
   height: 1.1rem;
 }
 
-.taskbar__app {
+.taskbar__app,
+.taskbar__tray {
   padding: 0.25rem var(--space-3);
   box-shadow: var(--border-in);
   font-size: var(--step--1);
+}
+
+.taskbar__tray {
+  margin-inline-start: auto;
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
 .modal {
@@ -535,6 +603,7 @@
 }
 
 @media (max-width: 640px) {
+  .tempest-home__top-grid,
   .tempest-home__hero,
   .endpoint-list__row,
   .facts-list,
@@ -542,12 +611,29 @@
     grid-template-columns: 1fr;
   }
 
-  .tempest-home__hero {
-    display: grid;
+  .tempest-home__windows {
+    margin-inline: 0;
   }
 
-  .tempest-home__stamp {
+  .desktop-icons {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    justify-items: start;
+  }
+
+  .tempest-home__windows > .resource-strip {
+    position: static;
+    width: auto;
+    max-width: none;
+    max-height: none;
+  }
+
+  .taskbar__app {
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .endpoint-list__row {

@@ -3,6 +3,8 @@
 Tempest is a self-hostable AT Protocol Personal Data Server (PDS) built with
 Elixir and Phoenix.
 
+![UI](./docs/images/ui.png)
+
 ## PDS Completion TODO
 
 The current endpoint matrix/coverage is [`docs/reference/pds-compatibility.md`](docs/reference/pds-compatibility.md).
