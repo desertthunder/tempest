@@ -141,12 +141,14 @@ defmodule TempestWeb.Xrpc.MigrationCompatibilityTest do
              |> get(~p"/xrpc/com.atproto.server.checkAccountStatus")
              |> json_response(200)
 
-    assert {:ok, upload} =
-             Blobs.validate_upload(blob_bytes, byte_size(blob_bytes), "image/png", Tempest.Config.load!())
-
-    assert upload.cid == blob_cid
-    assert :ok = Blobs.put_temp_metadata(did, upload)
-    assert :ok = Blobs.mark_public(did, [blob_cid])
+    assert %{"blob" => %{"ref" => %{"$link" => ^blob_cid}}} =
+             conn
+             |> recycle()
+             |> put_req_header("authorization", "Bearer #{target_account["accessJwt"]}")
+             |> put_req_header("content-type", "image/png")
+             |> put_req_header("content-length", Integer.to_string(byte_size(blob_bytes)))
+             |> post(~p"/xrpc/com.atproto.repo.uploadBlob", blob_bytes)
+             |> json_response(200)
 
     assert %{"blobs" => []} =
              conn

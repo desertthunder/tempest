@@ -80,6 +80,7 @@ defmodule TempestWeb.Plugs.XrpcAuth do
               "com.atproto.server.checkAccountStatus",
               "com.atproto.repo.importRepo",
               "com.atproto.repo.listMissingBlobs",
+              "com.atproto.repo.uploadBlob",
               "com.atproto.server.activateAccount",
               "com.atproto.server.deactivateAccount",
               "com.atproto.server.requestAccountDelete",
