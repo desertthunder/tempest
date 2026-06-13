@@ -19,7 +19,7 @@ defmodule Tempest.Records do
   alias Tempest.RepoCore.Tid.Clock
 
   def import_repo(%AuthContext{account: account}, car_bytes) when is_binary(car_bytes) do
-    with {:ok, did_document} <- Identity.did_document_for_did(account.did),
+    with {:ok, did_document} <- import_did_document(account),
          {:ok, verified} <- CarVerifier.verify_repo_car(car_bytes, did: account.did),
          :ok <- verify_import_signature(verified.commit, did_document),
          {:ok, imported} <- RepoStorage.import_verified_car(account, verified) do
@@ -28,6 +28,14 @@ defmodule Tempest.Records do
   end
 
   def import_repo(%AuthContext{}, _car_bytes), do: {:error, :invalid_request_body}
+
+  defp import_did_document(%Account{active: false, status: "deactivated", did: did}) do
+    Identity.external_did_document_for_did(did)
+  end
+
+  defp import_did_document(%Account{did: did}) do
+    Identity.did_document_for_did(did)
+  end
 
   def list_missing_blobs(%AuthContext{account: account}, params) when is_map(params) do
     with {:ok, limit} <- validate_limit(Map.get(params, "limit"), 500, 1000),

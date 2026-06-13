@@ -2,7 +2,6 @@ defmodule TempestWeb.Xrpc.MigrationCompatibilityTest do
   use TempestWeb.ConnCase, async: false
 
   alias Tempest.Accounts.Account
-  alias Tempest.Identity.SigningKey
   alias Tempest.{Blobs, Identity, Repo}
 
   import Ecto.Query
@@ -69,7 +68,6 @@ defmodule TempestWeb.Xrpc.MigrationCompatibilityTest do
 
     source = account!(did)
     source_document = Identity.did_document_for_account(source)
-    source_key = active_signing_key!(source.id)
 
     assert %{} = source_document
 
@@ -116,18 +114,10 @@ defmodule TempestWeb.Xrpc.MigrationCompatibilityTest do
     assert target_account["active"] == false
     assert target_account["status"] == "deactivated"
 
-    # The target instance has accepted the source DID and must validate imported
-    # commits against the source account key. Preserve that key in this shared-DB
-    # test harness to model the second instance receiving the migrated key state.
-    target = account!(did)
-    target_key = active_signing_key!(target.id)
-
-    target_key
-    |> Ecto.Changeset.change(%{
-      public_key_multibase: source_key.public_key_multibase,
-      private_key_ciphertext: source_key.private_key_ciphertext
-    })
-    |> Repo.update!()
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.request_path in ["/#{URI.encode(did)}", "/#{did}"]
+      Req.Test.json(req_conn, source_document)
+    end)
 
     assert %{"cid" => _, "rev" => _, "recordCount" => 1} =
              conn
@@ -214,10 +204,6 @@ defmodule TempestWeb.Xrpc.MigrationCompatibilityTest do
 
   defp account!(did) do
     Repo.one!(from account in Account, where: account.did == ^did)
-  end
-
-  defp active_signing_key!(account_id) do
-    Repo.one!(from key in SigningKey, where: key.account_id == ^account_id and key.active)
   end
 
   defp remove_repo_database!(did) do

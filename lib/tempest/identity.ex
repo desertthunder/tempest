@@ -110,6 +110,9 @@ defmodule Tempest.Identity do
 
   def did_document_for_did(_did), do: {:error, :invalid_did_syntax}
 
+  def external_did_document_for_did(did) when is_binary(did), do: resolve_did_document(did)
+  def external_did_document_for_did(_did), do: {:error, :invalid_did_syntax}
+
   def hosted_did_for_handle(handle) when is_binary(handle) do
     handle = Validators.normalize_handle(handle)
 
