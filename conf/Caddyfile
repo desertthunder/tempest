@@ -1,0 +1,20 @@
+# Caddy reverse proxy for a deployed Tempest PDS.
+#
+# Use with docker compose from this directory:
+#   cp .env.example .env
+#   TEMPEST_HOSTNAME=tempest.example.com docker compose -f docker-compose.yml --profile proxy up -d
+#
+# Caddy obtains and renews certificates automatically for public DNS names.
+# WebSocket upgrades for /xrpc/com.atproto.sync.subscribeRepos are proxied by
+# Caddy's reverse_proxy handler without extra directives.
+
+{$TEMPEST_HOSTNAME} {
+  encode zstd gzip
+
+  reverse_proxy tempest:4000 {
+    header_up Host {host}
+    header_up X-Real-IP {remote_host}
+    header_up X-Forwarded-For {remote_host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+}

@@ -1,0 +1,45 @@
+services:
+  tempest:
+    build:
+      context: ..
+      dockerfile: conf/Dockerfile
+    image: tempest:local
+    restart: unless-stopped
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      PHX_SERVER: "true"
+      PORT: "4000"
+      TEMPEST_DATA_DIR: /var/lib/tempest
+    volumes:
+      - ../data/tempest:/var/lib/tempest
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/xrpc/_health >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: ["proxy"]
+    depends_on:
+      tempest:
+        condition: service_healthy
+    environment:
+      TEMPEST_HOSTNAME: ${TEMPEST_HOSTNAME:-tempest.example.com}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

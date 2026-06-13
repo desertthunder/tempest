@@ -1,6 +1,6 @@
 ---
 title: Reference Documentation
-updated: 2026-06-03
+updated: 2026-06-13
 ---
 
 These docs describe current, verified behavior of Tempest. They explain the
@@ -15,6 +15,7 @@ Graduated reference docs:
 - [Repository Core](./repo-core.md)
 - [Record APIs](./record-apis.md)
 - [Blobs](./blobs.md)
+- [Account Migration](./account-migration.md)
 - [Migration and Account Lifecycle](./migration-lifecycle.md)
 - [Security, OAuth, and Delegated Access](./security-oauth.md)
 - [Admin and Operator Operations](./admin-operations.md)

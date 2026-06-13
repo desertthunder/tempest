@@ -12,11 +12,11 @@ references:
 Goal: make Tempest deployable, restorable, and externally verifiable as a
 SQLite-first PDS on local Docker or a managed PaaS with optional S3/R2 storage.
 
-- [ ] T15-01: Add release configuration.
-- [ ] T15-02: Add Dockerfile.
-- [ ] T15-03: Add docker-compose example.
-- [ ] T15-04: Add Caddy reverse proxy example.
-- [ ] T15-05: Add production env template.
+- [x] T15-01: Add release configuration.
+- [x] T15-02: Add Dockerfile.
+- [x] T15-03: Add docker-compose example.
+- [x] T15-04: Add Caddy reverse proxy example.
+- [x] T15-05: Add production env template.
 - [ ] T15-06: Add deployment docs for local-only, S3-backed, and reverse-proxy
       setups.
 - [x] T15-07: Add managed PaaS deployment profile for Railway-like hosts.

@@ -17,7 +17,7 @@ services:
     ports:
       - "4000:4000"
     env_file:
-      - tempest.env
+      - .env
     volumes:
       - ./data:/var/lib/tempest
 ```

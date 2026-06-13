@@ -31,8 +31,12 @@ tempest-*.tar
 # Ignore digested assets cache.
 /priv/static/cache_manifest.json
 
-# Local SQLite data directory.
+# Local SQLite data directories.
 /priv/tempest_dev/
+/data/
+
+# Local deployment secrets.
+/conf/.env
 
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
