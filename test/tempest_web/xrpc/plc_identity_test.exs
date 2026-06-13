@@ -50,7 +50,9 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
     assert response["handle"] == "plc-creds.test"
     assert response["signingKey"] == signing_key.public_key_multibase
     assert response["verificationMethods"] == %{"atproto" => signing_key.public_key_multibase}
-    assert response["rotationKeys"] == [signing_key.public_key_multibase]
+    assert [rotation_key] = response["rotationKeys"]
+    assert String.starts_with?(rotation_key, "did:key:u")
+    refute rotation_key == signing_key.public_key_multibase
     assert response["alsoKnownAs"] == ["at://plc-creds.test"]
 
     assert response["services"] == %{
@@ -72,7 +74,9 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
       {:ok, body, req_conn} = Plug.Conn.read_body(req_conn)
       decoded = Jason.decode!(body)
 
-      assert decoded["rotationKeys"] == [decoded["verificationMethods"]["atproto"]]
+      assert [rotation_key] = decoded["rotationKeys"]
+      assert String.starts_with?(rotation_key, "did:key:u")
+      refute rotation_key == decoded["verificationMethods"]["atproto"]
       assert decoded["services"]["atproto_pds"]["endpoint"] == "http://localhost:4002"
 
       send_resp(req_conn, 200, Jason.encode!(%{"ok" => true}))
@@ -87,7 +91,53 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
       |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials")
 
     response = json_response(conn, 200)
-    assert response["verificationMethods"]["atproto"] in response["rotationKeys"]
+    refute response["verificationMethods"]["atproto"] in response["rotationKeys"]
+  end
+
+  test "getRecommendedDidCredentials derives rotation keys from configured private material", %{conn: conn} do
+    private_key = :crypto.strong_rand_bytes(32)
+    expected_rotation_key = public_did_key(private_key)
+    Application.put_env(:tempest, Tempest.Identity, plc_rotation_key: multibase64(private_key))
+
+    account = create_account!(conn, "plc-configured-key.test", "plc-configured-key@example.com")
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> get(~p"/xrpc/com.atproto.identity.getRecommendedDidCredentials")
+
+    response = json_response(conn, 200)
+    assert response["rotationKeys"] == [expected_rotation_key]
+    refute response["signingKey"] in response["rotationKeys"]
+  end
+
+  test "signPlcOperation fetches existing PLC state before building update operation", %{conn: conn} do
+    put_identity_test_config(fetch_existing_plc_state: true)
+
+    Req.Test.expect(__MODULE__, 3, fn req_conn ->
+      case req_conn.method do
+        "POST" ->
+          send_resp(req_conn, 200, Jason.encode!(%{"ok" => true}))
+
+        "GET" ->
+          send_resp(req_conn, 200, Jason.encode!(%{"cid" => "bafy-old-plc-op"}))
+      end
+    end)
+
+    account = create_account!(conn, "plc-prev.test", "plc-prev@example.com")
+    stored_account = Repo.get_by!(Account, did: account["did"])
+    operation = PlcOperation.for_account(stored_account, prev: "bafy-old-plc-op")
+    token = request_plc_token!(conn, account["accessJwt"])
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.identity.signPlcOperation", sign_params(operation, token))
+
+    assert %{"operation" => %{"prev" => "bafy-old-plc-op"}} = json_response(conn, 200)
   end
 
   test "requestPlcOperationSignature requires bearer auth and JSON error shape", %{conn: conn} do
@@ -349,17 +399,28 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
 
   defp sign_params(operation, token) do
     operation
-    |> Map.take(["rotationKeys", "alsoKnownAs", "verificationMethods", "services"])
+    |> Map.take(["rotationKeys", "alsoKnownAs", "verificationMethods", "services", "prev"])
     |> Map.put("token", token)
   end
 
-  defp put_identity_test_config do
-    Application.put_env(:tempest, Tempest.Identity,
-      plc_publish_enabled: true,
-      plc_directory_url: "https://plc.test",
-      http_req_options: [plug: {Req.Test, __MODULE__}]
+  defp put_identity_test_config(extra \\ []) do
+    Application.put_env(
+      :tempest,
+      Tempest.Identity,
+      [
+        plc_publish_enabled: true,
+        plc_directory_url: "https://plc.test",
+        http_req_options: [plug: {Req.Test, __MODULE__}]
+      ] ++ extra
     )
   end
+
+  defp public_did_key(private_key) do
+    {public_key, _private_key} = :crypto.generate_key(:ecdh, :secp256k1, private_key)
+    "did:key:" <> multibase64(public_key)
+  end
+
+  defp multibase64(key), do: "u" <> Base.url_encode64(key, padding: false)
 
   defp audit_event_count(%Account{} = account, event_type) do
     SecurityEvent

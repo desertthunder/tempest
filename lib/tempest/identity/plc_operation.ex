@@ -9,13 +9,13 @@ defmodule Tempest.Identity.PlcOperation do
   @secp256k1_order 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
   @half_secp256k1_order div(@secp256k1_order, 2)
 
-  def for_account(%Account{} = account) do
+  def for_account(%Account{} = account, opts \\ []) do
     signing_key = KeyStore.active_key_for_account(account)
 
     %{
       "type" => "plc_operation",
-      "prev" => nil,
-      "rotationKeys" => [signing_key.public_key_multibase],
+      "prev" => Keyword.get(opts, :prev),
+      "rotationKeys" => rotation_keys(),
       "verificationMethods" => %{"atproto" => signing_key.public_key_multibase},
       "alsoKnownAs" => ["at://#{account.handle}"],
       "services" => %{
@@ -82,6 +82,43 @@ defmodule Tempest.Identity.PlcOperation do
 
   def validate_for_account(%Account{}, _operation), do: {:error, :invalid_operation}
 
+  defp rotation_keys do
+    configured_keys =
+      [:plc_rotation_key, :plc_recovery_key]
+      |> Enum.map(&identity_config/1)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&public_did_key!/1)
+
+    if configured_keys == [] do
+      [public_did_key!(fallback_rotation_key_material())]
+    else
+      Enum.uniq(configured_keys)
+    end
+  end
+
+  defp public_did_key!("did:key:" <> _rest = did_key), do: did_key
+
+  defp public_did_key!(private_key_material) when is_binary(private_key_material) do
+    private_key = decode_private_key!(private_key_material)
+    {public_key, _private_key} = :crypto.generate_key(:ecdh, :secp256k1, private_key)
+    "did:key:" <> multibase64(public_key)
+  end
+
+  defp decode_private_key!("u" <> encoded), do: Base.url_decode64!(encoded, padding: false)
+  defp decode_private_key!(encoded), do: Base.url_decode64!(encoded, padding: false)
+
+  defp fallback_rotation_key_material do
+    secret_key_base =
+      :tempest
+      |> Application.fetch_env!(TempestWeb.Endpoint)
+      |> Keyword.fetch!(:secret_key_base)
+
+    :crypto.hash(:sha256, "Tempest.Identity.PlcOperation.rotation_key:" <> secret_key_base)
+    |> multibase64()
+  end
+
+  defp multibase64(key), do: "u" <> Base.url_encode64(key, padding: false)
+
   defp pds_service_endpoint do
     %{scheme: scheme, host: host, port: port} = URI.parse(Tempest.Config.load!().public_url)
     default_port? = (scheme == "http" and port in [nil, 80]) or (scheme == "https" and port in [nil, 443])
@@ -92,8 +129,10 @@ defmodule Tempest.Identity.PlcOperation do
   defp recoverable?(operation, recommended) do
     operation_keys = Map.get(operation, "rotationKeys")
     recommended_keys = Map.fetch!(recommended, "rotationKeys")
+    signing_key = get_in(recommended, ["verificationMethods", "atproto"])
 
-    is_list(operation_keys) and operation_keys != [] and Enum.any?(recommended_keys, &(&1 in operation_keys))
+    is_list(operation_keys) and operation_keys != [] and signing_key not in operation_keys and
+      Enum.any?(recommended_keys, &(&1 in operation_keys))
   end
 
   defp active_key(account) do
@@ -153,6 +192,12 @@ defmodule Tempest.Identity.PlcOperation do
   end
 
   defp take_der_integer(_bytes), do: {:error, :invalid_signature}
+
+  defp identity_config(key) do
+    :tempest
+    |> Application.get_env(Tempest.Identity, [])
+    |> Keyword.get(key)
+  end
 
   defp fixed_uint(integer), do: integer |> :binary.encode_unsigned() |> pad_uint()
 

@@ -33,15 +33,14 @@ Supported now:
   `TEMPEST_PUBLIC_URL`.
 - Suppress public repo, record, blob, and sync reads for inactive accounts.
 
-Known limitation:
+### To-Do
 
-- Full `did:plc` migration is not complete. The public PLC identity endpoints
-  remain planned: `com.atproto.identity.getRecommendedDidCredentials`,
-  `requestPlcOperationSignature`, `signPlcOperation`, and
-  `submitPlcOperation`.
+- Full `did:plc` migration still needs black-box migration-out coverage, but the
+  public PLC identity endpoints are registered and locally tested against the PLC
+  client boundary.
 
-Self-controlled `did:web` accounts are the currently practical bring-your-own
-identity path because the operator can update the DID document directly.
+Self-controlled `did:web` accounts remain the simplest bring-your-own identity
+path because the operator can update the DID document directly.
 
 ## Migration-In Flow
 
@@ -75,11 +74,7 @@ curl -X POST "$TEMPEST/xrpc/com.atproto.server.createAccount" \
 The response should include:
 
 ```json
-{
-  "did": "did:example:...",
-  "active": false,
-  "status": "deactivated"
-}
+{ "did": "did:example:...", "active": false, "status": "deactivated" }
 ```
 
 Import the CAR:
@@ -110,8 +105,9 @@ activation.
 
 Update identity so the account DID document points `#atproto_pds` at
 `TEMPEST_PUBLIC_URL`. For `did:web`, update the hosted DID document. For
-`did:plc`, this currently requires an external/manual PLC operation because
-Tempest's public PLC operation endpoints are not implemented yet.
+`did:plc`, use `getRecommendedDidCredentials`, `requestPlcOperationSignature`,
+`signPlcOperation`, and `submitPlcOperation` to build, sign, and submit the PLC
+operation through Tempest's PLC client boundary.
 
 Activate the account:
 
@@ -136,9 +132,9 @@ Tempest fails closed during migration:
 - Missing referenced blobs keep `migrationReady=false`.
 - Activation fails when the DID document does not point at Tempest.
 
-## PLC Work Required
+## PLC Operation Flow
 
-Production `did:plc` migration needs the public identity operation flow, not only
+Production `did:plc` migration uses the public identity operation flow, not only
 repository import:
 
 - `com.atproto.identity.getRecommendedDidCredentials` must return the Tempest PDS
@@ -151,8 +147,11 @@ repository import:
 - `com.atproto.identity.submitPlcOperation` must submit through the PLC client,
   preserve migration event ordering, and record success or failure.
 
-These endpoints must deny app passwords and ordinary OAuth tokens unless a future
-spec defines a high-assurance delegated scope.
+These endpoints deny app passwords and ordinary OAuth tokens unless a future spec
+defines a high-assurance delegated scope. Configure `TEMPEST_PLC_ROTATION_KEY`
+with private rotation-key material; optionally configure `TEMPEST_PLC_RECOVERY_KEY`
+for an operator recovery key. Tempest derives public `did:key` rotation keys from
+that material and does not reuse repository signing keys as PLC rotation keys.
 
 ## Verification
 

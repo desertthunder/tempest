@@ -1,6 +1,6 @@
 ---
 title: PDS Compatibility Matrix
-updated: 2026-06-03
+updated: 2026-06-13
 ---
 
 Tempest tracks compatibility against the AT Protocol specs, the official
@@ -48,14 +48,14 @@ deferred     endpoint is out of scope for the current target profile
 
 ## Identity
 
-| Method                                              |      Status | Required coverage                                             |
-| --------------------------------------------------- | ----------: | ------------------------------------------------------------- |
-| `com.atproto.identity.resolveHandle`                | implemented | local and remote resolution smoke tests                       |
-| `com.atproto.identity.updateHandle`                 | implemented | auth and DID ownership checks                                 |
-| `com.atproto.identity.getRecommendedDidCredentials` |     planned | migration DID credential endpoint plus Lexicon bundle refresh |
-| `com.atproto.identity.requestPlcOperationSignature` |     planned | PLC boundary endpoint plus Lexicon bundle refresh             |
-| `com.atproto.identity.signPlcOperation`             |     planned | PLC boundary endpoint plus Lexicon bundle refresh             |
-| `com.atproto.identity.submitPlcOperation`           |     planned | PLC boundary endpoint plus Lexicon bundle refresh             |
+| Method                                              |      Status | Required coverage                                            |
+| --------------------------------------------------- | ----------: | ------------------------------------------------------------ |
+| `com.atproto.identity.resolveHandle`                | implemented | local and remote resolution smoke tests                      |
+| `com.atproto.identity.updateHandle`                 | implemented | auth and DID ownership checks                                |
+| `com.atproto.identity.getRecommendedDidCredentials` | implemented | credential shape, auth, dedicated PLC rotation key tests     |
+| `com.atproto.identity.requestPlcOperationSignature` | implemented | strong reauth, single-use token, audit-log tests             |
+| `com.atproto.identity.signPlcOperation`             | implemented | token consumption, fake PLC prev fetch, validation tests     |
+| `com.atproto.identity.submitPlcOperation`           | implemented | fake PLC submission, failure, idempotency, event-order tests |
 
 ## Repository
 
@@ -86,15 +86,15 @@ deferred     endpoint is out of scope for the current target profile
 | `com.atproto.sync.getBlob`         | implemented | local and S3/R2 adapter tests           |
 | `com.atproto.sync.requestCrawl`    | implemented | local test plus deployed relay check    |
 | `com.atproto.sync.subscribeRepos`  | implemented | WebSocket backfill/live smoke test      |
-| `com.atproto.sync.notifyOfUpdate`  |    deferred | not required for current target profile |
+| `com.atproto.sync.notifyOfUpdate`  |     planned | not required for current target profile |
 
 ## AppView and helpers
 
-| Method                          |      Status | Required coverage              |
-| ------------------------------- | ----------: | ------------------------------ |
-| `app.bsky.actor.getPreferences` | implemented | preference smoke test          |
-| `app.bsky.actor.putPreferences` | implemented | preference smoke test          |
-| Unknown `app.bsky.*` methods    | implemented | proxy/fallback policy tests     |
+| Method                          |      Status | Required coverage           |
+| ------------------------------- | ----------: | --------------------------- |
+| `app.bsky.actor.getPreferences` | implemented | preference smoke test       |
+| `app.bsky.actor.putPreferences` | implemented | preference smoke test       |
+| Unknown `app.bsky.*` methods    | implemented | proxy/fallback policy tests |
 
 ## AppView proxy/fallback policy
 

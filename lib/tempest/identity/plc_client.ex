@@ -5,6 +5,22 @@ defmodule Tempest.Identity.PlcClient do
   The client is configurable so tests can use Req.Test or another fake service.
   """
 
+  def fetch_state(did) when is_binary(did) do
+    url = plc_directory_url() <> "/" <> URI.encode(did)
+
+    opts =
+      [url: url, retry: false]
+      |> Keyword.merge(identity_config(:http_req_options) || [])
+
+    case Req.get(opts) do
+      {:ok, %{status: 200, body: body}} when is_map(body) -> {:ok, body}
+      {:ok, %{status: 200, body: body}} when is_binary(body) -> Jason.decode(body)
+      {:ok, %{status: 404}} -> {:ok, nil}
+      {:ok, %{status: status}} -> {:error, {:plc_status, status}}
+      {:error, reason} -> {:error, {:plc_request_failed, reason}}
+    end
+  end
+
   def publish_operation(did, operation) when is_binary(did) and is_map(operation) do
     url = plc_directory_url() <> "/" <> URI.encode(did)
 

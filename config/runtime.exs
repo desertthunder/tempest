@@ -42,6 +42,26 @@ if hosted_did_method = System.get_env("TEMPEST_HOSTED_DID_METHOD") do
   config :tempest, Tempest.Config, hosted_did_method: String.to_existing_atom(hosted_did_method)
 end
 
+identity_runtime_config = []
+
+identity_runtime_config =
+  if plc_rotation_key = System.get_env("TEMPEST_PLC_ROTATION_KEY") do
+    Keyword.put(identity_runtime_config, :plc_rotation_key, plc_rotation_key)
+  else
+    identity_runtime_config
+  end
+
+identity_runtime_config =
+  if plc_recovery_key = System.get_env("TEMPEST_PLC_RECOVERY_KEY") do
+    Keyword.put(identity_runtime_config, :plc_recovery_key, plc_recovery_key)
+  else
+    identity_runtime_config
+  end
+
+if identity_runtime_config != [] do
+  config :tempest, Tempest.Identity, identity_runtime_config
+end
+
 if blob_cdn_base_url = System.get_env("TEMPEST_BLOB_CDN_BASE_URL") do
   config :tempest, Tempest.Blobs, cdn_base_url: blob_cdn_base_url
 end

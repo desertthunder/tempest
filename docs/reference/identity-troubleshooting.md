@@ -1,6 +1,6 @@
 ---
 title: Identity Troubleshooting
-updated: 2026-05-31
+updated: 2026-06-13
 ---
 
 Identity correctness means the local account row, DID document, handle
@@ -30,8 +30,11 @@ For a hosted account, verify:
 ## Hosted DID modes
 
 `TEMPEST_HOSTED_DID_METHOD=plc` creates `did:plc` accounts. If PLC publishing is
-enabled in config, Tempest submits a PLC operation through the PLC client
-boundary.
+enabled in config, Tempest fetches existing PLC state, then submits a PLC
+operation through the PLC client boundary. Set `TEMPEST_PLC_ROTATION_KEY` to
+private rotation-key material; set `TEMPEST_PLC_RECOVERY_KEY` when an additional
+operator recovery key should be included. Public `did:key` rotation keys are
+derived from that configured material, not from repository signing keys.
 
 `TEMPEST_HOSTED_DID_METHOD=web` creates a `did:web` identity for the configured
 hostname. This is intended for single-user/self-hosted setups where the operator

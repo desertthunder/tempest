@@ -55,8 +55,10 @@ defmodule Tempest.Identity do
   def sign_plc_operation(%Account{} = account, token, operation_fields) when is_map(operation_fields) do
     operation =
       account
-      |> PlcOperation.for_account()
-      |> Map.merge(Map.take(operation_fields, ["rotationKeys", "alsoKnownAs", "verificationMethods", "services"]))
+      |> PlcOperation.for_account(prev: current_plc_prev(account))
+      |> Map.merge(
+        Map.take(operation_fields, ["rotationKeys", "alsoKnownAs", "verificationMethods", "services", "prev"])
+      )
 
     with :ok <- Correctness.check_local(account),
          {:ok, _token_record} <- Tempest.Security.consume_plc_operation_token(account, token),
@@ -88,7 +90,7 @@ defmodule Tempest.Identity do
   def publish_plc_operation(%Account{} = account) do
     with true <- String.starts_with?(account.did, "did:plc:"),
          :ok <- Correctness.check_local(account),
-         operation = PlcOperation.for_account(account),
+         operation = PlcOperation.for_account(account, prev: current_plc_prev(account)),
          :ok <- PlcClient.publish_operation(account.did, operation) do
       :ok
     else
@@ -154,6 +156,29 @@ defmodule Tempest.Identity do
   end
 
   def update_handle(_auth_context, _handle), do: {:error, :invalid_handle_syntax}
+
+  defp current_plc_prev(%Account{did: "did:plc:" <> _} = account) do
+    if fetch_existing_plc_state?() do
+      case PlcClient.fetch_state(account.did) do
+        {:ok, %{"cid" => cid}} when is_binary(cid) and cid != "" -> cid
+        {:ok, %{"prev" => prev}} when is_binary(prev) and prev != "" -> prev
+        {:ok, _state} -> nil
+        {:error, _reason} -> nil
+      end
+    end
+  end
+
+  defp current_plc_prev(%Account{}), do: nil
+
+  defp fetch_existing_plc_state? do
+    config = Application.get_env(:tempest, Tempest.Identity, [])
+
+    if Keyword.has_key?(config, :fetch_existing_plc_state) do
+      Keyword.fetch!(config, :fetch_existing_plc_state)
+    else
+      Application.get_env(:tempest, :env, :prod) != :test
+    end
+  end
 
   defp resolve_did_document(did) do
     with :ok <- Validators.validate_did(did),
