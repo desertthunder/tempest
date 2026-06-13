@@ -29,7 +29,7 @@ RUN mix release
 
 FROM alpine:${ALPINE_VERSION} AS runtime
 
-RUN apk add --no-cache ca-certificates libgcc libstdc++ ncurses-libs openssl sqlite-libs \
+RUN apk add --no-cache ca-certificates libgcc libstdc++ ncurses-libs openssl sqlite-libs su-exec \
   && addgroup -S tempest \
   && adduser -S -G tempest -h /app tempest \
   && mkdir -p /var/lib/tempest \
@@ -46,7 +46,6 @@ COPY --from=build --chown=tempest:tempest /app/_build/prod/rel/tempest ./
 COPY --chown=tempest:tempest conf/docker-entrypoint.sh /app/bin/docker-entrypoint
 RUN chmod +x /app/bin/docker-entrypoint
 
-USER tempest
 EXPOSE 4000
 ENTRYPOINT ["/app/bin/docker-entrypoint"]
 CMD ["start"]

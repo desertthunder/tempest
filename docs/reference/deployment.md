@@ -101,6 +101,11 @@ Configure the volume in Railway. The Dockerfile intentionally does not use a
 Docker `VOLUME` instruction because Railway rejects it; the mount must come from
 Railway's volume settings.
 
+The container entrypoint starts as root only long enough to create and chown the
+mounted `TEMPEST_DATA_DIR` tree. Bootstrap, migrations, and the Phoenix release
+then run as the unprivileged `tempest` user. This is required because Railway
+volume mounts may not arrive owned by the image user.
+
 Set the custom domain in Railway before migrating an account. Wait for DNS and
 TLS to become healthy.
 
@@ -157,8 +162,9 @@ confirmation delivery have been configured and tested.
 
 ## First Boot
 
-Deploy the service. The Docker entrypoint creates the storage layout, bootstraps
-SQLite, runs migrations, and starts the Phoenix release.
+Deploy the service. The Docker entrypoint prepares the mounted storage layout,
+bootstraps SQLite, runs migrations, and starts the Phoenix release as the
+`tempest` user.
 
 Check Railway logs for startup errors. Then verify externally:
 

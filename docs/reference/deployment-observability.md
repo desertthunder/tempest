@@ -142,6 +142,11 @@ because multiple active deployments cannot mount the same service volume safely.
 The volume must be configured in Railway, not with a Dockerfile `VOLUME`
 instruction.
 
+The Docker entrypoint runs as root only during volume preparation so it can
+create and chown `/var/lib/tempest` on Railway-mounted storage. After that,
+storage bootstrap, migrations, and the Phoenix release run as the unprivileged
+`tempest` user.
+
 ## Required environment
 
 ```text

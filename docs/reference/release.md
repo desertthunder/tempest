@@ -65,8 +65,9 @@ hurl --test --jobs 1 \
 ## Release Surface
 
 - Phoenix release Dockerfile at `conf/Dockerfile`.
-- Docker entrypoint at `conf/docker-entrypoint.sh` that creates the durable data
-  layout, bootstraps storage, runs Ecto migrations, and starts the release.
+- Docker entrypoint at `conf/docker-entrypoint.sh` that prepares Railway-mounted
+  storage, drops to the `tempest` user, bootstraps storage, runs Ecto
+  migrations, and starts the release.
 - Production runtime config that reads Railway's `PORT`.
 - Required production secrets and URL boundary in `conf/.env.example`.
 - Budget Railway plus R2 profile in `docs/reference/budget.md`.
@@ -90,6 +91,10 @@ TEMPEST_DATA_DIR=/var/lib/tempest
 
 The volume mount is a Railway setting. The Dockerfile does not declare
 `VOLUME`, because Railway rejects that instruction.
+
+On boot, the entrypoint creates and chowns `/var/lib/tempest` before running the
+release as the `tempest` user. This handles Railway volumes that mount with
+root-owned directories.
 
 Required variables:
 

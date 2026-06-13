@@ -8,6 +8,22 @@ fi
 : "${TEMPEST_DATA_DIR:=/var/lib/tempest}"
 export TEMPEST_DATA_DIR
 
+run_as_tempest() {
+  if [ "$(id -u)" = "0" ]; then
+    exec su-exec tempest "$@"
+  fi
+
+  exec "$@"
+}
+
+eval_as_tempest() {
+  if [ "$(id -u)" = "0" ]; then
+    su-exec tempest "$@"
+  else
+    "$@"
+  fi
+}
+
 mkdir -p \
   "$TEMPEST_DATA_DIR" \
   "$TEMPEST_DATA_DIR/repos" \
@@ -15,8 +31,12 @@ mkdir -p \
   "$TEMPEST_DATA_DIR/tmp" \
   "$TEMPEST_DATA_DIR/backups"
 
+if [ "$(id -u)" = "0" ]; then
+  chown -R tempest:tempest "$TEMPEST_DATA_DIR"
+fi
+
 if [ "${TEMPEST_RELEASE_BOOTSTRAP:-true}" != "false" ]; then
-  /app/bin/tempest eval '
+  eval_as_tempest /app/bin/tempest eval '
     Tempest.Config.load!() |> Tempest.Storage.bootstrap!()
 
     {:ok, _repo, _apps} =
@@ -26,4 +46,4 @@ if [ "${TEMPEST_RELEASE_BOOTSTRAP:-true}" != "false" ]; then
   '
 fi
 
-exec /app/bin/tempest start
+run_as_tempest /app/bin/tempest start
