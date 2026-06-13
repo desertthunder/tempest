@@ -239,6 +239,38 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     assert %{"error" => "AccountTakedown"} = json_response(login_conn, 403)
   end
 
+  test "createAccount accepts Bluesky-style service auth without kid or sub", %{conn: conn} do
+    did = "did:plc:" <> (:crypto.strong_rand_bytes(16) |> Base.encode32(case: :lower, padding: false))
+
+    {service_auth, did_document} =
+      remote_service_auth(did, "did:web:tempest.test", "com.atproto.server.createAccount",
+        include_kid?: false,
+        include_sub?: false,
+        lifetime_seconds: 60
+      )
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.request_path == "/#{did}"
+      Req.Test.json(req_conn, did_document)
+    end)
+
+    migrated =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.createAccount", %{
+        "did" => did,
+        "handle" => "bluesky-service-auth.test",
+        "email" => "bluesky-service-auth@example.com",
+        "password" => @password,
+        "serviceAuth" => service_auth
+      })
+      |> json_response(200)
+
+    assert migrated["did"] == did
+    assert migrated["active"] == false
+    assert migrated["status"] == "deactivated"
+  end
+
   test "migrated did:web account stays private until activation emits ordered events", %{conn: conn} do
     did = "did:web:migrated-#{System.unique_integer([:positive])}.example.com"
 
@@ -451,22 +483,25 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     events
   end
 
-  defp remote_service_auth(did, audience, method_nsid) do
+  defp remote_service_auth(did, audience, method_nsid, opts \\ []) do
     key = JOSE.JWK.generate_key({:ec, "secp256k1"})
     {_kty, private_jwk} = JOSE.JWK.to_map(key)
     public_key_multibase = public_key_multibase(private_jwk)
     now = DateTime.utc_now() |> DateTime.to_unix()
 
-    headers = %{"typ" => "JWT", "alg" => "ES256K", "kid" => did <> "#atproto"}
+    headers =
+      %{"typ" => "JWT", "alg" => "ES256K"}
+      |> maybe_put(Keyword.get(opts, :include_kid?, true), "kid", did <> "#atproto")
 
-    claims = %{
-      "iss" => did,
-      "sub" => did,
-      "aud" => audience,
-      "lxm" => method_nsid,
-      "iat" => now,
-      "exp" => now + 600
-    }
+    claims =
+      %{
+        "iss" => did,
+        "aud" => audience,
+        "lxm" => method_nsid,
+        "iat" => now,
+        "exp" => now + Keyword.get(opts, :lifetime_seconds, 600)
+      }
+      |> maybe_put(Keyword.get(opts, :include_sub?, true), "sub", did)
 
     {_jws, token} = JOSE.JWT.sign(key, headers, claims) |> JOSE.JWS.compact()
 
@@ -491,4 +526,7 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     y = Base.url_decode64!(encoded_y, padding: false)
     "u" <> Base.url_encode64(<<4, x::binary, y::binary>>, padding: false)
   end
+
+  defp maybe_put(map, true, key, value), do: Map.put(map, key, value)
+  defp maybe_put(map, false, _key, _value), do: map
 end

@@ -77,7 +77,7 @@ defmodule Tempest.Accounts.Tokens do
     _error -> {:error, :invalid}
   end
 
-  defp validate_service_auth_header(%{"alg" => "ES256K", "kid" => kid} = header) when is_binary(kid) do
+  defp validate_service_auth_header(%{"alg" => "ES256K"} = header) do
     case Map.get(header, "typ") do
       nil -> :ok
       typ when is_binary(typ) -> if String.upcase(typ) == "JWT", do: :ok, else: {:error, :invalid}
@@ -96,18 +96,20 @@ defmodule Tempest.Accounts.Tokens do
     _error -> {:error, :invalid}
   end
 
-  defp validate_service_auth_claim_shape(%{"iss" => did, "sub" => did, "aud" => aud, "lxm" => lxm})
+  defp validate_service_auth_claim_shape(%{"iss" => did, "aud" => aud, "lxm" => lxm} = claims)
        when is_binary(did) and did != "" and is_binary(aud) and aud != "" and is_binary(lxm) and lxm != "" do
-    :ok
+    case Map.get(claims, "sub", did) do
+      ^did -> :ok
+      _other -> {:error, :invalid}
+    end
   end
 
   defp validate_service_auth_claim_shape(_claims), do: {:error, :invalid}
 
-  defp service_auth_public_jwk(did, kid) do
+  defp service_auth_public_jwk(did, kid) when kid in [nil, did <> "#atproto"] do
     expected_kid = did <> "#atproto"
 
-    with ^expected_kid <- kid,
-         {:ok, document} <- Identity.did_document_for_did(did),
+    with {:ok, document} <- Identity.did_document_for_did(did),
          {:ok, public_key_multibase} <- find_atproto_public_key(document, expected_kid),
          {:ok, public_key} <- decode_multibase64(public_key_multibase),
          {:ok, jwk} <- public_jwk_from_raw_secp256k1(public_key) do
@@ -117,6 +119,8 @@ defmodule Tempest.Accounts.Tokens do
       _other -> {:error, :invalid}
     end
   end
+
+  defp service_auth_public_jwk(_did, _kid), do: {:error, :invalid}
 
   defp find_atproto_public_key(%{"verificationMethod" => methods}, expected_kid) when is_list(methods) do
     methods
@@ -141,8 +145,17 @@ defmodule Tempest.Accounts.Tokens do
     _error -> {:error, :invalid}
   end
 
-  defp validate_service_auth_claims(%{"iss" => did, "sub" => did, "iat" => iat, "exp" => exp})
+  defp validate_service_auth_claims(%{"iss" => did, "iat" => iat, "exp" => exp} = claims)
        when is_integer(iat) and is_integer(exp) do
+    case Map.get(claims, "sub", did) do
+      ^did -> validate_service_auth_times(iat, exp)
+      _other -> {:error, :invalid}
+    end
+  end
+
+  defp validate_service_auth_claims(_claims), do: {:error, :invalid}
+
+  defp validate_service_auth_times(iat, exp) do
     now = DateTime.utc_now() |> DateTime.to_unix()
 
     cond do
@@ -152,8 +165,6 @@ defmodule Tempest.Accounts.Tokens do
       true -> :ok
     end
   end
-
-  defp validate_service_auth_claims(_claims), do: {:error, :invalid}
 
   defp service_auth_private_jwk!(key) do
     with {:ok, private_key} <- KeyStore.decrypt_private_key(key),

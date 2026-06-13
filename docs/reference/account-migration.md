@@ -53,9 +53,15 @@ curl "$OLD_PDS/xrpc/com.atproto.sync.getRepo?did=$DID" -o repo.car
 Ask the source PDS for service auth scoped to account creation on Tempest:
 
 ```bash
+TEMPEST_SERVICE_DID=did:web:tempest.example.com
+
 curl -H "Authorization: Bearer $OLD_ACCESS" \
-  "$OLD_PDS/xrpc/com.atproto.server.getServiceAuth?aud=$TEMPEST_PUBLIC_URL&lxm=com.atproto.server.createAccount"
+  "$OLD_PDS/xrpc/com.atproto.server.getServiceAuth?aud=$TEMPEST_SERVICE_DID&lxm=com.atproto.server.createAccount"
 ```
+
+`aud` is the target service DID, not the HTTPS service endpoint. The HTTPS
+endpoint still belongs in the public DID document's `#atproto_pds`
+`serviceEndpoint`.
 
 Create the account on Tempest with the existing DID:
 

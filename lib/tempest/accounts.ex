@@ -561,8 +561,9 @@ defmodule Tempest.Accounts do
       token = Map.get(attrs, "serviceAuth") || Map.get(attrs, "serviceAuthToken")
 
       with token when is_binary(token) and token != "" <- token,
-           {:ok, %{"iss" => ^did, "sub" => ^did, "aud" => aud, "lxm" => "com.atproto.server.createAccount"}} <-
+           {:ok, %{"iss" => ^did, "aud" => aud, "lxm" => "com.atproto.server.createAccount"} = claims} <-
              Tokens.verify_service_auth(token),
+           ^did <- Map.get(claims, "sub", did),
            :ok <- validate_service_audience(aud) do
         :ok
       else
