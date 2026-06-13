@@ -186,8 +186,9 @@ defmodule Tempest.Blobs do
   """
   def status_counts(did, referenced_cids \\ []) when is_binary(did) and is_list(referenced_cids) do
     with {:ok, public_count} <- public_count(did),
+         {:ok, imported_count} <- present_count(did, referenced_cids),
          {:ok, missing} <- missing_cids(did, referenced_cids) do
-      {:ok, %{blob_count: public_count, missing_blob_count: length(missing)}}
+      {:ok, %{blob_count: public_count, imported_blob_count: imported_count, missing_blob_count: length(missing)}}
     end
   end
 
@@ -207,6 +208,20 @@ defmodule Tempest.Blobs do
 
   defp public_count(did) do
     case Repo.query("SELECT COUNT(*) FROM blob_metadata WHERE did = ?1 AND state = 'public'", [did]) do
+      {:ok, %{rows: [[count]]}} when is_integer(count) -> {:ok, count}
+      {:ok, _result} -> {:error, :unexpected_count_result}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp present_count(_did, []), do: {:ok, 0}
+
+  defp present_count(did, cids) do
+    cids = cids |> Enum.uniq() |> Enum.sort()
+    placeholders = Enum.map_join(cids, ",", fn _cid -> "?" end)
+    sql = "SELECT COUNT(*) FROM blob_metadata WHERE did = ?1 AND cid IN (#{placeholders})"
+
+    case Repo.query(sql, [did | cids]) do
       {:ok, %{rows: [[count]]}} when is_integer(count) -> {:ok, count}
       {:ok, _result} -> {:error, :unexpected_count_result}
       {:error, reason} -> {:error, reason}

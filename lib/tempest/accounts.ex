@@ -173,7 +173,7 @@ defmodule Tempest.Accounts do
          "indexedRecords" => repo_counts.record_count,
          "privateStateValues" => 0,
          "expectedBlobs" => repo_counts.referenced_blob_count,
-         "importedBlobs" => blob_counts.blob_count,
+         "importedBlobs" => blob_counts.imported_blob_count,
          "did" => account.did,
          "active" => activated?,
          "status" => account.status,
