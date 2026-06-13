@@ -48,6 +48,5 @@ RUN chmod +x /app/bin/docker-entrypoint
 
 USER tempest
 EXPOSE 4000
-VOLUME ["/var/lib/tempest"]
 ENTRYPOINT ["/app/bin/docker-entrypoint"]
 CMD ["start"]

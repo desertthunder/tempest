@@ -97,6 +97,9 @@ volume mount=/var/lib/tempest
 
 Do not run multiple replicas. Railway volumes do not support active replicas,
 and Tempest's SQLite profile expects one writer.
+Configure the volume in Railway. The Dockerfile intentionally does not use a
+Docker `VOLUME` instruction because Railway rejects it; the mount must come from
+Railway's volume settings.
 
 Set the custom domain in Railway before migrating an account. Wait for DNS and
 TLS to become healthy.

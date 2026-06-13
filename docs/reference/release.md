@@ -88,6 +88,9 @@ volume mount=/var/lib/tempest
 TEMPEST_DATA_DIR=/var/lib/tempest
 ```
 
+The volume mount is a Railway setting. The Dockerfile does not declare
+`VOLUME`, because Railway rejects that instruction.
+
 Required variables:
 
 ```text

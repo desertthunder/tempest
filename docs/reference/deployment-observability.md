@@ -139,6 +139,8 @@ Railway volumes are persistent, but Railway documents several caveats relevant
 to Tempest: each service can only have one volume, replicas cannot be used with
 volumes, and deployments with an attached volume may have a short downtime window
 because multiple active deployments cannot mount the same service volume safely.
+The volume must be configured in Railway, not with a Dockerfile `VOLUME`
+instruction.
 
 ## Required environment
 
