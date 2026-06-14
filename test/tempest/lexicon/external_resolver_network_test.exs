@@ -58,6 +58,55 @@ defmodule Tempest.Lexicon.ExternalResolver.NetworkTest do
     assert {:ok, @document} = Network.resolve(@id, resolver_opts())
   end
 
+  test "resolves site.standard lexicons in the default external namespace set" do
+    for id <- ~w(
+           site.standard.document
+           site.standard.graph.recommend
+           site.standard.graph.subscription
+           site.standard.publication
+         ) do
+      Network.reset_cache!()
+
+      document = Map.put(@document, "id", id)
+      query = "_lexicon." <> (id |> String.split(".") |> Enum.drop(-1) |> Enum.reverse() |> Enum.join("."))
+
+      assert {:ok, ^document} =
+               Network.resolve(id,
+                 dns_txt_lookup: fn ^query -> ["did=#{@did}"] end,
+                 did_document_lookup: fn @did ->
+                   {:ok,
+                    %{
+                      "service" => [
+                        %{"type" => "AtprotoPersonalDataServer", "serviceEndpoint" => "https://pds.example"}
+                      ]
+                    }}
+                 end,
+                 schema_record_lookup: fn _endpoint, @did, ^id -> {:ok, %{"value" => document}} end,
+                 req_options: [plug: {Req.Test, __MODULE__}]
+               )
+    end
+  end
+
+  test "rejects external resolution outside the default namespace set" do
+    assert {:error, :not_allowed} =
+             Network.resolve(@id,
+               dns_txt_lookup: fn @query -> ["did=#{@did}"] end,
+               did_document_lookup: fn @did ->
+                 {:ok,
+                  %{"service" => [%{"type" => "AtprotoPersonalDataServer", "serviceEndpoint" => "https://pds.example"}]}}
+               end,
+               req_options: [plug: {Req.Test, __MODULE__}]
+             )
+  end
+
+  test "allows non-default namespaces when explicitly configured" do
+    Req.Test.expect(__MODULE__, fn conn ->
+      json(conn, %{"value" => Map.put(@document, "$type", "com.atproto.lexicon.schema")})
+    end)
+
+    assert {:ok, @document} = Network.resolve(@id, resolver_opts(allowed_namespaces: ["example.remote"]))
+  end
+
   test "caches positive resolution results" do
     counter = start_counter!()
 
@@ -170,6 +219,7 @@ defmodule Tempest.Lexicon.ExternalResolver.NetworkTest do
         did_document_lookup: fn @did ->
           {:ok, %{"service" => [%{"type" => "AtprotoPersonalDataServer", "serviceEndpoint" => "https://pds.example"}]}}
         end,
+        allowed_namespaces: ["example.remote"],
         req_options: [plug: {Req.Test, __MODULE__}]
       ],
       overrides

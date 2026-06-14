@@ -3,7 +3,7 @@ defmodule Tempest.Lexicon.Validator do
   Generic Lexicon schema validator for repository records.
   """
 
-  alias Tempest.Lexicon.Registry
+  alias Tempest.Lexicon.{KnownRecords, Registry}
   alias Tempest.RepoCore.{AtUri, Cid, Did, Handle, Nsid, RecordKey, Tid}
 
   @max_depth 64
@@ -26,8 +26,12 @@ defmodule Tempest.Lexicon.Validator do
               end
             end
 
-          {:error, :unknown_lexicon} when not require_schema? ->
-            {:ok, :unknown}
+          {:error, :unknown_lexicon} ->
+            cond do
+              KnownRecords.known?(collection) -> {:ok, :valid}
+              not require_schema? -> {:ok, :unknown}
+              true -> {:error, :unknown_lexicon}
+            end
 
           {:error, reason} ->
             {:error, reason}

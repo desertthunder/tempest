@@ -25,6 +25,7 @@ defmodule Tempest.Lexicon.ExternalResolver.Network do
   @cache_table :tempest_lexicon_external_resolver_cache
   @txt_prefix "did="
   @schema_collection "com.atproto.lexicon.schema"
+  @default_allowed_namespaces ["site.standard"]
 
   @default_opts [
     positive_ttl_ms: 300_000,
@@ -42,11 +43,15 @@ defmodule Tempest.Lexicon.ExternalResolver.Network do
     ensure_cache!()
     now = monotonic_ms()
 
-    case lookup_cache(id, now) do
-      {:fresh, document} -> {:ok, document}
-      {:negative, reason} -> {:error, reason}
-      {:stale, document} -> refresh_with_single_flight(id, opts, document)
-      :miss -> refresh_with_single_flight(id, opts, nil)
+    if namespace_allowed?(id, Keyword.get(opts, :allowed_namespaces, @default_allowed_namespaces)) do
+      case lookup_cache(id, now) do
+        {:fresh, document} -> {:ok, document}
+        {:negative, reason} -> {:error, reason}
+        {:stale, document} -> refresh_with_single_flight(id, opts, document)
+        :miss -> refresh_with_single_flight(id, opts, nil)
+      end
+    else
+      {:error, :not_allowed}
     end
   end
 
@@ -130,6 +135,17 @@ defmodule Tempest.Lexicon.ExternalResolver.Network do
       {:error, :invalid_ref}
     end
   end
+
+  defp namespace_allowed?(_id, []), do: true
+
+  defp namespace_allowed?(id, namespaces) when is_list(namespaces) do
+    Enum.any?(namespaces, fn
+      namespace when is_binary(namespace) -> id == namespace or String.starts_with?(id, namespace <> ".")
+      _namespace -> false
+    end)
+  end
+
+  defp namespace_allowed?(_id, _namespaces), do: false
 
   defp resolve_lexicon_did(domain, opts) do
     query = "_lexicon." <> domain

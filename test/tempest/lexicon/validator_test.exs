@@ -103,6 +103,61 @@ defmodule Tempest.Lexicon.ValidatorTest do
     assert {:error, :unknown_lexicon} =
              Validator.validate_record("example.app.record", "abc", record, require_schema?: true)
   end
+
+  test "known record fallback treats site.standard records as valid after resolution misses" do
+    previous_config = Application.get_env(:tempest, Tempest.Lexicon.Registry, [])
+
+    Application.put_env(:tempest, Tempest.Lexicon.Registry,
+      bundled?: false,
+      paths: [],
+      external_resolver: [
+        enabled?: true,
+        resolver: Tempest.Lexicon.ValidatorTest.FailingResolver
+      ]
+    )
+
+    on_exit(fn ->
+      Application.put_env(:tempest, Tempest.Lexicon.Registry, previous_config)
+    end)
+
+    for collection <- ~w(
+          site.standard.document
+          site.standard.graph.recommend
+          site.standard.graph.subscription
+          site.standard.publication
+        ) do
+      assert {:ok, :valid} =
+               Validator.validate_record(collection, "abc", %{"$type" => collection}, require_schema?: true)
+    end
+
+    assert {:error, :unknown_lexicon} =
+             Validator.validate_record("other.standard.document", "abc", %{"$type" => "other.standard.document"},
+               require_schema?: true
+             )
+  end
+
+  test "known record fallback can be extended with configured namespaces" do
+    previous_config = Application.get_env(:tempest, Tempest.Lexicon.Registry, [])
+
+    Application.put_env(:tempest, Tempest.Lexicon.Registry,
+      bundled?: false,
+      paths: [],
+      known_record_namespaces: ["example.standard"],
+      external_resolver: [
+        enabled?: true,
+        resolver: Tempest.Lexicon.ValidatorTest.FailingResolver
+      ]
+    )
+
+    on_exit(fn ->
+      Application.put_env(:tempest, Tempest.Lexicon.Registry, previous_config)
+    end)
+
+    assert {:ok, :valid} =
+             Validator.validate_record("example.standard.document", "abc", %{"$type" => "example.standard.document"},
+               require_schema?: true
+             )
+  end
 end
 
 defmodule Tempest.Lexicon.ValidatorTest.FailingResolver do

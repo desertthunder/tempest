@@ -137,17 +137,35 @@ if admin_token_hash = System.get_env("TEMPEST_ADMIN_TOKEN_HASH") do
   config :tempest, :admin_token_hash, admin_token_hash
 end
 
-if lexicon_paths = System.get_env("TEMPEST_LEXICON_PATHS") do
-  paths = String.split(lexicon_paths, ",", trim: true)
-  config :tempest, Tempest.Lexicon.Registry, paths: paths
-end
-
 if appview_url = System.get_env("TEMPEST_APPVIEW_URL") do
   config :tempest, Tempest.Xrpc.Proxy, upstream_base_url: String.trim_trailing(appview_url, "/")
 end
 
-if System.get_env("TEMPEST_LEXICON_EXTERNAL_RESOLVER") in ["1", "true", "TRUE"] do
-  config :tempest, Tempest.Lexicon.Registry, external_resolver: [enabled?: true]
+lexicon_runtime_config = []
+
+lexicon_runtime_config =
+  if lexicon_paths = System.get_env("TEMPEST_LEXICON_PATHS") do
+    Keyword.put(lexicon_runtime_config, :paths, String.split(lexicon_paths, ",", trim: true))
+  else
+    lexicon_runtime_config
+  end
+
+lexicon_runtime_config =
+  if known_records = System.get_env("TEMPEST_LEXICON_KNOWN_RECORDS") do
+    Keyword.put(lexicon_runtime_config, :known_records, String.split(known_records, ",", trim: true))
+  else
+    lexicon_runtime_config
+  end
+
+lexicon_runtime_config =
+  if System.get_env("TEMPEST_LEXICON_EXTERNAL_RESOLVER") in ["1", "true", "TRUE"] do
+    Keyword.put(lexicon_runtime_config, :external_resolver, enabled?: true)
+  else
+    lexicon_runtime_config
+  end
+
+if lexicon_runtime_config != [] do
+  config :tempest, Tempest.Lexicon.Registry, lexicon_runtime_config
 end
 
 if config_env() == :prod do
