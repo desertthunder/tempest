@@ -7,10 +7,34 @@ defmodule TempestWeb.HomeLive do
   @refresh_interval :timer.seconds(15)
 
   @service_routes [
-    %{verb: "GET", name: "/.well-known/atproto-did", href: "/.well-known/atproto-did", badge: "public", badge_class: "badge-success"},
-    %{verb: "GET", name: "/.well-known/did.json", href: "/.well-known/did.json", badge: "public", badge_class: "badge-success"},
-    %{verb: "GET", name: "/.well-known/oauth-protected-resource", href: "/.well-known/oauth-protected-resource", badge: "meta", badge_class: "badge-info"},
-    %{verb: "GET", name: "/.well-known/oauth-authorization-server", href: "/.well-known/oauth-authorization-server", badge: "meta", badge_class: "badge-info"},
+    %{
+      verb: "GET",
+      name: "/.well-known/atproto-did",
+      href: "/.well-known/atproto-did",
+      badge: "public",
+      badge_class: "badge-success"
+    },
+    %{
+      verb: "GET",
+      name: "/.well-known/did.json",
+      href: "/.well-known/did.json",
+      badge: "public",
+      badge_class: "badge-success"
+    },
+    %{
+      verb: "GET",
+      name: "/.well-known/oauth-protected-resource",
+      href: "/.well-known/oauth-protected-resource",
+      badge: "meta",
+      badge_class: "badge-info"
+    },
+    %{
+      verb: "GET",
+      name: "/.well-known/oauth-authorization-server",
+      href: "/.well-known/oauth-authorization-server",
+      badge: "meta",
+      badge_class: "badge-info"
+    },
     %{verb: "GET", name: "/oauth/jwks", href: "/oauth/jwks", badge: "meta", badge_class: "badge-info"},
     %{verb: "GET", name: "/xrpc/_health", href: "/xrpc/_health", badge: "ops", badge_class: "badge-info"},
     %{verb: "GET", name: "/xrpc/_stats", href: "/xrpc/_stats", badge: "public", badge_class: "badge-success"},
@@ -44,7 +68,7 @@ defmodule TempestWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={nil}>
+    <Layouts.app flash={@flash} current_scope={%{}}>
       <main id="tempest-home" class="tempest-home">
         <div class="tempest-home__desktop" aria-label="Tempest desktop">
           <div class="tempest-home__workarea">
@@ -176,9 +200,9 @@ defmodule TempestWeb.HomeLive do
                 </header>
                 <div id="api-endpoints" class="win-window__body endpoint-list">
                   <%= for endpoint <- @endpoint_rows do %>
-                    <.link
+                    <a
                       :if={endpoint.href}
-                      navigate={endpoint.href}
+                      href={endpoint.href}
                       class="endpoint-list__row"
                     >
                       <span class="endpoint-list__method">{endpoint.verb}</span>
@@ -187,7 +211,7 @@ defmodule TempestWeb.HomeLive do
                         {endpoint.name}
                       </span>
                       <span class={["badge", endpoint.badge_class, "endpoint-list__badge"]}>{endpoint.badge}</span>
-                    </.link>
+                    </a>
                     <div :if={!endpoint.href} class={["endpoint-list__row", endpoint.muted? && "endpoint-list__row--muted"]}>
                       <span class="endpoint-list__method">{endpoint.verb}</span>
                       <span>
@@ -415,14 +439,17 @@ defmodule TempestWeb.HomeLive do
   defp badge_class_for(%Method{auth: :bearer}), do: "badge-info"
   defp badge_class_for(%Method{auth: :admin}), do: "badge-ghost"
 
-  defp public_href(%Method{auth: :none, nsid: "com.atproto.server.describeServer"}), do: "/xrpc/com.atproto.server.describeServer"
+  defp public_href(%Method{auth: :none, nsid: "com.atproto.server.describeServer"}, _host),
+    do: "/xrpc/com.atproto.server.describeServer"
 
   defp public_href(%Method{auth: :none, nsid: "com.atproto.identity.resolveHandle"}, host) do
     "/xrpc/com.atproto.identity.resolveHandle?handle=#{host}"
   end
 
-  defp public_href(%Method{auth: :none, nsid: "com.atproto.sync.listRepos"}), do: "/xrpc/com.atproto.sync.listRepos"
-  defp public_href(%Method{}), do: nil
+  defp public_href(%Method{auth: :none, nsid: "com.atproto.sync.listRepos"}, _host),
+    do: "/xrpc/com.atproto.sync.listRepos"
+
+  defp public_href(%Method{}, _host), do: nil
 
   defp health_light_class("ok"), do: "status-light--ok"
   defp health_light_class("degraded"), do: "status-light--ready"
