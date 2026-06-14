@@ -69,7 +69,15 @@ defmodule Tempest.Xrpc.Proxy do
   defp forwarded_headers(conn, upstream, nsid) do
     conn.req_headers
     |> Enum.filter(fn {name, _value} ->
-      name in ["accept", "content-type", "atproto-accept-labelers", "x-atproto-accept-labelers"]
+      name in [
+        "accept",
+        "accept-language",
+        "content-type",
+        "atproto-accept-labelers",
+        "atproto-content-labelers",
+        "x-atproto-accept-labelers",
+        "x-bsky-topics"
+      ]
     end)
     |> maybe_put_service_auth(conn, upstream, nsid)
   end

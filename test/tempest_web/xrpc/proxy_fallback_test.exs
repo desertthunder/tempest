@@ -21,11 +21,17 @@ defmodule TempestWeb.Xrpc.ProxyFallbackTest do
     Req.Test.expect(__MODULE__, fn conn ->
       assert conn.request_path == "/xrpc/app.bsky.feed.getTimeline"
       assert conn.query_string == "limit=1"
+      assert Plug.Conn.get_req_header(conn, "x-bsky-topics") == ["science,news"]
+      assert Plug.Conn.get_req_header(conn, "accept-language") == ["en-US"]
+      assert Plug.Conn.get_req_header(conn, "atproto-content-labelers") == ["did:plc:labeler"]
       Req.Test.json(conn, %{"feed" => []})
     end)
 
     proxy_conn =
       conn
+      |> put_req_header("x-bsky-topics", "science,news")
+      |> put_req_header("accept-language", "en-US")
+      |> put_req_header("atproto-content-labelers", "did:plc:labeler")
       |> get(~p"/xrpc/app.bsky.feed.getTimeline", %{"limit" => "1"})
 
     assert json_response(proxy_conn, 200) == %{"feed" => []}

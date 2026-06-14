@@ -119,12 +119,10 @@ defmodule TempestWeb.Router do
   defp put_xrpc_cors_headers(conn, _opts) do
     conn
     |> Plug.Conn.put_resp_header("access-control-allow-origin", "*")
-    |> Plug.Conn.put_resp_header("access-control-allow-methods", "GET, POST, OPTIONS")
-    |> Plug.Conn.put_resp_header(
-      "access-control-allow-headers",
-      "authorization, content-type, dpop, atproto-proxy, atproto-accept-labelers, x-atproto-accept-labelers"
-    )
+    |> Plug.Conn.put_resp_header("access-control-allow-credentials", "true")
+    |> Plug.Conn.put_resp_header("access-control-allow-methods", "*")
+    |> Plug.Conn.put_resp_header("access-control-allow-headers", "*")
     |> Plug.Conn.put_resp_header("access-control-expose-headers", "dpop-nonce")
-    |> Plug.Conn.put_resp_header("access-control-max-age", "86400")
+    |> Plug.Conn.put_resp_header("access-control-max-age", "100000000")
   end
 end

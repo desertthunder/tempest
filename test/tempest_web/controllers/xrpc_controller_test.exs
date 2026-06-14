@@ -21,22 +21,17 @@ defmodule TempestWeb.XrpcControllerTest do
       |> put_req_header("access-control-request-method", "GET")
       |> put_req_header(
         "access-control-request-headers",
-        "authorization,content-type,dpop,atproto-proxy,atproto-accept-labelers"
+        "authorization,content-type,dpop,atproto-proxy,atproto-accept-labelers,x-atproto-accept-labelers,x-bsky-topics,x-future-client-header"
       )
       |> options(~p"/xrpc/com.atproto.server.describeServer")
 
     assert response(conn, 204) == ""
     assert get_resp_header(conn, "access-control-allow-origin") == ["*"]
-    assert get_resp_header(conn, "access-control-allow-methods") == ["GET, POST, OPTIONS"]
+    assert get_resp_header(conn, "access-control-allow-credentials") == ["true"]
+    assert get_resp_header(conn, "access-control-allow-methods") == ["*"]
+    assert get_resp_header(conn, "access-control-allow-headers") == ["*"]
     assert get_resp_header(conn, "access-control-expose-headers") == ["dpop-nonce"]
-
-    [allow_headers] = get_resp_header(conn, "access-control-allow-headers")
-    assert allow_headers =~ "authorization"
-    assert allow_headers =~ "content-type"
-    assert allow_headers =~ "dpop"
-    assert allow_headers =~ "atproto-proxy"
-    assert allow_headers =~ "atproto-accept-labelers"
-    assert allow_headers =~ "x-atproto-accept-labelers"
+    assert get_resp_header(conn, "access-control-max-age") == ["100000000"]
   end
 
   test "GET did.json returns service DID document", %{conn: conn} do
