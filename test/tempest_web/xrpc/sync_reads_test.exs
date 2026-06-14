@@ -389,6 +389,33 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     assert json_response(crawl_conn, 200) == %{}
   end
 
+  test "requestCrawl continues when a configured relay fails", %{conn: conn} do
+    Application.put_env(:tempest, Tempest.Sync,
+      relays: ["https://bad-relay.test", "https://relay.test"],
+      request_crawl_window_ms: 0,
+      http_req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    Req.Test.expect(__MODULE__, 2, fn req_conn ->
+      assert req_conn.method == "POST"
+      assert req_conn.request_path == "/xrpc/com.atproto.sync.requestCrawl"
+      assert {:ok, %{"hostname" => "localhost"}, _conn} = Plug.Conn.read_body(req_conn) |> decode_req_body(req_conn)
+
+      case req_conn.host do
+        "bad-relay.test" -> Plug.Conn.send_resp(req_conn, 503, "{}")
+        "relay.test" -> Plug.Conn.send_resp(req_conn, 200, "{}")
+      end
+    end)
+
+    crawl_conn =
+      conn
+      |> recycle()
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.sync.requestCrawl", %{"hostname" => "localhost"})
+
+    assert json_response(crawl_conn, 200) == %{}
+  end
+
   test "request_own_crawl requests configured relays for the local hostname" do
     Application.put_env(:tempest, Tempest.Sync,
       relays: ["https://relay.test"],
@@ -406,6 +433,24 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     end)
 
     assert {:ok, %{}} = Tempest.Sync.request_own_crawl()
+  end
+
+  test "request_own_crawl does not consume the public requestCrawl rate limit", %{conn: conn} do
+    Application.put_env(:tempest, Tempest.Sync,
+      relays: [],
+      request_crawl_window_ms: 60_000,
+      http_req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    assert {:ok, %{}} = Tempest.Sync.request_own_crawl()
+
+    public_conn =
+      conn
+      |> recycle()
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.sync.requestCrawl", %{"hostname" => "localhost"})
+
+    assert json_response(public_conn, 200) == %{}
   end
 
   test "requestCrawl is rate limited per hostname", %{conn: conn} do

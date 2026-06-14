@@ -4,6 +4,7 @@ defmodule Tempest.Sync do
   """
 
   import Ecto.Query
+  require Logger
 
   alias Tempest.Accounts.Account
   alias Tempest.Blobs
@@ -121,21 +122,15 @@ defmodule Tempest.Sync do
 
   def request_crawl(params) when is_map(params) do
     with {:ok, hostname} <- validate_request_crawl_hostname(Map.get(params, "hostname")),
-         :ok <- check_request_crawl_rate(hostname),
-         {:ok, result} <- request_configured_relays(hostname) do
-      :telemetry.execute([:tempest, :sync, :request_crawl], %{relay_count: result.requested}, %{
-        hostname: hostname,
-        skipped: result.skipped
-      })
-
-      {:ok, %{}}
+         :ok <- check_request_crawl_rate(hostname) do
+      request_configured_relays(hostname)
     end
   end
 
   def request_crawl(_params), do: {:error, :invalid_request_body}
 
   def request_own_crawl do
-    request_crawl(%{"hostname" => Config.load!().hostname})
+    request_configured_relays(Config.load!().hostname)
   end
 
   defp validate_get_record_params(params) do
@@ -343,13 +338,37 @@ defmodule Tempest.Sync do
       |> Application.get_env(__MODULE__, [])
       |> Keyword.get(:http_req_options, [])
 
-    Enum.reduce_while(relays, {:ok, %{requested: 0, skipped: 0}}, fn relay, {:ok, acc} ->
-      case request_relay_crawl(relay, hostname, req_options) do
-        :ok -> {:cont, {:ok, %{acc | requested: acc.requested + 1}}}
-        {:skip, _reason} -> {:cont, {:ok, %{acc | skipped: acc.skipped + 1}}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
+    result =
+      Enum.reduce(relays, %{requested: 0, skipped: 0, failed: 0}, fn relay, acc ->
+        case request_relay_crawl(relay, hostname, req_options) do
+          :ok ->
+            %{acc | requested: acc.requested + 1}
+
+          {:skip, reason} ->
+            log_relay_crawl_skip(relay, reason)
+            %{acc | skipped: acc.skipped + 1}
+
+          {:error, reason} ->
+            log_relay_crawl_failure(relay, reason)
+            %{acc | failed: acc.failed + 1}
+        end
+      end)
+
+    :telemetry.execute([:tempest, :sync, :request_crawl], %{relay_count: result.requested}, %{
+      hostname: hostname,
+      skipped: result.skipped,
+      failed: result.failed
+    })
+
+    {:ok, %{}}
+  end
+
+  defp log_relay_crawl_skip(relay, reason) do
+    Logger.warning("skipping requestCrawl relay #{inspect(relay)}: #{inspect(reason)}")
+  end
+
+  defp log_relay_crawl_failure(relay, reason) do
+    Logger.warning("requestCrawl relay #{inspect(relay)} failed: #{inspect(reason)}")
   end
 
   defp request_relay_crawl(relay, hostname, req_options) when is_binary(relay) do
