@@ -89,7 +89,7 @@ defmodule Tempest.Blobs.S3IntegrationTest do
     assert response(response, 200) == "s3 integration bytes"
   end
 
-  test "record writes report S3 promotion failures clearly", %{conn: conn} do
+  test "record writes recover when S3 copy fails but the temp object is readable", %{conn: conn} do
     account = create_account!(conn)
     cid = Blobs.cid_for("s3 promotion failure")
 
@@ -112,20 +112,75 @@ defmodule Tempest.Blobs.S3IntegrationTest do
       Plug.Conn.send_resp(conn, 403, "")
     end)
 
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 promotion failure")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
+      assert {:ok, "s3 promotion failure", conn} = Plug.Conn.read_body(conn)
+      Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "DELETE"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 204, "")
+    end)
+
+    conn
+    |> auth_json(account)
+    |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+      "repo" => account["did"],
+      "collection" => "app.tempest.blob",
+      "rkey" => "s3-failure",
+      "validate" => false,
+      "record" => %{"$type" => "app.tempest.blob", "image" => blob}
+    })
+    |> json_response(200)
+  end
+
+  test "record writes report missing temp object bytes clearly", %{conn: conn} do
+    account = create_account!(conn)
+    cid = Blobs.cid_for("s3 missing temp")
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    blob = upload_blob!(conn, account, "s3 missing temp")["blob"]
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
     response =
       conn
       |> auth_json(account)
       |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
         "repo" => account["did"],
         "collection" => "app.tempest.blob",
-        "rkey" => "s3-failure",
+        "rkey" => "s3-missing-temp",
         "validate" => false,
         "record" => %{"$type" => "app.tempest.blob", "image" => blob}
       })
-      |> json_response(502)
+      |> json_response(500)
 
-    assert response["error"] == "UpstreamFailure"
-    assert response["message"] == "blob storage request failed"
+    assert response["error"] == "InternalServerError"
+    assert response["message"] == "uploaded blob bytes could not be found"
   end
 
   defp create_account!(conn) do

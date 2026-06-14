@@ -46,13 +46,21 @@ defmodule Tempest.Blobs.S3Storage do
           {:ok, destination}
 
         {:ok, %{status: 404}} ->
-          {:error, :blob_not_found}
+          promote_blob_via_read_write(config, did, cid, source, destination)
 
         {:ok, %{status: status}} ->
-          {:error, {:s3_status, status}}
+          case promote_blob_via_read_write(config, did, cid, source, destination) do
+            {:ok, promoted} -> {:ok, promoted}
+            {:error, :blob_not_found} -> {:error, {:s3_status, status}}
+            {:error, reason} -> {:error, reason}
+          end
 
         {:error, reason} ->
-          {:error, reason}
+          case promote_blob_via_read_write(config, did, cid, source, destination) do
+            {:ok, promoted} -> {:ok, promoted}
+            {:error, :blob_not_found} -> {:error, reason}
+            {:error, fallback_reason} -> {:error, fallback_reason}
+          end
       end
     end
   end
@@ -122,6 +130,35 @@ defmodule Tempest.Blobs.S3Storage do
     {:ok, request}
   rescue
     e in KeyError -> {:error, {:missing_s3_config, e.key}}
+  end
+
+  defp promote_blob_via_read_write(config, did, cid, source, destination) do
+    with {:ok, bytes} <- read_key(config, source),
+         :ok <- write_key(config, destination, bytes),
+         :ok <- delete_temp_blob(config, did, cid) do
+      {:ok, destination}
+    end
+  end
+
+  defp read_key(config, key) do
+    with {:ok, request} <- request_options(config, key, method: :get) do
+      case Req.request(request) do
+        {:ok, %{status: status, body: bytes}} when status in 200..299 and is_binary(bytes) -> {:ok, bytes}
+        {:ok, %{status: 404}} -> {:error, :blob_not_found}
+        {:ok, %{status: status}} -> {:error, {:s3_status, status}}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp write_key(config, key, bytes) when is_binary(bytes) do
+    with {:ok, request} <- request_options(config, key, method: :put, body: bytes) do
+      case Req.request(request) do
+        {:ok, %{status: status}} when status in 200..299 -> :ok
+        {:ok, %{status: status}} -> {:error, {:s3_status, status}}
+        {:error, reason} -> {:error, reason}
+      end
+    end
   end
 
   defp object_url(endpoint_url, bucket, key) do
