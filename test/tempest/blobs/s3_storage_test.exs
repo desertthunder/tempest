@@ -148,7 +148,46 @@ defmodule Tempest.Blobs.S3StorageTest do
       Plug.Conn.send_resp(conn, 404, "")
     end)
 
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
     assert {:error, :blob_not_found} = S3Storage.promote_blob(config, did, cid)
+  end
+
+  test "promote_blob succeeds when temp is gone but public object already exists", %{
+    config: config,
+    did: did,
+    cid: cid
+  } do
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 bytes")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "DELETE"
+      assert conn.request_path == "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    assert {:ok, promoted_path} = S3Storage.promote_blob(config, did, cid)
+    assert promoted_path == "blobs/#{did}/#{cid}"
   end
 
   test "get_blob reads public object bytes", %{config: config, did: did, cid: cid} do

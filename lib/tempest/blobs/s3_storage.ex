@@ -138,10 +138,29 @@ defmodule Tempest.Blobs.S3Storage do
   end
 
   defp promote_blob_via_read_write(config, did, cid, source, destination) do
-    with {:ok, bytes} <- read_key(config, source),
-         :ok <- write_key(config, destination, bytes),
-         :ok <- delete_temp_blob(config, did, cid) do
-      {:ok, destination}
+    case read_key(config, source) do
+      {:ok, bytes} ->
+        with :ok <- write_key(config, destination, bytes),
+             :ok <- delete_temp_blob(config, did, cid) do
+          {:ok, destination}
+        end
+
+      {:error, :blob_not_found} ->
+        promote_existing_blob(config, did, cid, destination)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp promote_existing_blob(config, did, cid, destination) do
+    case read_key(config, destination) do
+      {:ok, _bytes} ->
+        _ = delete_temp_blob(config, did, cid)
+        {:ok, destination}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

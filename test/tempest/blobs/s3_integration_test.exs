@@ -185,6 +185,12 @@ defmodule Tempest.Blobs.S3IntegrationTest do
       Plug.Conn.send_resp(conn, 404, "")
     end)
 
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
     response =
       conn
       |> auth_json(account)
@@ -199,6 +205,89 @@ defmodule Tempest.Blobs.S3IntegrationTest do
 
     assert response["error"] == "InternalServerError"
     assert response["message"] == "uploaded blob bytes could not be found"
+  end
+
+  test "putRecord reuses an already-public S3 blob without requiring temp bytes", %{conn: conn} do
+    account = create_account!(conn)
+    cid = Blobs.cid_for("s3 reused public blob")
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 reused public blob")
+    end)
+
+    blob = upload_blob!(conn, account, "s3 reused public blob")["blob"]
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "DELETE"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 204, "")
+    end)
+
+    created =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.blob",
+        "rkey" => "s3-reuse",
+        "validate" => false,
+        "record" => %{"$type" => "app.tempest.blob", "image" => blob, "caption" => "first"}
+      })
+      |> json_response(200)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 reused public blob")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "DELETE"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    updated =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.putRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.blob",
+        "rkey" => "s3-reuse",
+        "swapRecord" => created["cid"],
+        "validate" => false,
+        "record" => %{"$type" => "app.tempest.blob", "image" => blob, "caption" => "second"}
+      })
+      |> json_response(200)
+
+    assert updated["uri"] == "at://#{account["did"]}/app.tempest.blob/s3-reuse"
+    assert updated["cid"] != created["cid"]
   end
 
   defp create_account!(conn) do
