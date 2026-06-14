@@ -128,6 +128,7 @@ defmodule Tempest.Lexicon.Validator do
 
   defp validate_value(value, %{"type" => "blob"} = schema, _document, path, _depth) do
     with :ok <- ensure_map(value, path),
+         :ok <- validate_blob_ref(value, path),
          :ok <- validate_optional_blob_size(value, schema, path),
          :ok <- validate_optional_blob_mime(value, schema, path) do
       :ok
@@ -304,6 +305,16 @@ defmodule Tempest.Lexicon.Validator do
   end
 
   defp validate_optional_blob_size(_value, _schema, _path), do: :ok
+
+  defp validate_blob_ref(
+         %{"$type" => "blob", "ref" => %{"$link" => cid}, "mimeType" => mime_type, "size" => size},
+         path
+       )
+       when is_binary(cid) and is_binary(mime_type) and is_integer(size) and size >= 0 do
+    validate_string_format(cid, "cid", join_path(path, "ref"))
+  end
+
+  defp validate_blob_ref(_value, path), do: {:error, {:invalid_field, path}}
 
   defp validate_optional_blob_mime(value, %{"accept" => accept}, path) when is_list(accept) do
     case Map.get(value, "mimeType") do

@@ -182,6 +182,9 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:missing_record_type), do: {:error, 400, "InvalidRequest", "record must include a $type field"}
   defp repo_error(:record_type_mismatch), do: {:error, 400, "InvalidRequest", "record $type must match collection"}
   defp repo_error(:unknown_lexicon), do: {:error, 400, "InvalidRequest", "record lexicon is unknown"}
+  defp repo_error(:invalid_record), do: {:error, 400, "InvalidRequest", "record is invalid"}
+  defp repo_error(:invalid_string), do: {:error, 400, "InvalidRequest", "record contains an invalid string"}
+  defp repo_error(:max_depth_exceeded), do: {:error, 400, "InvalidRequest", "record nesting is too deep"}
   defp repo_error(:missing_signing_key), do: {:error, 500, "InternalServerError", "account has no active signing key"}
   defp repo_error({:field_too_small, field}), do: {:error, 400, "InvalidRequest", "#{field} is too small"}
   defp repo_error({:field_too_large, field}), do: {:error, 400, "InvalidRequest", "#{field} is too large"}
@@ -214,6 +217,33 @@ defmodule Tempest.Xrpc.Repo do
 
   defp repo_error({:field_too_short, field}),
     do: {:error, 400, "InvalidRequest", "#{field} is too short"}
+
+  defp repo_error({:invalid_schema, field}),
+    do: {:error, 400, "InvalidRequest", "#{field} schema is invalid"}
+
+  defp repo_error({:unsupported_schema_type, field, type}),
+    do: {:error, 400, "InvalidRequest", "#{field} schema type #{type} is unsupported"}
+
+  defp repo_error({:invalid_commit_event, _reason}),
+    do: {:error, 500, "InternalServerError", "repository commit event is invalid"}
+
+  defp repo_error({:invalid_record_json, _reason}),
+    do: {:error, 500, "InternalServerError", "stored record JSON is invalid"}
+
+  defp repo_error({:invalid_record_cid, _reason}),
+    do: {:error, 500, "InternalServerError", "stored record CID is invalid"}
+
+  defp repo_error({:invalid_mst_node, _reason}),
+    do: {:error, 500, "InternalServerError", "repository tree is invalid"}
+
+  defp repo_error({:invalid_commit, _reason}),
+    do: {:error, 500, "InternalServerError", "repository commit is invalid"}
+
+  defp repo_error({:invalid_commit_cid, _reason}),
+    do: {:error, 500, "InternalServerError", "repository commit CID is invalid"}
+
+  defp repo_error({:invalid_block_cid, _reason}),
+    do: {:error, 500, "InternalServerError", "repository block CID is invalid"}
 
   defp repo_error(_reason), do: {:error, 500, "InternalServerError", "repository write failed"}
 end

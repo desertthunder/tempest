@@ -40,6 +40,21 @@ defmodule Tempest.Lexicon.ValidatorTest do
              Validator.validate_record("app.bsky.actor.profile", "self", record)
   end
 
+  test "rejects malformed blob references" do
+    record = %{
+      "$type" => "app.bsky.actor.profile",
+      "avatar" => %{
+        "$type" => "blob",
+        "cid" => Cid.for_raw("avatar") |> Cid.to_string(),
+        "mimeType" => "image/png",
+        "size" => 6
+      }
+    }
+
+    assert {:error, {:invalid_field, "app.bsky.actor.profile.avatar"}} =
+             Validator.validate_record("app.bsky.actor.profile", "self", record)
+  end
+
   test "enforces record key types from the Lexicon definition" do
     record = %{"$type" => "app.bsky.actor.profile"}
 

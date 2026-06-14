@@ -607,6 +607,84 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert File.exists?(Path.join([Tempest.Config.load!().data_dir, "blobs", path_did(account["did"]), cid]))
   end
 
+  test "putRecord updates Bluesky profile avatar and banner blobs", %{conn: conn} do
+    account = create_account!(conn, "records-profile-images.test", "records-profile-images@example.com")
+    created = create_profile!(conn, account, "Profile Images")
+
+    avatar = upload_blob!(conn, account, png_bytes(), "image/png")["blob"]
+    banner = upload_blob!(conn, account, jpeg_bytes(), "image/jpeg")["blob"]
+    avatar_cid = avatar["ref"]["$link"]
+    banner_cid = banner["ref"]["$link"]
+
+    assert blob_metadata(account["did"], avatar_cid).state == "temp"
+    assert blob_metadata(account["did"], banner_cid).state == "temp"
+
+    updated =
+      conn
+      |> auth_json(account)
+      |> put_req_header("atproto-proxy", "did:web:api.bsky.app#bsky_appview")
+      |> put_req_header("atproto-accept-labelers", "did:plc:ar7c4by46qjdydhdevvrndac;redact")
+      |> post(~p"/xrpc/com.atproto.repo.putRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self",
+        "swapRecord" => created["cid"],
+        "record" => %{
+          "$type" => "app.bsky.actor.profile",
+          "avatar" => avatar,
+          "banner" => banner,
+          "createdAt" => "2026-06-13T20:20:43.434Z",
+          "description" => "tempest.desertthunder.dev",
+          "displayName" => "Tempest"
+        }
+      })
+      |> json_response(200)
+
+    assert updated["uri"] == "at://#{account["did"]}/app.bsky.actor.profile/self"
+    assert updated["cid"] != created["cid"]
+    assert updated["validationStatus"] == "valid"
+    assert blob_metadata(account["did"], avatar_cid).state == "public"
+    assert blob_metadata(account["did"], banner_cid).state == "public"
+
+    profile =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self"
+      })
+      |> json_response(200)
+
+    assert profile["value"]["avatar"]["ref"]["$link"] == avatar_cid
+    assert profile["value"]["banner"]["ref"]["$link"] == banner_cid
+  end
+
+  test "putRecord rejects malformed blob references with a client error", %{conn: conn} do
+    account = create_account!(conn, "records-profile-bad-blob.test", "records-profile-bad-blob@example.com")
+    created = create_profile!(conn, account, "Bad Blob")
+    uploaded = upload_blob!(conn, account, png_bytes(), "image/png")["blob"]
+
+    rejected_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.putRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.actor.profile",
+        "rkey" => "self",
+        "swapRecord" => created["cid"],
+        "record" => %{
+          "$type" => "app.bsky.actor.profile",
+          "avatar" => Map.delete(uploaded, "ref"),
+          "displayName" => "Bad Blob"
+        }
+      })
+
+    response = json_response(rejected_conn, 400)
+    assert response["error"] == "InvalidRequest"
+    assert response["message"] =~ "avatar"
+  end
+
   test "importRepo verifies CARs atomically and keeps post-import revisions monotonic", %{conn: conn} do
     account = create_account!(conn, "records-import.test", "records-import@example.com")
     profile = create_profile!(conn, account, "Imported")
@@ -766,6 +844,14 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     |> put_req_header("content-length", Integer.to_string(byte_size(bytes)))
     |> post(~p"/xrpc/com.atproto.repo.uploadBlob", bytes)
     |> json_response(200)
+  end
+
+  defp png_bytes do
+    <<0x89, "PNG", 0x0D, 0x0A, 0x1A, 0x0A, "tempest-test-png">>
+  end
+
+  defp jpeg_bytes do
+    <<0xFF, 0xD8, 0xFF, "tempest-test-jpeg">>
   end
 
   defp blob_record_params(repo, rkey, blob) do
