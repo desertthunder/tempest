@@ -227,6 +227,11 @@ If request-time scans become expensive, add a supervised cache with a short TTL
 such as 5-30 seconds. The JSON response should include `generatedAt` so clients can
 judge freshness.
 
+Current implementation note: stats are generated on each request and are not
+cached. `generatedAt` is the UTC timestamp for the request-time snapshot. If a
+short TTL cache is introduced later, `generatedAt` must describe the cached
+snapshot time rather than the client response time.
+
 ## HTTP verification
 
 ```bash

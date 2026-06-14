@@ -9,7 +9,7 @@ references:
 ---
 
 Goal: publish `docs/reference/` as a public Phoenix documentation site with a
-Web 1.0 / Netscape Navigator-inspired UI.
+Netscape Navigator-inspired shell and a web 1.0 design (with a sidebar & search)
 
 - [ ] T17-01: Add a `Tempest.Docs` context with a fixed manifest for files under
       `docs/reference/`.
@@ -17,9 +17,8 @@ Web 1.0 / Netscape Navigator-inspired UI.
       traversal attempt.
 - [ ] T17-03: Add frontmatter parsing for `title` and `updated`, falling back to
       manifest values when frontmatter is missing.
-- [ ] T17-04: Add server-side Markdown rendering for trusted local reference docs.
-      Decide whether to use a dependency such as `MDEx`/`Earmark` or a small local
-      subset renderer.
+- [ ] T17-04: Add server-side Markdown rendering for trusted local reference docs
+      with `MDEx`
 - [ ] T17-05: Add relative-link rewriting for links between known reference docs.
 - [ ] T17-06: Add `TempestWeb.DocController` with `index` and `show` actions.
 - [ ] T17-07: Add public routes `GET /docs` and `GET /docs/:slug` under the

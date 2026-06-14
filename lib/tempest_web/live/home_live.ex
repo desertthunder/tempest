@@ -277,7 +277,7 @@ defmodule TempestWeb.HomeLive do
         id: "health-status",
         label: "Health",
         state: health_status,
-        value: "#{health["checks"]["statsScanErrorCount"] || 0} scan errors",
+        value: "#{stats_scan_error_count(health)} scan errors",
         note: "Derived from storage, database, directory, and sequencer checks.",
         light_class: health_light_class(health_status)
       }
@@ -325,7 +325,7 @@ defmodule TempestWeb.HomeLive do
         id: "status-health",
         label: "Node Health",
         state: health_status,
-        value: "#{health["checks"]["statsScanErrorCount"] || 0} scan errors",
+        value: "#{stats_scan_error_count(health)} scan errors",
         note: "Status derives from storage, database, directory, and sequencer checks.",
         light_class: health_light_class(health_status)
       }
@@ -335,6 +335,9 @@ defmodule TempestWeb.HomeLive do
   defp health_light_class("ok"), do: "status-light--ok"
   defp health_light_class("degraded"), do: "status-light--ready"
   defp health_light_class(_status), do: nil
+
+  defp stats_scan_error_count(%{"checks" => %{} = checks}), do: checks["statsScanErrorCount"] || 0
+  defp stats_scan_error_count(_health), do: 0
 
   defp rendered_at do
     DateTime.utc_now()

@@ -29,12 +29,12 @@ keeping admin-only operations and sensitive internals private.
       records, last indexed, uptime, and health.
 - [x] T16-10: Add helper copy explaining that `lastIndexedAt` is local repo,
       commit, or sequencer activity observed by this PDS.
-- [ ] T16-11: Add ConnCase tests for `/stats` and `/xrpc/_stats` without admin
+- [x] T16-11: Add ConnCase tests for `/stats` and `/xrpc/_stats` without admin
       authorization.
-- [ ] T16-12: Add regression tests proving public stats do not include email,
+- [x] T16-12: Add regression tests proving public stats do not include email,
       token, session, OAuth, backup path, admin token, or private filesystem data.
-- [ ] T16-13: Add Hurl smoke test `test/smoke/public-stats.hurl`.
-- [ ] T16-14: Document cache behavior if stats are cached. Include `generatedAt`
+- [x] T16-13: Add Hurl smoke test `test/smoke/public-stats.hurl`.
+- [x] T16-14: Document cache behavior if stats are cached. Include `generatedAt`
       in the JSON response either way.
 
 ## Integration Tests
@@ -60,6 +60,11 @@ hurl --test --jobs 1 \
 
 Prefer simple request-time aggregation first. If it becomes slow, add a short TTL
 cache and keep the response honest with `generatedAt`.
+
+Current behavior: public stats are generated on each request and are not cached.
+Every JSON response includes `generatedAt`, the UTC timestamp for that response's
+request-time snapshot. If a short TTL cache is added later, `generatedAt` must
+remain the timestamp for the cached snapshot, not the time a client receives it.
 
 Suggested JSON shape:
 

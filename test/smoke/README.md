@@ -24,6 +24,7 @@ hurl --test --jobs 1 \
   --variable account_email="smoke-${suffix}@example.com" \
   --variable account_password="correct horse battery staple" \
   test/smoke/health.hurl \
+  test/smoke/public-stats.hurl \
   test/smoke/xrpc.hurl \
   test/smoke/accounts.hurl \
   test/smoke/identity.hurl \
