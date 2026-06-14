@@ -29,6 +29,7 @@ defmodule Tempest.Docs do
     %{slug: "deployment", path: "deployment.md", title: "Deployment Guide"},
     %{slug: "deployment-observability", path: "deployment-observability.md", title: "Deployment and Observability"},
     %{slug: "endpoints", path: "endpoints.md", title: "Endpoints"},
+    %{slug: "identity-handles", path: "identity-handles.md", title: "Identity and Handles"},
     %{slug: "identity-troubleshooting", path: "identity-troubleshooting.md", title: "Identity Troubleshooting"},
     %{slug: "interop-testing", path: "interop-testing.md", title: "Interop and Integration Testing"},
     %{slug: "lexicon-schemas", path: "lexicon-schemas.md", title: "Lexicon Schemas"},
@@ -41,6 +42,7 @@ defmodule Tempest.Docs do
     %{slug: "storage-sqlite", path: "storage-sqlite.md", title: "SQLite Storage"},
     %{slug: "sync-firehose", path: "sync-firehose.md", title: "Sync and Firehose"},
     %{slug: "tokens", path: "tokens.md", title: "Tokens"},
+    %{slug: "public-stats-dashboard", path: "public-stats-dashboard.md", title: "Public Stats Dashboard"},
     %{slug: "xrpc", path: "xrpc.md", title: "XRPC HTTP Surface"}
   ]
 

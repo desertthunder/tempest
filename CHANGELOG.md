@@ -2,6 +2,23 @@
 
 ## v0.1.0
 
+### 2026-06-13
+
+- Added deployment verification support for post-deployment checks, including release
+  and deployment docs, HTTPS smoke runbook, and hosted DID/relay/AppView verification
+  guidance.
+- Added public aggregate stats surfaces:
+  - `GET /stats` HTML dashboard.
+  - `GET /xrpc/_stats` public JSON snapshot with generated timestamps.
+  - Public stats privacy checks and smoke coverage for unauthorized-sensitive data.
+
+### 2026-06-12
+
+- Added local PDS compatibility verification for protocol endpoints, auth matrices,
+  black-box flows, and event compatibility against local smoke profiles.
+- Added restore-drill coverage and local AppView proxy/fallback verification to keep
+  compatibility expectations aligned before deployment.
+
 ### 2026-06-03
 
 - Added authenticated account operator UI for repo/blob browsing, sequencer and
@@ -49,3 +66,5 @@
   DID discovery, handle resolution, handle update, and SSRF protection for remote handle
   checks.
 - Added Hurl smoke test scaffolding.
+- Added baseline identity and handle local behavior for did:web and did:plc setup.
+- Added hosted DID mode config, public DID publishing, and handle verification flow checks.

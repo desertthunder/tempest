@@ -25,6 +25,8 @@ Graduated reference docs:
 - [PDS Compatibility Matrix](./pds-compatibility.md)
 - [Lexicon Schemas](./lexicon-schemas.md)
 - [Interop and Integration Testing](./interop-testing.md)
+- [Identity and Handles](./identity-handles.md)
+- [Public Stats Dashboard](./public-stats-dashboard.md)
 
 ---
 

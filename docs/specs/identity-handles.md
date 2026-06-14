@@ -1,132 +1,22 @@
 ---
 title: Identity and Handles
-updated: 2026-05-08
+updated: 2026-06-13
+status: implemented
 ---
 
-Identity is rooted in DIDs. Handles are mutable DNS names that must resolve back to the
-DID, while the DID document must claim the handle.
+Reference documentation: ../reference/identity-handles.md
 
-## DID Support
-
-Supported methods:
-
-- `did:web` for self-hosted identities where the operator controls the domain.
-- `did:plc` for identities published to the PLC directory.
-
-Tempest must distinguish invalid DID syntax, unsupported DID method, and
-supported method resolution failure.
-
-### Hosted identity modes
-
-Tempest must not mint identifiers that are not externally resolvable.
-
-- In `did:web` mode, Tempest serves the DID document at `/.well-known/did.json`
-  and expects handle verification via DNS TXT and/or HTTPS well-known.
-- In `did:plc` mode, Tempest publishes PLC operations to `https://plc.directory`
-  for identity creation and handle/service updates.
-
-OAuth and relay/AppView interop depend on this being correct.
-
-## DID Document Requirements
-
-The DID document must expose:
-
-- `id`: the DID.
-- `alsoKnownAs`: an `at://<handle>` claim when a handle is known.
-- `verificationMethod`: an atproto signing key using `Multikey` when possible.
-- `service`: `#atproto_pds` with type `AtprotoPersonalDataServer`.
-
-The PDS service endpoint should be only scheme, host, and optional port. Avoid userinfo, paths, and query strings.
-
-## Handle Verification
-
-Supported handle resolution methods:
-
-- DNS TXT record.
-- HTTPS `/.well-known/atproto-did`.
-
-Verification requires both directions:
-
-```text
-handle -> DID
-DID document -> at://handle
-```
-
-Use `Req` for outbound HTTP and apply SSRF protections before fetching any URL derived from identity metadata.
-
-## PLC Operations
-
-Initial implementation may use a PLC client boundary:
-
-```text
-Tempest.Identity.PlcClient
-Tempest.Identity.PlcOperation
-Tempest.Identity.KeyStore
-```
-
-The boundary must make it possible to test against a fake PLC service.
-
-Migration-ready identity support requires:
-
-- `com.atproto.identity.getRecommendedDidCredentials` returning this PDS service endpoint, signing key, handle, and PLC rotation-key recommendations.
-- `com.atproto.identity.requestPlcOperationSignature` and `com.atproto.identity.signPlcOperation` with a separate security token factor.
-- `com.atproto.identity.submitPlcOperation` validating that the operation keeps the account recoverable and points the atproto service at Tempest before submission.
-- `com.atproto.server.reserveSigningKey` for migration flows that need stable key material before the account is activated.
-- `did:web` support for both PDS-hosted subdomains and bring-your-own domains.
-
-### PLC XRPC Endpoint Coverage
-
-Tempest must expose the PLC identity XRPC methods as first-class compatibility
-endpoints, not only as internal PLC client helpers:
-
-| Method | Auth | Required local coverage |
-|---|---|---|
-| `com.atproto.identity.getRecommendedDidCredentials` | bearer access | response includes DID, handle, atproto signing key, service endpoint, and recommended rotation keys for the authenticated account |
-| `com.atproto.identity.requestPlcOperationSignature` | bearer access + strong reauth challenge | creates an auditable, single-use PLC operation signature request without submitting an operation |
-| `com.atproto.identity.signPlcOperation` | bearer access + valid reauth token | signs only operations that preserve account recoverability and Tempest service routing |
-| `com.atproto.identity.submitPlcOperation` | bearer access + signed operation | submits through `Tempest.Identity.PlcClient`, rejects operations that remove Tempest as PDS, and records success/failure for migration audit |
-
-Coverage must include response shapes, protocol error shapes, auth failures,
-app-password/OAuth denial for recovery-sensitive actions, and fake-PLC boundary
-tests. These endpoints are account-recovery operations; app passwords and broad
-OAuth scopes must not authorize them unless a future spec explicitly defines a
-separate high-assurance delegated scope.
-
-See [Migration and Account Lifecycle](./migration-lifecycle.md) for account activation sequencing.
-
-## Adversarial Checks
-
-- Never trust a handle only because it is stored locally.
-- Do not follow redirects to local, private, or link-local addresses.
-- Preserve signing key material securely; avoid logging private keys.
-- Key rotation must create a new repository commit so the current signing key can verify the latest repo state.
-- PLC operations must be treated as account-recovery actions and require stronger reauth than ordinary record writes.
-- A DID document update that points away from Tempest must move the local account toward inactive or migration-out handling.
-
-## HTTP Verification
+Verification:
 
 ```bash
-http GET :4000/.well-known/atproto-did Host:alice.test
-http GET :4000/xrpc/com.atproto.identity.resolveHandle handle==alice.test
-http POST :4000/xrpc/com.atproto.identity.updateHandle \
-  "Authorization:Bearer $TOKEN" handle=alice.test
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  --variable account_handle="identity-${suffix}.test" \
+  --variable account_email="identity-${suffix}@example.com" \
+  --variable account_password="correct horse battery staple" \
+  test/smoke/identity.hurl
+
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  test/smoke/identity-correctness.hurl
 ```
-
-Expected:
-
-- Well-known handle route returns the DID as plain text.
-- `resolveHandle` returns the DID.
-- `updateHandle` updates local identity only after bidirectional verification.
-
-## Sources
-
-- <https://atproto.com/specs/did>
-- <https://atproto.com/specs/handle>
-- <https://atproto.com/guides/identity>
-- <https://github.com/did-method-plc/did-method-plc>
-
-## References
-
-- Cocoon PDS: <https://github.com/haileyok/cocoon>
-- Tranquil PDS: <https://tangled.org/tranquil.farm/tranquil-pds>
-- Cirrus PDS: <https://github.com/ascorbic/cirrus>
