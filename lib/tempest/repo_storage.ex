@@ -448,6 +448,129 @@ defmodule Tempest.RepoStorage do
   end
 
   @doc """
+  Returns the latest current record summary for a public stats snapshot.
+  """
+  def latest_public_record(did, %Config{} = config \\ Config.load!()) when is_binary(did) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, rows} <-
+               fetch_all(
+                 conn,
+                 """
+                 SELECT collection, rkey, cid, updated_at
+                 FROM records
+                 ORDER BY updated_at DESC, path ASC
+                 LIMIT 1
+                 """,
+                 []
+               ) do
+          case rows do
+            [[collection, rkey, cid, updated_at]] ->
+              {:ok, %{collection: collection, rkey: rkey, cid: cid, indexed_at: updated_at}}
+
+            [] ->
+              {:ok, nil}
+          end
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
+  Returns per-collection current record counts for public stats.
+  """
+  def collection_summaries(did, %Config{} = config \\ Config.load!()) when is_binary(did) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, rows} <-
+               fetch_all(
+                 conn,
+                 """
+                 SELECT collection, COUNT(*) AS record_count
+                 FROM records
+                 GROUP BY collection
+                 ORDER BY record_count DESC, collection ASC
+                 """,
+                 []
+               ) do
+          {:ok,
+           Enum.map(rows, fn [collection, record_count] -> %{collection: collection, record_count: record_count} end)}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
+  Returns commit counts grouped into the supplied Monday week starts.
+  """
+  def commit_week_counts(did, week_starts, %Config{} = config \\ Config.load!())
+      when is_binary(did) and is_list(week_starts) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, rows} <- fetch_all(conn, "SELECT inserted_at FROM commits", []) do
+          week_start_set = MapSet.new(week_starts)
+
+          counts =
+            rows
+            |> Enum.map(fn [inserted_at] -> inserted_at end)
+            |> Enum.reduce(%{}, fn inserted_at, acc ->
+              case week_start_for_iso8601(inserted_at) do
+                {:ok, week_start} ->
+                  if MapSet.member?(week_start_set, week_start) do
+                    Map.update(acc, week_start, 1, &(&1 + 1))
+                  else
+                    acc
+                  end
+
+                :error ->
+                  acc
+              end
+            end)
+
+          {:ok, counts}
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
+  Returns sanitized public profile blob CIDs from the current actor profile.
+  """
+  def public_profile_blobs(did, %Config{} = config \\ Config.load!()) when is_binary(did) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result =
+        with {:ok, rows} <-
+               fetch_all(
+                 conn,
+                 """
+                 SELECT record_json
+                 FROM records
+                 WHERE collection = 'app.bsky.actor.profile' AND rkey = 'self'
+                 LIMIT 1
+                 """,
+                 []
+               ) do
+          case rows do
+            [[record_json]] ->
+              with {:ok, record} <- Jason.decode(record_json) do
+                {:ok, %{avatar_cid: blob_cid(record["avatar"]), banner_cid: blob_cid(record["banner"])}}
+              else
+                {:error, reason} -> {:error, {:invalid_profile_record_json, reason}}
+              end
+
+            [] ->
+              {:ok, %{avatar_cid: nil, banner_cid: nil}}
+          end
+        end
+
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
   Lists blob CIDs referenced by current records.
   """
   def list_referenced_blobs(did, opts \\ []) when is_binary(did) do
@@ -837,6 +960,27 @@ defmodule Tempest.RepoStorage do
     |> Enum.reject(&is_nil/1)
     |> Enum.max(fn -> nil end)
   end
+
+  defp week_start_for_iso8601(value) when is_binary(value) do
+    with {:ok, datetime, _offset} <- DateTime.from_iso8601(value) do
+      date = DateTime.to_date(datetime)
+      {:ok, Date.add(date, 1 - Date.day_of_week(date))}
+    else
+      _error -> :error
+    end
+  end
+
+  defp week_start_for_iso8601(_value), do: :error
+
+  defp blob_cid(%{"ref" => %{"$link" => cid}}) when is_binary(cid) do
+    if Cid.valid?(cid), do: cid
+  end
+
+  defp blob_cid(%{"cid" => cid}) when is_binary(cid) do
+    if Cid.valid?(cid), do: cid
+  end
+
+  defp blob_cid(_value), do: nil
 
   defp referenced_blob_cids(record_json) do
     case Jason.decode(record_json) do

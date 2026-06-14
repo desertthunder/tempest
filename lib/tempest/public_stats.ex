@@ -9,13 +9,20 @@ defmodule Tempest.PublicStats do
   alias Tempest.Storage.Timestamp
   alias Tempest.{Config, Repo, RepoStorage, Sequencer, Storage}
 
+  @user_limit 12
+  @collection_limit 10
+  @commit_week_limit 8
+
   @doc """
   Returns public aggregate stats without admin-only fields or local paths.
   """
   def summary(opts \\ []) do
     config = Keyword.get_lazy(opts, :config, &Config.load!/0)
+    accounts = hosted_accounts(@user_limit)
+    week_ranges = commit_week_ranges()
     repo_scan = scan_repos(config)
-    health = health(config, repo_scan.error_count)
+    details = scan_details(accounts, week_ranges, config)
+    health = health(config, repo_scan.error_count + details.error_count)
 
     %{
       "status" => health["status"],
@@ -23,6 +30,10 @@ defmodule Tempest.PublicStats do
       "generatedAt" => Timestamp.iso8601_utc(),
       "uptimeSeconds" => uptime_seconds(),
       "metrics" => metrics(repo_scan),
+      "users" => details.users,
+      "latestRecord" => details.latest_record,
+      "commitWeeks" => commit_weeks(week_ranges, details.commit_week_counts),
+      "collections" => collection_summaries(details.collections),
       "health" => health
     }
   end
@@ -41,6 +52,129 @@ defmodule Tempest.PublicStats do
       "recordCount" => repo_scan.record_count,
       "lastIndexedAt" => max_iso8601([repo_scan.latest_activity_at, sequencer_latest_created_at()])
     }
+  end
+
+  defp scan_details(accounts, week_ranges, config) do
+    week_starts = Enum.map(week_ranges, & &1.week_start)
+
+    accounts
+    |> Enum.reduce(empty_detail_scan(), fn account, acc ->
+      case repo_status_counts(account.did, config) do
+        {:ok, counts} ->
+          scan_account_details(account, counts, week_starts, config, acc)
+
+        {:error, _reason} ->
+          acc
+      end
+    end)
+    |> Map.update!(:users, &Enum.reverse/1)
+  end
+
+  defp scan_account_details(account, counts, week_starts, config, acc) do
+    with {:ok, profile} <- repo_profile_blobs(account.did, config),
+         {:ok, latest_record} <- repo_latest_public_record(account.did, config),
+         {:ok, commit_week_counts} <- repo_commit_week_counts(account.did, week_starts, config),
+         {:ok, collection_summaries} <- repo_collection_summaries(account.did, config) do
+      user = public_user(account, counts, profile)
+
+      %{
+        acc
+        | users: [user | acc.users],
+          latest_record: newest_record(acc.latest_record, public_latest_record(account, latest_record)),
+          commit_week_counts: merge_counts(acc.commit_week_counts, commit_week_counts),
+          collections: collection_summaries ++ acc.collections
+      }
+    else
+      {:error, _reason} ->
+        %{acc | error_count: acc.error_count + 1}
+    end
+  end
+
+  defp empty_detail_scan do
+    %{users: [], latest_record: nil, commit_week_counts: %{}, collections: [], error_count: 0}
+  end
+
+  defp public_user(account, counts, profile) do
+    %{
+      "did" => account.did,
+      "handle" => account.handle,
+      "status" => account.status,
+      "recordCount" => Map.get(counts, :record_count, 0),
+      "lastIndexedAt" => Map.get(counts, :latest_activity_at),
+      "avatarUrl" => blob_url(account.did, Map.get(profile, :avatar_cid)),
+      "bannerUrl" => blob_url(account.did, Map.get(profile, :banner_cid))
+    }
+  end
+
+  defp public_latest_record(_account, nil), do: nil
+
+  defp public_latest_record(account, record) do
+    %{
+      "did" => account.did,
+      "handle" => account.handle,
+      "collection" => record.collection,
+      "rkey" => record.rkey,
+      "cid" => record.cid,
+      "indexedAt" => record.indexed_at
+    }
+  end
+
+  defp newest_record(nil, record), do: record
+  defp newest_record(record, nil), do: record
+
+  defp newest_record(%{"indexedAt" => left} = current, %{"indexedAt" => right} = candidate) do
+    if right > left, do: candidate, else: current
+  end
+
+  defp merge_counts(left, right) do
+    Map.merge(left, right, fn _key, left_count, right_count -> left_count + right_count end)
+  end
+
+  defp commit_week_ranges do
+    current_week_start =
+      Date.utc_today()
+      |> week_start()
+
+    0..(@commit_week_limit - 1)
+    |> Enum.map(fn offset -> Date.add(current_week_start, -7 * offset) end)
+    |> Enum.reverse()
+    |> Enum.map(fn week_start -> %{week_start: week_start, week_end: Date.add(week_start, 6)} end)
+  end
+
+  defp commit_weeks(week_ranges, counts) do
+    Enum.map(week_ranges, fn range ->
+      %{
+        "weekStart" => Date.to_iso8601(range.week_start),
+        "weekEnd" => Date.to_iso8601(range.week_end),
+        "commitCount" => Map.get(counts, range.week_start, 0)
+      }
+    end)
+  end
+
+  defp collection_summaries(summaries) do
+    summaries
+    |> Enum.reduce(%{}, fn summary, acc ->
+      Map.update(acc, summary.collection, summary.record_count, &(&1 + summary.record_count))
+    end)
+    |> Enum.map(fn {collection, record_count} -> %{"collection" => collection, "recordCount" => record_count} end)
+    |> Enum.sort_by(fn summary -> {-summary["recordCount"], summary["collection"]} end)
+    |> Enum.take(@collection_limit)
+  end
+
+  defp week_start(date), do: Date.add(date, 1 - Date.day_of_week(date))
+
+  defp hosted_accounts(limit) do
+    Account
+    |> where([a], a.active == true and a.status == "active")
+    |> order_by([a], asc: a.handle, asc: a.did)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  defp blob_url(_did, nil), do: nil
+
+  defp blob_url(did, cid) when is_binary(did) and is_binary(cid) do
+    "/xrpc/com.atproto.sync.getBlob?" <> URI.encode_query(%{"did" => did, "cid" => cid})
   end
 
   defp scan_repos(config) do
@@ -71,6 +205,38 @@ defmodule Tempest.PublicStats do
     _error -> {:error, :repo_stats_failed}
   catch
     _kind, _reason -> {:error, :repo_stats_failed}
+  end
+
+  defp repo_profile_blobs(did, config) do
+    RepoStorage.public_profile_blobs(did, config)
+  rescue
+    _error -> {:error, :repo_profile_failed}
+  catch
+    _kind, _reason -> {:error, :repo_profile_failed}
+  end
+
+  defp repo_latest_public_record(did, config) do
+    RepoStorage.latest_public_record(did, config)
+  rescue
+    _error -> {:error, :repo_latest_record_failed}
+  catch
+    _kind, _reason -> {:error, :repo_latest_record_failed}
+  end
+
+  defp repo_commit_week_counts(did, week_starts, config) do
+    RepoStorage.commit_week_counts(did, week_starts, config)
+  rescue
+    _error -> {:error, :repo_commit_weeks_failed}
+  catch
+    _kind, _reason -> {:error, :repo_commit_weeks_failed}
+  end
+
+  defp repo_collection_summaries(did, config) do
+    RepoStorage.collection_summaries(did, config)
+  rescue
+    _error -> {:error, :repo_collection_summaries_failed}
+  catch
+    _kind, _reason -> {:error, :repo_collection_summaries_failed}
   end
 
   defp empty_repo_scan do

@@ -300,6 +300,167 @@
   font-weight: 700;
 }
 
+.public-users {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.public-user-card {
+  overflow: hidden;
+  background: var(--surface-raised);
+  box-shadow: var(--border-in);
+}
+
+.public-user-card__banner {
+  height: 4.7rem;
+  background: var(--accent-soft);
+}
+
+.public-user-card__banner--fallback {
+  background:
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 0.45) 0 0.45rem, transparent 0.45rem 0.9rem),
+    linear-gradient(90deg, var(--win-title), var(--info));
+}
+
+.public-user-card__banner img,
+.public-user-card__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.public-user-card__body {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.public-user-card__avatar {
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  margin-block-start: -1.7rem;
+  overflow: hidden;
+  border: 2px solid var(--surface-raised);
+  background: white;
+  box-shadow: var(--border-out);
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+}
+
+.public-user-card__avatar--fallback {
+  color: white;
+  background: var(--win-title);
+}
+
+.public-user-card__handle {
+  font-size: var(--step-0);
+  overflow-wrap: anywhere;
+}
+
+.public-user-card__did,
+.public-record-facts dd,
+.collection-summary__name {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.public-user-card__did,
+.public-user-card__facts,
+.public-record-facts,
+.collection-summary,
+.commit-histogram {
+  font-size: var(--step--1);
+}
+
+.public-user-card__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-2);
+}
+
+.public-user-card__facts dt {
+  font-weight: 700;
+}
+
+.public-user-card__facts dd {
+  margin: 0;
+}
+
+.stats-dashboard__empty {
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  box-shadow: var(--border-in);
+}
+
+.commit-histogram {
+  display: grid;
+  align-items: end;
+  gap: var(--space-2);
+  grid-template-columns: repeat(8, minmax(2.4rem, 1fr));
+  min-height: 10rem;
+  padding: var(--space-3);
+  background: var(--surface-sunken);
+  box-shadow: var(--border-in);
+}
+
+.commit-histogram__bar {
+  display: grid;
+  grid-template-rows: 7rem auto auto;
+  gap: var(--space-1);
+  align-items: end;
+  min-width: 0;
+  text-align: center;
+}
+
+.commit-histogram__fill {
+  align-self: end;
+  min-height: 0.25rem;
+  background: var(--info);
+  box-shadow: inset -1px -1px 0 var(--win-dark), inset 1px 1px 0 rgb(255 255 255 / 0.5);
+  transition: height 160ms ease;
+}
+
+.commit-histogram__bar p,
+.commit-histogram__bar strong {
+  min-width: 0;
+  font-size: 0.72rem;
+}
+
+.collection-summary {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.collection-summary__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4rem;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.collection-summary__count {
+  font-weight: 700;
+  text-align: end;
+}
+
+.collection-summary__track {
+  grid-column: 1 / -1;
+  height: 0.75rem;
+  background: var(--surface-sunken);
+  box-shadow: var(--border-in);
+}
+
+.collection-summary__track span {
+  display: block;
+  height: 100%;
+  background: var(--success);
+  transition: width 160ms ease;
+}
+
 .status-light {
   display: inline-block;
   width: 0.72rem;

@@ -145,6 +145,65 @@ defmodule Tempest.RepoStorageTest do
     assert counts.latest_activity_at == max(counts.latest_commit_at, counts.latest_record_at)
   end
 
+  test "public stats helpers expose latest record, profile blobs, commit weeks, and collection counts" do
+    assert {:ok, created} =
+             Accounts.create_account(%{
+               "handle" => "repo-public-details.test",
+               "email" => "repo-public-details@example.com",
+               "password" => @password
+             })
+
+    path =
+      Config.load!()
+      |> Config.repo_db_path(created["did"])
+
+    on_exit(fn -> File.rm(path) end)
+
+    account = Repo.get_by!(Account, did: created["did"])
+    signing_key = KeyStore.active_key_for_account(account)
+    avatar_cid = Cid.for_raw("avatar bytes") |> Cid.to_string()
+    banner_cid = Cid.for_raw("banner bytes") |> Cid.to_string()
+
+    assert {:ok, _record} =
+             RepoStorage.create_record(account, signing_key, %{
+               collection: "app.bsky.actor.profile",
+               rkey: "self",
+               swap_commit: nil,
+               record: %{
+                 "$type" => "app.bsky.actor.profile",
+                 "avatar" => %{"$type" => "blob", "ref" => %{"$link" => avatar_cid}, "mimeType" => "image/png"},
+                 "banner" => %{"$type" => "blob", "ref" => %{"$link" => banner_cid}, "mimeType" => "image/png"}
+               }
+             })
+
+    assert {:ok, _record} =
+             RepoStorage.create_record(account, signing_key, %{
+               collection: "app.bsky.feed.post",
+               rkey: "one",
+               swap_commit: nil,
+               record: %{"$type" => "app.bsky.feed.post", "text" => "hello"}
+             })
+
+    assert {:ok, %{avatar_cid: ^avatar_cid, banner_cid: ^banner_cid}} =
+             RepoStorage.public_profile_blobs(created["did"])
+
+    assert {:ok, latest} = RepoStorage.latest_public_record(created["did"])
+    assert latest.collection in ["app.bsky.actor.profile", "app.bsky.feed.post"]
+    assert is_binary(latest.rkey)
+    assert is_binary(latest.cid)
+    assert is_binary(latest.indexed_at)
+
+    assert {:ok, collections} = RepoStorage.collection_summaries(created["did"])
+    assert %{collection: "app.bsky.actor.profile", record_count: 1} in collections
+    assert %{collection: "app.bsky.feed.post", record_count: 1} in collections
+
+    week_start =
+      Date.utc_today()
+      |> Date.add(1 - Date.day_of_week(Date.utc_today()))
+
+    assert {:ok, %{^week_start => 3}} = RepoStorage.commit_week_counts(created["did"], [week_start])
+  end
+
   test "imported records normalize DRISL CID links before storing JSON" do
     assert {:ok, source_created} =
              Accounts.create_account(%{

@@ -110,6 +110,99 @@ defmodule TempestWeb.HomeLive do
             </div>
 
             <div :if={@live_action == :stats} class="tempest-home__grid">
+              <section class="win-window" aria-labelledby="users-title">
+                <header class="win-window__titlebar">
+                  <span id="users-title" class="win-window__title">Users</span>
+                </header>
+                <div class="win-window__body public-users" id="public-users">
+                  <div :if={@users == []} class="stats-dashboard__empty">No active hosted users yet.</div>
+                  <article :for={user <- @users} id={"public-user-#{user["did"]}"} class="public-user-card">
+                    <div class={[
+                      "public-user-card__banner",
+                      is_nil(user["bannerUrl"]) && "public-user-card__banner--fallback"
+                    ]}>
+                      <img :if={user["bannerUrl"]} src={user["bannerUrl"]} alt="" loading="lazy" />
+                    </div>
+                    <div class="public-user-card__body">
+                      <div
+                        class={[
+                          "public-user-card__avatar",
+                          is_nil(user["avatarUrl"]) && "public-user-card__avatar--fallback"
+                        ]}
+                        aria-hidden="true"
+                      >
+                        <img :if={user["avatarUrl"]} src={user["avatarUrl"]} alt="" loading="lazy" />
+                        <span :if={is_nil(user["avatarUrl"])}>{user_initial(user)}</span>
+                      </div>
+                      <h2 class="public-user-card__handle">{user["handle"]}</h2>
+                      <p class="public-user-card__did">{user["did"]}</p>
+                      <dl class="public-user-card__facts">
+                        <dt>Status</dt>
+                        <dd>{user["status"] || "unknown"}</dd>
+                        <dt>Records</dt>
+                        <dd>{user["recordCount"] || 0}</dd>
+                      </dl>
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <section class="win-window" aria-labelledby="latest-record-title">
+                <header class="win-window__titlebar">
+                  <span id="latest-record-title" class="win-window__title">Latest Indexed Record</span>
+                </header>
+                <div class="win-window__body" id="latest-indexed-record">
+                  <div :if={is_nil(@latest_record)} class="stats-dashboard__empty">No current records indexed yet.</div>
+                  <dl :if={@latest_record} class="facts-list public-record-facts">
+                    <dt>User</dt>
+                    <dd>{@latest_record["handle"] || @latest_record["did"]}</dd>
+                    <dt>Collection</dt>
+                    <dd>{@latest_record["collection"]}</dd>
+                    <dt>RKey</dt>
+                    <dd>{@latest_record["rkey"]}</dd>
+                    <dt>CID</dt>
+                    <dd>{@latest_record["cid"]}</dd>
+                    <dt>Indexed</dt>
+                    <dd>{@latest_record["indexedAt"]}</dd>
+                  </dl>
+                </div>
+              </section>
+
+              <section class="win-window" aria-labelledby="commit-weeks-title">
+                <header class="win-window__titlebar">
+                  <span id="commit-weeks-title" class="win-window__title">Weekly Commits</span>
+                </header>
+                <div class="win-window__body" id="commit-weeks">
+                  <div class="commit-histogram">
+                    <div :for={week <- @commit_weeks} class="commit-histogram__bar">
+                      <div
+                        class="commit-histogram__fill"
+                        style={"height: #{commit_bar_height(week, @max_commit_week_count)}%"}
+                      >
+                      </div>
+                      <p>{week_label(week)}</p>
+                      <strong>{week["commitCount"] || 0}</strong>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="win-window" aria-labelledby="collections-title">
+                <header class="win-window__titlebar">
+                  <span id="collections-title" class="win-window__title">Collections</span>
+                </header>
+                <div class="win-window__body collection-summary" id="collection-summaries">
+                  <div :if={@collections == []} class="stats-dashboard__empty">No collection records yet.</div>
+                  <div :for={collection <- @collections} class="collection-summary__row">
+                    <span class="collection-summary__name">{collection["collection"]}</span>
+                    <span class="collection-summary__count">{collection["recordCount"]}</span>
+                    <span class="collection-summary__track" aria-hidden="true">
+                      <span style={"width: #{collection_bar_width(collection, @max_collection_record_count)}%"}></span>
+                    </span>
+                  </div>
+                </div>
+              </section>
+
               <section class="win-window" aria-labelledby="health-title">
                 <header class="win-window__titlebar">
                   <span id="health-title" class="win-window__title">Health Checks</span>
@@ -179,6 +272,12 @@ defmodule TempestWeb.HomeLive do
     |> assign(:health, health)
     |> assign(:checks, checks)
     |> assign(:metrics, metrics)
+    |> assign(:users, summary["users"] || [])
+    |> assign(:latest_record, summary["latestRecord"])
+    |> assign(:commit_weeks, summary["commitWeeks"] || [])
+    |> assign(:collections, summary["collections"] || [])
+    |> assign(:max_commit_week_count, max_count(summary["commitWeeks"] || [], "commitCount"))
+    |> assign(:max_collection_record_count, max_count(summary["collections"] || [], "recordCount"))
     |> assign(:health_status, health["status"] || "unknown")
     |> assign(:rendered_at, summary["generatedAt"] || rendered_at())
     |> assign(:center_title, center_title(socket.assigns.live_action))
@@ -307,6 +406,30 @@ defmodule TempestWeb.HomeLive do
 
   defp stats_scan_error_count(%{"checks" => %{} = checks}), do: checks["statsScanErrorCount"] || 0
   defp stats_scan_error_count(_health), do: 0
+
+  defp max_count(items, key) do
+    items
+    |> Enum.map(&(&1[key] || 0))
+    |> Enum.max(fn -> 0 end)
+  end
+
+  defp commit_bar_height(_week, 0), do: 4
+  defp commit_bar_height(%{"commitCount" => count}, max_count), do: max(round(count / max_count * 100), 4)
+  defp commit_bar_height(_week, _max_count), do: 4
+
+  defp collection_bar_width(_collection, 0), do: 0
+
+  defp collection_bar_width(%{"recordCount" => count}, max_count) do
+    max(round(count / max_count * 100), 4)
+  end
+
+  defp collection_bar_width(_collection, _max_count), do: 0
+
+  defp week_label(%{"weekStart" => week_start}) when is_binary(week_start), do: String.slice(week_start, 5, 5)
+  defp week_label(_week), do: "n/a"
+
+  defp user_initial(%{"handle" => <<first::binary-size(1), _rest::binary>>}), do: String.upcase(first)
+  defp user_initial(_user), do: "?"
 
   defp rendered_at do
     DateTime.utc_now()

@@ -36,17 +36,17 @@ keeping admin-only operations and sensitive internals private.
 - [x] T16-13: Add Hurl smoke test `test/smoke/public-stats.hurl`.
 - [x] T16-14: Document cache behavior if stats are cached. Include `generatedAt`
       in the JSON response either way.
-- [ ] T16-15: Rename the public account detail concept to "users".
-- [ ] T16-16: Add the public `users` group described in the stats spec.
-- [ ] T16-17: Add public avatar and banner support for user cards.
-- [ ] T16-18: Render user cards on `/stats`.
-- [ ] T16-19: Add the public `latestRecord` group described in the stats spec.
-- [ ] T16-20: Render a "Latest Indexed Record" section on `/stats`.
-- [ ] T16-21: Add repo storage support for weekly commit counts.
-- [ ] T16-22: Add the public `commitWeeks` group described in the stats spec.
-- [ ] T16-23: Render a compact weekly commit histogram on `/stats`.
-- [ ] T16-24: Add repo storage support for collection summaries.
-- [ ] T16-25: Add the public `collections` group described in the stats spec.
+- [x] T16-15: Rename the public account detail concept to "users".
+- [x] T16-16: Add the public `users` group described in the stats spec.
+- [x] T16-17: Add public avatar and banner support for user cards.
+- [x] T16-18: Render user cards on `/stats`.
+- [x] T16-19: Add the public `latestRecord` group described in the stats spec.
+- [x] T16-20: Render a "Latest Indexed Record" section on `/stats`.
+- [x] T16-21: Add repo storage support for weekly commit counts.
+- [x] T16-22: Add the public `commitWeeks` group described in the stats spec.
+- [x] T16-23: Render a compact weekly commit histogram on `/stats`.
+- [x] T16-24: Add repo storage support for collection summaries.
+- [x] T16-25: Add the public `collections` group described in the stats spec.
 - [ ] T16-26: Render collection summary rows on `/stats` with count bars.
 - [ ] T16-27: Extend public stats tests for `users`, avatar/banner URLs,
       `latestRecord`, `commitWeeks`, and collection summaries.

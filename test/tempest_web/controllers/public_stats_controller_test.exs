@@ -35,6 +35,10 @@ defmodule TempestWeb.PublicStatsControllerTest do
     assert html =~ "Tempest Public Stats"
     assert html =~ "Hosted Accounts"
     assert html =~ "Last Indexed"
+    assert html =~ ~s(id="public-users")
+    assert html =~ "Latest Indexed Record"
+    assert html =~ ~s(id="commit-weeks")
+    assert html =~ ~s(id="collection-summaries")
 
     stats =
       conn
@@ -46,6 +50,10 @@ defmodule TempestWeb.PublicStatsControllerTest do
     assert is_binary(stats["generatedAt"])
     assert is_integer(stats["uptimeSeconds"])
     assert is_map(stats["metrics"])
+    assert is_list(stats["users"])
+    assert Map.has_key?(stats, "latestRecord")
+    assert is_list(stats["commitWeeks"])
+    assert is_list(stats["collections"])
     assert is_map(stats["health"])
 
     rejected =
@@ -85,6 +93,14 @@ defmodule TempestWeb.PublicStatsControllerTest do
     assert response["metrics"]["collectionCount"] == 2
     assert response["metrics"]["recordCount"] == 2
     assert is_binary(response["metrics"]["lastIndexedAt"])
+
+    assert [%{"handle" => "stats-public.test", "avatarUrl" => nil, "bannerUrl" => nil} | _rest] =
+             Enum.filter(response["users"], &(&1["did"] == account.did))
+
+    assert response["latestRecord"]["did"] == account.did
+    assert length(response["commitWeeks"]) == 8
+    assert %{"collection" => "app.bsky.actor.profile", "recordCount" => 1} in response["collections"]
+    assert %{"collection" => "app.bsky.feed.post", "recordCount" => 1} in response["collections"]
 
     encoded = response |> Jason.encode!() |> String.downcase()
 
