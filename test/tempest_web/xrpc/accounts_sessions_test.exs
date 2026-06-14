@@ -56,6 +56,14 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
 
     assert is_binary(login["accessJwt"])
     assert is_binary(login["refreshJwt"])
+    assert compact_jwt?(login["accessJwt"])
+    assert compact_jwt?(login["refreshJwt"])
+
+    assert %{"typ" => "access", "scope" => "com.atproto.access", "aud" => "did:web:localhost"} =
+             jwt_payload(login["accessJwt"])
+
+    assert %{"typ" => "refresh", "scope" => "com.atproto.refresh", "aud" => "did:web:localhost"} =
+             jwt_payload(login["refreshJwt"])
 
     session_conn =
       conn
@@ -605,6 +613,16 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
 
   defp encode_base58_value(value, alphabet, acc) do
     encode_base58_value(div(value, 58), alphabet, [Enum.at(alphabet, rem(value, 58)) | acc])
+  end
+
+  defp compact_jwt?(token), do: token |> String.split(".") |> length() == 3
+
+  defp jwt_payload(token) do
+    token
+    |> String.split(".")
+    |> Enum.at(1)
+    |> Base.url_decode64!(padding: false)
+    |> Jason.decode!()
   end
 
   defp maybe_put(map, true, key, value), do: Map.put(map, key, value)

@@ -39,6 +39,21 @@ defmodule TempestWeb.XrpcControllerTest do
     assert allow_headers =~ "x-atproto-accept-labelers"
   end
 
+  test "GET did.json returns service DID document", %{conn: conn} do
+    conn = get(conn, ~p"/.well-known/did.json")
+    response = json_response(conn, 200)
+
+    assert response["id"] == "did:web:localhost"
+
+    assert [
+             %{
+               "id" => "#atproto_pds",
+               "type" => "AtprotoPersonalDataServer",
+               "serviceEndpoint" => "http://localhost:4002"
+             }
+           ] = response["service"]
+  end
+
   test "unknown XRPC method returns JSON error", %{conn: conn} do
     conn = get(conn, ~p"/xrpc/com.atproto.unknown.method")
     response = json_response(conn, 404)

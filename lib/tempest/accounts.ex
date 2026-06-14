@@ -30,22 +30,22 @@ defmodule Tempest.Accounts do
           |> Map.put("active", not migrated?)
           |> Map.put("status", if(migrated?, do: "deactivated", else: "active"))
 
-        refresh_token = Tokens.new_refresh_token()
-
         Repo.transaction(fn ->
           with {:ok, account} <- Repo.insert(Account.create_changeset(%Account{}, account_attrs)),
                {:ok, signing_key} <- Identity.create_initial_signing_key(account),
                {:ok, _repo_path} <- RepoStorage.initialize_empty_repo(account, signing_key),
+               family_id = Ecto.UUID.generate(),
+               refresh_token = Tokens.sign_refresh_token(account, family_id),
                {:ok, session} <-
-                 Repo.insert(new_session_changeset(account, refresh_token, Ecto.UUID.generate())) do
-            {account, session}
+                 Repo.insert(new_session_changeset(account, refresh_token, family_id)) do
+            {account, session, refresh_token}
           else
             {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback({:validation, changeset})
             {:error, reason} -> Repo.rollback({:repo_initialization, reason})
           end
         end)
         |> case do
-          {:ok, {account, session}} ->
+          {:ok, {account, session, refresh_token}} ->
             with :ok <- maybe_publish_plc_operation(account),
                  {:ok, _events} <- emit_account_creation_events(account) do
               {:ok, session_response(account, session, refresh_token)}
@@ -119,7 +119,7 @@ defmodule Tempest.Accounts do
           Repo.rollback(:expired_refresh_token)
 
         true ->
-          refresh_token = Tokens.new_refresh_token()
+          refresh_token = Tokens.sign_refresh_token(account, fresh_session.family_id)
 
           fresh_session
           |> Session.rotate_changeset(%{revoked_at: now, rotated_at: now})
@@ -422,10 +422,11 @@ defmodule Tempest.Accounts do
   end
 
   defp create_session_for_account(%Account{} = account) do
-    refresh_token = Tokens.new_refresh_token()
+    family_id = Ecto.UUID.generate()
+    refresh_token = Tokens.sign_refresh_token(account, family_id)
 
     account
-    |> new_session_changeset(refresh_token, Ecto.UUID.generate())
+    |> new_session_changeset(refresh_token, family_id)
     |> Repo.insert()
     |> case do
       {:ok, session} -> {:ok, session_response(account, session, refresh_token)}

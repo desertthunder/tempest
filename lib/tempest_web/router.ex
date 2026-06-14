@@ -15,7 +15,7 @@ defmodule TempestWeb.Router do
   end
 
   pipeline :well_known do
-    plug :accepts, ["text"]
+    plug :accepts, ["text", "json"]
   end
 
   pipeline :oauth_metadata do
@@ -72,6 +72,7 @@ defmodule TempestWeb.Router do
     pipe_through :well_known
 
     get "/.well-known/atproto-did", WellKnownController, :atproto_did
+    get "/.well-known/did.json", WellKnownController, :did_json
   end
 
   scope "/oauth", TempestWeb do

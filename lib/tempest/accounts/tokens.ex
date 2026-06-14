@@ -16,6 +16,28 @@ defmodule Tempest.Accounts.Tokens do
   @refresh_prefix "tempest-refresh-v1."
 
   def sign_access_token(%Account{} = account, %Session{} = session) do
+    sign_session_jwt!(account, %{
+      "typ" => "access",
+      "scope" => "com.atproto.access",
+      "sub" => account.did,
+      "aud" => service_did(),
+      "account_id" => account.id,
+      "session_id" => session.id,
+      "jti" => Integer.to_string(session.id)
+    })
+  end
+
+  def sign_refresh_token(%Account{} = account, family_id) when is_binary(family_id) do
+    sign_session_jwt!(account, %{
+      "typ" => "refresh",
+      "scope" => "com.atproto.refresh",
+      "sub" => account.did,
+      "aud" => service_did(),
+      "jti" => family_id
+    })
+  end
+
+  def sign_legacy_access_token(%Account{} = account, %Session{} = session) do
     Phoenix.Token.sign(Endpoint, @access_salt, %{
       "typ" => "access",
       "account_id" => account.id,
@@ -25,7 +47,10 @@ defmodule Tempest.Accounts.Tokens do
   end
 
   def verify_access_token(token) when is_binary(token) do
-    Phoenix.Token.verify(Endpoint, @access_salt, token, max_age: @access_max_age_seconds)
+    case verify_session_jwt(token, "access", @access_max_age_seconds) do
+      {:ok, claims} -> {:ok, claims}
+      {:error, _reason} -> Phoenix.Token.verify(Endpoint, @access_salt, token, max_age: @access_max_age_seconds)
+    end
   end
 
   def verify_access_token(_token), do: {:error, :invalid}
@@ -199,6 +224,94 @@ defmodule Tempest.Accounts.Tokens do
   end
 
   defp base64url(value), do: Base.url_encode64(value, padding: false)
+
+  defp sign_session_jwt!(%Account{} = account, claims) do
+    now = DateTime.utc_now() |> DateTime.to_unix()
+    key = KeyStore.active_key_for_account(account)
+    jwk = service_auth_private_jwk!(key)
+    typ = if claims["typ"] == "refresh", do: "refresh+jwt", else: "at+jwt"
+    max_age = if claims["typ"] == "refresh", do: @refresh_lifetime_seconds, else: @access_max_age_seconds
+
+    headers = %{"typ" => typ, "alg" => "ES256K", "kid" => account.did <> key.kid}
+
+    claims =
+      claims
+      |> Map.put("iss", account.did)
+      |> Map.put("iat", now)
+      |> Map.put("exp", now + max_age)
+
+    {_jws, compact} = JOSE.JWT.sign(jwk, headers, claims) |> JOSE.JWS.compact()
+    compact
+  end
+
+  defp verify_session_jwt(token, expected_typ, max_age_seconds) do
+    with {:ok, header} <- peek_service_auth_header(token),
+         :ok <- validate_session_jwt_header(header, expected_typ),
+         {:ok, unverified_claims} <- peek_service_auth_claims(token),
+         :ok <- validate_session_claim_shape(unverified_claims, expected_typ),
+         {:ok, public_jwk} <- service_auth_public_jwk(unverified_claims["iss"], header["kid"]),
+         {:ok, claims} <- verify_service_auth_signature(token, public_jwk),
+         :ok <- validate_session_claims(claims, expected_typ, max_age_seconds) do
+      {:ok, claims}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, "access")
+       when typ in ["at+jwt", "JWT"],
+       do: :ok
+
+  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, "refresh")
+       when typ in ["refresh+jwt", "JWT"],
+       do: :ok
+
+  defp validate_session_jwt_header(_header, _expected_typ), do: {:error, :invalid}
+
+  defp validate_session_claim_shape(%{"typ" => "access", "scope" => "com.atproto.access"} = claims, "access") do
+    with did when is_binary(did) and did != "" <- Map.get(claims, "sub"),
+         ^did <- Map.get(claims, "iss"),
+         account_id when is_integer(account_id) <- Map.get(claims, "account_id"),
+         session_id when is_integer(session_id) <- Map.get(claims, "session_id") do
+      :ok
+    else
+      _other -> {:error, :invalid}
+    end
+  end
+
+  defp validate_session_claim_shape(%{"typ" => "refresh", "scope" => "com.atproto.refresh"} = claims, "refresh") do
+    with did when is_binary(did) and did != "" <- Map.get(claims, "sub"),
+         ^did <- Map.get(claims, "iss") do
+      :ok
+    else
+      _other -> {:error, :invalid}
+    end
+  end
+
+  defp validate_session_claim_shape(_claims, _expected_typ), do: {:error, :invalid}
+
+  defp validate_session_claims(
+         %{"typ" => expected_typ, "sub" => did, "iss" => did, "aud" => aud, "iat" => iat, "exp" => exp},
+         expected_typ,
+         max_age_seconds
+       )
+       when is_integer(iat) and is_integer(exp) do
+    now = DateTime.utc_now() |> DateTime.to_unix()
+
+    cond do
+      aud != service_did() -> {:error, :invalid}
+      iat > now + 60 -> {:error, :invalid}
+      exp <= now -> {:error, :expired_token}
+      exp - iat > max_age_seconds -> {:error, :invalid}
+      true -> :ok
+    end
+  end
+
+  defp validate_session_claims(_claims, _expected_typ, _max_age_seconds), do: {:error, :invalid}
+
+  defp service_did do
+    "did:web:" <> Tempest.Config.load!().hostname
+  end
 
   defp random_url_token(bytes) do
     bytes
