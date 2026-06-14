@@ -44,6 +44,7 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     app/bsky/embed/recordWithMedia.json
     app/bsky/embed/video.json
     app/bsky/feed/defs.json
+    app/bsky/feed/post.json
     app/bsky/feed/postgate.json
     app/bsky/feed/threadgate.json
     app/bsky/graph/defs.json

@@ -161,7 +161,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert %{"error" => "InvalidRequest"} = json_response(denied_conn, 400)
   end
 
-  test "createRecord persists Bluesky post-shaped records with unknown validation status", %{conn: conn} do
+  test "createRecord validates and persists Bluesky post records", %{conn: conn} do
     account = create_account!(conn, "records-bsky-post.test", "records-bsky-post@example.com")
 
     created =
@@ -170,7 +170,8 @@ defmodule TempestWeb.Xrpc.RecordsTest do
       |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
         "repo" => account["did"],
         "collection" => "app.bsky.feed.post",
-        "rkey" => "3kpost",
+        "rkey" => "3mo7hac7efyou",
+        "validate" => true,
         "record" => %{
           "$type" => "app.bsky.feed.post",
           "text" => "hello from bsky-shaped post",
@@ -179,8 +180,8 @@ defmodule TempestWeb.Xrpc.RecordsTest do
       })
       |> json_response(200)
 
-    assert created["uri"] == "at://#{account["did"]}/app.bsky.feed.post/3kpost"
-    assert created["validationStatus"] == "unknown"
+    assert created["uri"] == "at://#{account["did"]}/app.bsky.feed.post/3mo7hac7efyou"
+    assert created["validationStatus"] == "valid"
     assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 1
 
     response =
@@ -189,7 +190,7 @@ defmodule TempestWeb.Xrpc.RecordsTest do
       |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
         "repo" => account["did"],
         "collection" => "app.bsky.feed.post",
-        "rkey" => "3kpost"
+        "rkey" => "3mo7hac7efyou"
       })
       |> json_response(200)
 

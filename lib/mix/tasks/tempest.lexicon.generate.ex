@@ -15,6 +15,9 @@ defmodule Mix.Tasks.Tempest.Lexicon.Generate do
     * `--generated-at` - ISO8601 timestamp. Defaults to current UTC time.
     * `--include` - comma-separated document ids to include. Dependencies reached
       through local refs are included automatically.
+    * `--namespace` - comma-separated document id prefixes to include. This can
+      be used instead of enumerating every document id, for example
+      `--namespace app.bsky.feed,com.atproto.repo`.
 
   Operator update workflow:
 
@@ -47,7 +50,8 @@ defmodule Mix.Tasks.Tempest.Lexicon.Generate do
           source_repo: :string,
           out: :string,
           generated_at: :string,
-          include: :string
+          include: :string,
+          namespace: :string
         ],
         aliases: [s: :source, c: :commit, o: :out]
       )
@@ -63,7 +67,7 @@ defmodule Mix.Tasks.Tempest.Lexicon.Generate do
     generated_at = Keyword.get(opts, :generated_at, generated_at())
 
     with {:ok, documents, _manifest} <- LocalProvider.load(paths: [source]),
-         documents = select_documents(documents, Keyword.get(opts, :include)),
+         documents = select_documents(documents, Keyword.get(opts, :include), Keyword.get(opts, :namespace)),
          :ok <- Document.validate_documents(documents) do
       File.mkdir_p!(Path.dirname(output))
       File.write!(output, module_source(documents, source_repo, commit, generated_at))
@@ -73,12 +77,14 @@ defmodule Mix.Tasks.Tempest.Lexicon.Generate do
     end
   end
 
-  defp select_documents(documents, nil), do: sort_documents(documents)
+  defp select_documents(documents, nil, nil), do: sort_documents(documents)
 
-  defp select_documents(documents, include) do
+  defp select_documents(documents, include, namespace) do
     ids =
-      include
-      |> String.split(",", trim: true)
+      documents
+      |> included_document_ids(include)
+      |> namespace_document_ids(namespace)
+      |> Enum.uniq()
 
     by_id = Map.new(documents, &{Map.fetch!(&1, "id"), &1})
 
@@ -87,6 +93,27 @@ defmodule Mix.Tasks.Tempest.Lexicon.Generate do
     |> Map.keys()
     |> Enum.map(&Map.fetch!(by_id, &1))
     |> sort_documents()
+  end
+
+  defp included_document_ids(documents, nil), do: Enum.map(documents, &Map.fetch!(&1, "id"))
+
+  defp included_document_ids(_documents, include) do
+    include
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+  end
+
+  defp namespace_document_ids(ids, nil), do: ids
+
+  defp namespace_document_ids(ids, namespace) do
+    namespaces =
+      namespace
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+
+    Enum.filter(ids, fn id -> Enum.any?(namespaces, &(id == &1 or String.starts_with?(id, &1 <> "."))) end)
   end
 
   defp expand_dependencies(ids, by_id, seen) do

@@ -13,18 +13,18 @@ defmodule Tempest.Lexicon.LocalProvider do
   @impl true
   def load(opts) do
     paths = Keyword.get(opts, :paths, [])
+    repositories = Keyword.get(opts, :repositories, [])
     limits = Keyword.merge(@default_limits, opts)
 
-    with {:ok, files} <- expand_files(paths, limits),
+    with {:ok, files} <- expand_files(paths, repositories, limits),
          {:ok, documents} <- read_documents(files, limits) do
       {:ok, documents, local_manifest(files, documents)}
     end
   end
 
-  defp expand_files(paths, limits) when is_list(paths) do
+  defp expand_files(paths, repositories, limits) when is_list(paths) and is_list(repositories) do
     files =
-      paths
-      |> Enum.flat_map(&lexicon_files/1)
+      (Enum.flat_map(paths, &lexicon_files/1) ++ Enum.flat_map(repositories, &repository_files/1))
       |> Enum.uniq()
       |> Enum.sort()
 
@@ -35,7 +35,7 @@ defmodule Tempest.Lexicon.LocalProvider do
     end
   end
 
-  defp expand_files(_paths, _limits), do: {:error, :invalid_lexicon_paths}
+  defp expand_files(_paths, _repositories, _limits), do: {:error, :invalid_lexicon_paths}
 
   defp read_documents(files, limits) do
     Enum.reduce_while(files, {:ok, []}, fn file, {:ok, documents} ->
@@ -80,6 +80,43 @@ defmodule Tempest.Lexicon.LocalProvider do
   end
 
   defp lexicon_files(_path), do: []
+
+  defp repository_files(repository) when is_list(repository) or is_map(repository) do
+    repository = Map.new(repository)
+    root = Map.get(repository, :path) || Map.get(repository, "path")
+    namespaces = Map.get(repository, :namespaces) || Map.get(repository, "namespaces") || []
+
+    with true <- is_binary(root),
+         lexicon_root when is_binary(lexicon_root) <- lexicon_root(root),
+         true <- is_list(namespaces) do
+      namespaces
+      |> Enum.flat_map(&namespace_files(lexicon_root, &1))
+    else
+      _invalid -> []
+    end
+  end
+
+  defp repository_files(_repository), do: []
+
+  defp lexicon_root(root) do
+    cond do
+      File.dir?(Path.join(root, "lexicons")) -> Path.join(root, "lexicons")
+      File.dir?(root) -> root
+      true -> nil
+    end
+  end
+
+  defp namespace_files(root, namespace) when is_binary(namespace) do
+    namespace_path = Path.join([root | String.split(namespace, ".", trim: true)])
+
+    cond do
+      File.dir?(namespace_path) -> Path.wildcard(Path.join(namespace_path, "**/*.json"))
+      File.regular?(namespace_path <> ".json") -> [namespace_path <> ".json"]
+      true -> []
+    end
+  end
+
+  defp namespace_files(_root, _namespace), do: []
 
   defp local_manifest(files, documents) do
     %{

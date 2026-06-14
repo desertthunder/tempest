@@ -157,7 +157,7 @@ defmodule Tempest.Lexicon.OfficialComAtprotoCompatibilityTest do
     assert :ok = Document.validate_documents(@official_com_atproto_subset)
   end
 
-  test "compatibility target excludes official app.bsky profile post and follow records" do
+  test "com.atproto compatibility subset stays scoped to com.atproto documents" do
     ids = Enum.map(@official_com_atproto_subset, &Map.fetch!(&1, "id"))
 
     assert Enum.all?(ids, &String.starts_with?(&1, "com.atproto."))

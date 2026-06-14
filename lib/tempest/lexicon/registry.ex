@@ -27,6 +27,7 @@ defmodule Tempest.Lexicon.Registry do
     bundled_provider: Tempest.Lexicon.Bundled,
     documents: [],
     paths: [],
+    repositories: [],
     limits: [],
     external_resolver: @default_external_resolver
   ]
@@ -142,7 +143,10 @@ defmodule Tempest.Lexicon.Registry do
          {:ok, configured_documents} <- normalize_documents(Keyword.get(config, :documents, [])),
          {:ok, local_documents, local_manifest} <-
            Tempest.Lexicon.LocalProvider.load(
-             Keyword.merge(Keyword.get(config, :limits, []), paths: Keyword.get(config, :paths, []))
+             Keyword.merge(Keyword.get(config, :limits, []),
+               paths: Keyword.get(config, :paths, []),
+               repositories: Keyword.get(config, :repositories, [])
+             )
            ) do
       documents = bundled_documents ++ configured_documents ++ local_documents
 

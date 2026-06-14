@@ -10,6 +10,7 @@ defmodule Tempest.Lexicon.BundledManifestTest do
     assert manifest["source_repo"] == "https://github.com/bluesky-social/atproto"
     assert manifest["source_commit"] =~ ~r/^[0-9a-f]{40}$/
     assert manifest["document_count"] == length(Bundled.documents())
+    assert "app.bsky.feed.post" in manifest["document_ids"]
     assert "com.atproto.repo.applyWrites" in manifest["document_ids"]
     assert "com.atproto.sync.getBlocks" in manifest["document_ids"]
     assert "com.atproto.sync.requestCrawl" in manifest["document_ids"]

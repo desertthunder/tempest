@@ -57,6 +57,59 @@ defmodule Tempest.Lexicon.GenerateTaskTest do
     assert generated =~ ~s("example.app.subject")
   end
 
+  test "generates bundled module from namespace prefixes with dependencies" do
+    source = tmp_dir!("namespace-source")
+    output = Path.join(tmp_dir!("namespace-output"), "bundled.ex")
+
+    write_json!(
+      Path.join(source, "example.app.note.json"),
+      lexicon("example.app.note", %{
+        "main" => %{
+          "type" => "record",
+          "key" => "any",
+          "record" => %{
+            "type" => "object",
+            "properties" => %{"subject" => %{"type" => "ref", "ref" => "com.example.subject"}}
+          }
+        }
+      })
+    )
+
+    write_json!(
+      Path.join(source, "example.app.profile.json"),
+      lexicon("example.app.profile", %{"main" => %{"type" => "object"}})
+    )
+
+    write_json!(
+      Path.join(source, "com.example.subject.json"),
+      lexicon("com.example.subject", %{"main" => %{"type" => "object"}})
+    )
+
+    write_json!(
+      Path.join(source, "other.app.note.json"),
+      lexicon("other.app.note", %{"main" => %{"type" => "object"}})
+    )
+
+    Generate.run([
+      "--source",
+      source,
+      "--commit",
+      "abc123",
+      "--namespace",
+      "example.app",
+      "--out",
+      output
+    ])
+
+    generated = File.read!(output)
+
+    assert generated =~ ~s("document_count" => 3)
+    assert generated =~ ~s("example.app.note")
+    assert generated =~ ~s("example.app.profile")
+    assert generated =~ ~s("com.example.subject")
+    refute generated =~ ~s("other.app.note")
+  end
+
   defp lexicon(id, defs), do: %{"lexicon" => 1, "id" => id, "defs" => defs}
 
   defp tmp_dir!(name) do
@@ -65,5 +118,8 @@ defmodule Tempest.Lexicon.GenerateTaskTest do
     path
   end
 
-  defp write_json!(path, data), do: File.write!(path, Jason.encode!(data))
+  defp write_json!(path, data) do
+    File.mkdir_p!(Path.dirname(path))
+    File.write!(path, Jason.encode!(data))
+  end
 end

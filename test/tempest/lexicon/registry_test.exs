@@ -46,6 +46,37 @@ defmodule Tempest.Lexicon.RegistryTest do
              Registry.fetch_definition("com.atproto.repo.strongRef")
   end
 
+  test "loads repository namespaces from a lexicons directory" do
+    directory = tmp_dir!("namespace-lexicons")
+    write_json!(Path.join([directory, "example", "app", "post.json"]), custom_record("example.app.post"))
+    write_json!(Path.join([directory, "example", "app", "like.json"]), custom_record("example.app.like"))
+    write_json!(Path.join([directory, "other", "app", "post.json"]), custom_record("other.app.post"))
+
+    Application.put_env(:tempest, Registry,
+      bundled?: false,
+      repositories: [[path: directory, namespaces: ["example.app"]]]
+    )
+
+    assert :ok = Registry.validate_startup!()
+    assert {:ok, _document, %{"type" => "record"}} = Registry.fetch_record("example.app.post")
+    assert {:ok, _document, %{"type" => "record"}} = Registry.fetch_record("example.app.like")
+    assert {:error, :unknown_lexicon} = Registry.fetch_record("other.app.post")
+  end
+
+  test "loads repository namespaces from a git checkout root" do
+    checkout = tmp_dir!("namespace-repo")
+    lexicons = Path.join(checkout, "lexicons")
+    write_json!(Path.join([lexicons, "example", "feed", "post.json"]), custom_record("example.feed.post"))
+
+    Application.put_env(:tempest, Registry,
+      bundled?: false,
+      repositories: [[path: checkout, namespaces: ["example.feed"]]]
+    )
+
+    assert :ok = Registry.validate_startup!()
+    assert {:ok, _document, %{"type" => "record"}} = Registry.fetch_record("example.feed.post")
+  end
+
   test "configured local documents are validated and can add custom record schemas" do
     directory = tmp_dir!("custom-lexicons")
 
@@ -232,7 +263,10 @@ defmodule Tempest.Lexicon.RegistryTest do
     path
   end
 
-  defp write_json!(path, data), do: File.write!(path, Jason.encode!(data))
+  defp write_json!(path, data) do
+    File.mkdir_p!(Path.dirname(path))
+    File.write!(path, Jason.encode!(data))
+  end
 end
 
 defmodule Tempest.Lexicon.RegistryTest.Resolver do
