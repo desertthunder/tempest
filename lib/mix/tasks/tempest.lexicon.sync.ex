@@ -20,9 +20,10 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     * `--generated-at` - timestamp passed to the generator when `--generate` is set.
     * `--bundle-out` - generated module path when `--generate` is set.
 
-  The default path set intentionally includes local PDS endpoints plus the
-  private `app.bsky.actor` preference compatibility endpoints and their minimal
-  official dependency closure as currently tracked by Tempest.
+  The default path set includes local PDS endpoints plus every official
+  `app.bsky.*` Lexicon document available at the pinned commit. If GitHub tree
+  discovery is not available, Tempest falls back to the known record and
+  dependency subset required for local PDS writes.
   """
 
   use Mix.Task
@@ -31,7 +32,7 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
 
   @requirements ["app.config"]
 
-  @default_paths ~w(
+  @fallback_app_bsky_paths ~w(
     app/bsky/actor/defs.json
     app/bsky/actor/getPreferences.json
     app/bsky/actor/profile.json
@@ -44,13 +45,28 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     app/bsky/embed/recordWithMedia.json
     app/bsky/embed/video.json
     app/bsky/feed/defs.json
+    app/bsky/feed/generator.json
+    app/bsky/feed/like.json
     app/bsky/feed/post.json
     app/bsky/feed/postgate.json
+    app/bsky/feed/repost.json
     app/bsky/feed/threadgate.json
+    app/bsky/graph/block.json
     app/bsky/graph/defs.json
+    app/bsky/graph/follow.json
+    app/bsky/graph/list.json
+    app/bsky/graph/listblock.json
+    app/bsky/graph/listitem.json
+    app/bsky/graph/starterpack.json
+    app/bsky/graph/verification.json
     app/bsky/labeler/defs.json
+    app/bsky/labeler/service.json
+    app/bsky/notification/declaration.json
     app/bsky/notification/defs.json
     app/bsky/richtext/facet.json
+  )
+
+  @default_core_paths ~w(
     com/atproto/identity/resolveHandle.json
     com/atproto/identity/updateHandle.json
     com/atproto/label/defs.json
@@ -124,7 +140,10 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
     out = Keyword.get(opts, :out, "priv/lexicons/official")
     source_repo = Keyword.get(opts, :source_repo, "https://github.com/bluesky-social/atproto")
     base_url = Keyword.get(opts, :base_url, raw_base_url(source_repo, commit))
-    paths = lexicon_paths(Keyword.get(opts, :paths))
+
+    {:ok, _apps} = Application.ensure_all_started(:req)
+
+    paths = lexicon_paths(Keyword.get(opts, :paths), source_repo, commit)
 
     Enum.each(paths, &sync_path(base_url, out, &1))
     Mix.shell().info("Synced #{length(paths)} Lexicon document(s) to #{out}")
@@ -157,15 +176,50 @@ defmodule Mix.Tasks.Tempest.Lexicon.Sync do
 
   defp raw_base_url(source_repo, commit), do: String.trim_trailing(source_repo, "/") <> "/" <> commit <> "/lexicons"
 
-  defp lexicon_paths(nil), do: @default_paths
+  defp lexicon_paths(nil, source_repo, commit) do
+    source_repo
+    |> discover_app_bsky_paths(commit)
+    |> case do
+      {:ok, paths} -> Enum.uniq(Enum.sort(paths ++ @default_core_paths))
+      {:error, _reason} -> Enum.uniq(Enum.sort(@fallback_app_bsky_paths ++ @default_core_paths))
+    end
+  end
 
-  defp lexicon_paths(path_file) do
+  defp lexicon_paths(path_file, _source_repo, _commit) do
     path_file
     |> File.read!()
     |> String.split("\n", trim: true)
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == "" or String.starts_with?(&1, "#")))
   end
+
+  defp discover_app_bsky_paths("https://github.com/" <> repo, commit) do
+    repo = String.trim_trailing(repo, "/")
+    url = "https://api.github.com/repos/#{repo}/git/trees/#{commit}?recursive=1"
+
+    case Req.get(url: url, retry: false) do
+      {:ok, %{status: 200, body: %{"tree" => tree}}} when is_list(tree) ->
+        paths =
+          tree
+          |> Enum.flat_map(fn
+            %{"path" => "lexicons/app/bsky/" <> rest, "type" => "blob"} ->
+              if String.ends_with?(rest, ".json"), do: ["app/bsky/" <> rest], else: []
+
+            _entry ->
+              []
+          end)
+
+        if paths == [], do: {:error, :no_app_bsky_paths}, else: {:ok, paths}
+
+      {:ok, %{status: status}} ->
+        {:error, {:tree_status, status}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp discover_app_bsky_paths(_source_repo, _commit), do: {:error, :unsupported_source_repo}
 
   defp sync_path("file://" <> source, out, path) do
     source_path = Path.join(source, path)

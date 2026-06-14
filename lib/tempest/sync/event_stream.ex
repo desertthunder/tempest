@@ -39,6 +39,7 @@ defmodule Tempest.Sync.EventStream do
   defp normalize_commit_links(payload) do
     payload
     |> update_cid_link("commit")
+    |> update_cid_link("prevData")
     |> update_ops()
   end
 
@@ -56,10 +57,18 @@ defmodule Tempest.Sync.EventStream do
   end
 
   defp update_ops(%{"ops" => ops} = payload) when is_list(ops) do
-    Map.put(payload, "ops", Enum.map(ops, &update_cid_link(&1, "cid")))
+    Map.put(payload, "ops", Enum.map(ops, &normalize_op_links/1))
   end
 
   defp update_ops(payload), do: payload
+
+  defp normalize_op_links(op) when is_map(op) do
+    op
+    |> update_cid_link("cid")
+    |> update_cid_link("prev")
+  end
+
+  defp normalize_op_links(op), do: op
 
   defp check_frame_size(frame) do
     if byte_size(frame) <= @max_frame_bytes do

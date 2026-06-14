@@ -489,6 +489,7 @@ defmodule Tempest.Records do
     base = %{
       "ops" => ops,
       "blobs" => [],
+      "rebase" => false,
       "tooBig" => false
     }
 
@@ -521,6 +522,7 @@ defmodule Tempest.Records do
           "blocks" => Drisl.bytes(car_slice.bytes),
           "ops" => ops,
           "blobs" => [],
+          "rebase" => false,
           "tooBig" => true
         }
         |> put_common_commit_fields(stored)

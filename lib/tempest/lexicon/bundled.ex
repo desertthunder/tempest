@@ -10,27 +10,164 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 72,
+    "document_count" => 209,
     "document_ids" => [
       "app.bsky.actor.defs",
       "app.bsky.actor.getPreferences",
+      "app.bsky.actor.getProfile",
+      "app.bsky.actor.getProfiles",
+      "app.bsky.actor.getSuggestions",
       "app.bsky.actor.profile",
       "app.bsky.actor.putPreferences",
+      "app.bsky.actor.searchActors",
+      "app.bsky.actor.searchActorsTypeahead",
+      "app.bsky.actor.status",
+      "app.bsky.ageassurance.begin",
+      "app.bsky.ageassurance.defs",
+      "app.bsky.ageassurance.getConfig",
+      "app.bsky.ageassurance.getState",
+      "app.bsky.authCreatePosts",
+      "app.bsky.authDeleteContent",
+      "app.bsky.authFullApp",
+      "app.bsky.authManageFeedDeclarations",
+      "app.bsky.authManageLabelerService",
+      "app.bsky.authManageModeration",
+      "app.bsky.authManageNotifications",
+      "app.bsky.authManageProfile",
+      "app.bsky.authViewAll",
+      "app.bsky.bookmark.createBookmark",
+      "app.bsky.bookmark.defs",
+      "app.bsky.bookmark.deleteBookmark",
+      "app.bsky.bookmark.getBookmarks",
+      "app.bsky.contact.defs",
+      "app.bsky.contact.dismissMatch",
+      "app.bsky.contact.getMatches",
+      "app.bsky.contact.getSyncStatus",
+      "app.bsky.contact.importContacts",
+      "app.bsky.contact.removeData",
+      "app.bsky.contact.sendNotification",
+      "app.bsky.contact.startPhoneVerification",
+      "app.bsky.contact.verifyPhone",
+      "app.bsky.draft.createDraft",
+      "app.bsky.draft.defs",
+      "app.bsky.draft.deleteDraft",
+      "app.bsky.draft.getDrafts",
+      "app.bsky.draft.updateDraft",
       "app.bsky.embed.defs",
       "app.bsky.embed.external",
       "app.bsky.embed.gallery",
+      "app.bsky.embed.getEmbedExternalView",
       "app.bsky.embed.images",
       "app.bsky.embed.record",
       "app.bsky.embed.recordWithMedia",
       "app.bsky.embed.video",
       "app.bsky.feed.defs",
+      "app.bsky.feed.describeFeedGenerator",
+      "app.bsky.feed.generator",
+      "app.bsky.feed.getActorFeeds",
+      "app.bsky.feed.getActorLikes",
+      "app.bsky.feed.getAuthorFeed",
+      "app.bsky.feed.getFeed",
+      "app.bsky.feed.getFeedGenerator",
+      "app.bsky.feed.getFeedGenerators",
+      "app.bsky.feed.getFeedSkeleton",
+      "app.bsky.feed.getLikes",
+      "app.bsky.feed.getListFeed",
+      "app.bsky.feed.getPostThread",
+      "app.bsky.feed.getPosts",
+      "app.bsky.feed.getQuotes",
+      "app.bsky.feed.getRepostedBy",
+      "app.bsky.feed.getSuggestedFeeds",
+      "app.bsky.feed.getTimeline",
+      "app.bsky.feed.like",
       "app.bsky.feed.post",
       "app.bsky.feed.postgate",
+      "app.bsky.feed.repost",
+      "app.bsky.feed.searchPosts",
+      "app.bsky.feed.sendInteractions",
       "app.bsky.feed.threadgate",
+      "app.bsky.graph.block",
       "app.bsky.graph.defs",
+      "app.bsky.graph.follow",
+      "app.bsky.graph.getActorStarterPacks",
+      "app.bsky.graph.getBlocks",
+      "app.bsky.graph.getFollowers",
+      "app.bsky.graph.getFollows",
+      "app.bsky.graph.getKnownFollowers",
+      "app.bsky.graph.getList",
+      "app.bsky.graph.getListBlocks",
+      "app.bsky.graph.getListMutes",
+      "app.bsky.graph.getLists",
+      "app.bsky.graph.getListsWithMembership",
+      "app.bsky.graph.getMutes",
+      "app.bsky.graph.getRelationships",
+      "app.bsky.graph.getStarterPack",
+      "app.bsky.graph.getStarterPacks",
+      "app.bsky.graph.getStarterPacksWithMembership",
+      "app.bsky.graph.getSuggestedFollowsByActor",
+      "app.bsky.graph.list",
+      "app.bsky.graph.listblock",
+      "app.bsky.graph.listitem",
+      "app.bsky.graph.muteActor",
+      "app.bsky.graph.muteActorList",
+      "app.bsky.graph.muteThread",
+      "app.bsky.graph.searchStarterPacks",
+      "app.bsky.graph.starterpack",
+      "app.bsky.graph.unmuteActor",
+      "app.bsky.graph.unmuteActorList",
+      "app.bsky.graph.unmuteThread",
+      "app.bsky.graph.verification",
       "app.bsky.labeler.defs",
+      "app.bsky.labeler.getServices",
+      "app.bsky.labeler.service",
+      "app.bsky.notification.declaration",
       "app.bsky.notification.defs",
+      "app.bsky.notification.getPreferences",
+      "app.bsky.notification.getUnreadCount",
+      "app.bsky.notification.listActivitySubscriptions",
+      "app.bsky.notification.listNotifications",
+      "app.bsky.notification.putActivitySubscription",
+      "app.bsky.notification.putPreferences",
+      "app.bsky.notification.putPreferencesV2",
+      "app.bsky.notification.registerPush",
+      "app.bsky.notification.unregisterPush",
+      "app.bsky.notification.updateSeen",
       "app.bsky.richtext.facet",
+      "app.bsky.unspecced.defs",
+      "app.bsky.unspecced.getAgeAssuranceState",
+      "app.bsky.unspecced.getConfig",
+      "app.bsky.unspecced.getOnboardingSuggestedStarterPacks",
+      "app.bsky.unspecced.getOnboardingSuggestedStarterPacksSkeleton",
+      "app.bsky.unspecced.getOnboardingSuggestedUsersSkeleton",
+      "app.bsky.unspecced.getPopularFeedGenerators",
+      "app.bsky.unspecced.getPostThreadOtherV2",
+      "app.bsky.unspecced.getPostThreadV2",
+      "app.bsky.unspecced.getSuggestedFeeds",
+      "app.bsky.unspecced.getSuggestedFeedsSkeleton",
+      "app.bsky.unspecced.getSuggestedOnboardingUsers",
+      "app.bsky.unspecced.getSuggestedStarterPacks",
+      "app.bsky.unspecced.getSuggestedStarterPacksSkeleton",
+      "app.bsky.unspecced.getSuggestedUsers",
+      "app.bsky.unspecced.getSuggestedUsersForDiscover",
+      "app.bsky.unspecced.getSuggestedUsersForDiscoverSkeleton",
+      "app.bsky.unspecced.getSuggestedUsersForExplore",
+      "app.bsky.unspecced.getSuggestedUsersForExploreSkeleton",
+      "app.bsky.unspecced.getSuggestedUsersForSeeMore",
+      "app.bsky.unspecced.getSuggestedUsersForSeeMoreSkeleton",
+      "app.bsky.unspecced.getSuggestedUsersSkeleton",
+      "app.bsky.unspecced.getSuggestionsSkeleton",
+      "app.bsky.unspecced.getTaggedSuggestions",
+      "app.bsky.unspecced.getTrendingTopics",
+      "app.bsky.unspecced.getTrends",
+      "app.bsky.unspecced.getTrendsSkeleton",
+      "app.bsky.unspecced.initAgeAssurance",
+      "app.bsky.unspecced.searchActorsSkeleton",
+      "app.bsky.unspecced.searchPostsSkeleton",
+      "app.bsky.unspecced.searchStarterPacksSkeleton",
+      "app.bsky.video.defs",
+      "app.bsky.video.getJobStatus",
+      "app.bsky.video.getUploadLimits",
+      "app.bsky.video.uploadVideo",
       "com.atproto.identity.getRecommendedDidCredentials",
       "com.atproto.identity.requestPlcOperationSignature",
       "com.atproto.identity.resolveHandle",
@@ -85,7 +222,7 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.sync.requestCrawl",
       "com.atproto.sync.subscribeRepos"
     ],
-    "generated_at" => "2026-06-13T00:00:00Z",
+    "generated_at" => "2026-06-14T00:00:00Z",
     "source_commit" => "6b4f57f49dd113d891bba38c89dada2b8547689b",
     "source_repo" => "https://github.com/bluesky-social/atproto"
   }
@@ -803,6 +940,120 @@ defmodule Tempest.Lexicon.Bundled do
     %{
       "defs" => %{
         "main" => %{
+          "description" =>
+            "Get detailed profile view of an actor. Does not require auth, but contains relevant metadata with auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "ref" => "app.bsky.actor.defs#profileViewDetailed",
+              "type" => "ref"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{
+                "description" => "Handle or DID of account to fetch profile of.",
+                "format" => "at-identifier",
+                "type" => "string"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.actor.getProfile",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get detailed profile views of multiple actors.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "profiles" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileViewDetailed",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["profiles"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actors" => %{
+                "items" => %{"format" => "at-identifier", "type" => "string"},
+                "maxLength" => 25,
+                "type" => "array"
+              }
+            },
+            "required" => ["actors"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.actor.getProfiles",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a list of suggested actors. Expected use is discovery of accounts to follow during new account onboarding.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"},
+                "recId" => %{
+                  "description" => "DEPRECATED: use recIdStr instead.",
+                  "type" => "integer"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.actor.getSuggestions",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
           "description" => "A declaration of a Bluesky account profile.",
           "key" => "literal:self",
           "record" => %{
@@ -881,6 +1132,1728 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "app.bsky.actor.putPreferences",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Find actors (profiles) matching search criteria. Does not require auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"}
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "q" => %{
+                "description" =>
+                  "Search query string. Syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.",
+                "type" => "string"
+              },
+              "term" => %{
+                "description" => "DEPRECATED: use 'q' instead.",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.actor.searchActors",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Find actor suggestions for a prefix search term. Expected use is for auto-completion during text field entry. Does not require auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileViewBasic",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "q" => %{
+                "description" => "Search query prefix; not a full query string.",
+                "type" => "string"
+              },
+              "term" => %{
+                "description" => "DEPRECATED: use 'q' instead.",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.actor.searchActorsTypeahead",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "live" => %{
+          "description" => "Advertises an account as currently offering live content.",
+          "type" => "token"
+        },
+        "main" => %{
+          "description" => "A declaration of a Bluesky account status.",
+          "key" => "literal:self",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "durationMinutes" => %{
+                "description" =>
+                  "The duration of the status in minutes. Applications can choose to impose minimum and maximum limits.",
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "embed" => %{
+                "description" => "An optional embed associated with the status.",
+                "refs" => ["app.bsky.embed.external"],
+                "type" => "union"
+              },
+              "status" => %{
+                "description" => "The status for the account.",
+                "knownValues" => ["app.bsky.actor.status#live"],
+                "type" => "string"
+              }
+            },
+            "required" => ["status", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.actor.status",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Initiate Age Assurance for an account.",
+          "errors" => [
+            %{"name" => "InvalidEmail"},
+            %{"name" => "DidTooLong"},
+            %{"name" => "InvalidInitiation"},
+            %{"name" => "RegionNotSupported"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "countryCode" => %{
+                  "description" => "An ISO 3166-1 alpha-2 code of the user's location.",
+                  "type" => "string"
+                },
+                "email" => %{
+                  "description" => "The user's email address to receive Age Assurance instructions.",
+                  "type" => "string"
+                },
+                "language" => %{
+                  "description" => "The user's preferred language for communication during the Age Assurance process.",
+                  "type" => "string"
+                },
+                "regionCode" => %{
+                  "description" => "An optional ISO 3166-2 code of the user's region or state within the country.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["email", "language", "countryCode"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "ref" => "app.bsky.ageassurance.defs#state",
+              "type" => "ref"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.ageassurance.begin",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "access" => %{
+          "description" => "The access level granted based on Age Assurance data we've processed.",
+          "knownValues" => ["unknown", "none", "safe", "full"],
+          "type" => "string"
+        },
+        "config" => %{
+          "description" => "",
+          "properties" => %{
+            "regions" => %{
+              "description" => "The per-region Age Assurance configuration.",
+              "items" => %{
+                "ref" => "app.bsky.ageassurance.defs#configRegion",
+                "type" => "ref"
+              },
+              "type" => "array"
+            }
+          },
+          "required" => ["regions"],
+          "type" => "object"
+        },
+        "configRegion" => %{
+          "description" => "The Age Assurance configuration for a specific region.",
+          "properties" => %{
+            "countryCode" => %{
+              "description" => "The ISO 3166-1 alpha-2 country code this configuration applies to.",
+              "type" => "string"
+            },
+            "minAccessAge" => %{
+              "description" => "The minimum age (as a whole integer) required to use Bluesky in this region.",
+              "type" => "integer"
+            },
+            "regionCode" => %{
+              "description" =>
+                "The ISO 3166-2 region code this configuration applies to. If omitted, the configuration applies to the entire country.",
+              "type" => "string"
+            },
+            "rules" => %{
+              "description" =>
+                "The ordered list of Age Assurance rules that apply to this region. Rules should be applied in order, and the first matching rule determines the access level granted. The rules array should always include a default rule as the last item.",
+              "items" => %{
+                "refs" => [
+                  "#configRegionRuleDefault",
+                  "#configRegionRuleIfDeclaredOverAge",
+                  "#configRegionRuleIfDeclaredUnderAge",
+                  "#configRegionRuleIfAssuredOverAge",
+                  "#configRegionRuleIfAssuredUnderAge",
+                  "#configRegionRuleIfAccountNewerThan",
+                  "#configRegionRuleIfAccountOlderThan"
+                ],
+                "type" => "union"
+              },
+              "type" => "array"
+            }
+          },
+          "required" => ["countryCode", "minAccessAge", "rules"],
+          "type" => "object"
+        },
+        "configRegionRuleDefault" => %{
+          "description" => "Age Assurance rule that applies by default.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            }
+          },
+          "required" => ["access"],
+          "type" => "object"
+        },
+        "configRegionRuleIfAccountNewerThan" => %{
+          "description" => "Age Assurance rule that applies if the account is equal-to or newer than a certain date.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            },
+            "date" => %{
+              "description" => "The date threshold as a datetime string.",
+              "format" => "datetime",
+              "type" => "string"
+            }
+          },
+          "required" => ["date", "access"],
+          "type" => "object"
+        },
+        "configRegionRuleIfAccountOlderThan" => %{
+          "description" => "Age Assurance rule that applies if the account is older than a certain date.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            },
+            "date" => %{
+              "description" => "The date threshold as a datetime string.",
+              "format" => "datetime",
+              "type" => "string"
+            }
+          },
+          "required" => ["date", "access"],
+          "type" => "object"
+        },
+        "configRegionRuleIfAssuredOverAge" => %{
+          "description" =>
+            "Age Assurance rule that applies if the user has been assured to be equal-to or over a certain age.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            },
+            "age" => %{
+              "description" => "The age threshold as a whole integer.",
+              "type" => "integer"
+            }
+          },
+          "required" => ["age", "access"],
+          "type" => "object"
+        },
+        "configRegionRuleIfAssuredUnderAge" => %{
+          "description" => "Age Assurance rule that applies if the user has been assured to be under a certain age.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            },
+            "age" => %{
+              "description" => "The age threshold as a whole integer.",
+              "type" => "integer"
+            }
+          },
+          "required" => ["age", "access"],
+          "type" => "object"
+        },
+        "configRegionRuleIfDeclaredOverAge" => %{
+          "description" =>
+            "Age Assurance rule that applies if the user has declared themselves equal-to or over a certain age.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            },
+            "age" => %{
+              "description" => "The age threshold as a whole integer.",
+              "type" => "integer"
+            }
+          },
+          "required" => ["age", "access"],
+          "type" => "object"
+        },
+        "configRegionRuleIfDeclaredUnderAge" => %{
+          "description" => "Age Assurance rule that applies if the user has declared themselves under a certain age.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            },
+            "age" => %{
+              "description" => "The age threshold as a whole integer.",
+              "type" => "integer"
+            }
+          },
+          "required" => ["age", "access"],
+          "type" => "object"
+        },
+        "event" => %{
+          "description" => "Object used to store Age Assurance data in stash.",
+          "properties" => %{
+            "access" => %{
+              "description" => "The access level granted based on Age Assurance data we've processed.",
+              "knownValues" => ["unknown", "none", "safe", "full"],
+              "type" => "string"
+            },
+            "attemptId" => %{
+              "description" => "The unique identifier for this instance of the Age Assurance flow, in UUID format.",
+              "type" => "string"
+            },
+            "completeIp" => %{
+              "description" => "The IP address used when completing the Age Assurance flow.",
+              "type" => "string"
+            },
+            "completeUa" => %{
+              "description" => "The user agent used when completing the Age Assurance flow.",
+              "type" => "string"
+            },
+            "countryCode" => %{
+              "description" => "The ISO 3166-1 alpha-2 country code provided when beginning the Age Assurance flow.",
+              "type" => "string"
+            },
+            "createdAt" => %{
+              "description" => "The date and time of this write operation.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "email" => %{
+              "description" => "The email used for Age Assurance.",
+              "type" => "string"
+            },
+            "initIp" => %{
+              "description" => "The IP address used when initiating the Age Assurance flow.",
+              "type" => "string"
+            },
+            "initUa" => %{
+              "description" => "The user agent used when initiating the Age Assurance flow.",
+              "type" => "string"
+            },
+            "regionCode" => %{
+              "description" => "The ISO 3166-2 region code provided when beginning the Age Assurance flow.",
+              "type" => "string"
+            },
+            "status" => %{
+              "description" => "The status of the Age Assurance process.",
+              "knownValues" => ["unknown", "pending", "assured", "blocked"],
+              "type" => "string"
+            }
+          },
+          "required" => ["createdAt", "status", "access", "attemptId", "countryCode"],
+          "type" => "object"
+        },
+        "state" => %{
+          "description" => "The user's computed Age Assurance state.",
+          "properties" => %{
+            "access" => %{
+              "ref" => "app.bsky.ageassurance.defs#access",
+              "type" => "ref"
+            },
+            "lastInitiatedAt" => %{
+              "description" => "The timestamp when this state was last updated.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "status" => %{
+              "ref" => "app.bsky.ageassurance.defs#status",
+              "type" => "ref"
+            }
+          },
+          "required" => ["status", "access"],
+          "type" => "object"
+        },
+        "stateMetadata" => %{
+          "description" => "Additional metadata needed to compute Age Assurance state client-side.",
+          "properties" => %{
+            "accountCreatedAt" => %{
+              "description" => "The account creation timestamp.",
+              "format" => "datetime",
+              "type" => "string"
+            }
+          },
+          "required" => [],
+          "type" => "object"
+        },
+        "status" => %{
+          "description" => "The status of the Age Assurance process.",
+          "knownValues" => ["unknown", "pending", "assured", "blocked"],
+          "type" => "string"
+        }
+      },
+      "id" => "app.bsky.ageassurance.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Returns Age Assurance configuration for use on the client.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "ref" => "app.bsky.ageassurance.defs#config",
+              "type" => "ref"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.ageassurance.getConfig",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Returns server-computed Age Assurance state, if available, and any additional metadata needed to compute Age Assurance state client-side.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "metadata" => %{
+                  "ref" => "app.bsky.ageassurance.defs#stateMetadata",
+                  "type" => "ref"
+                },
+                "state" => %{
+                  "ref" => "app.bsky.ageassurance.defs#state",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["state", "metadata"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "countryCode" => %{"type" => "string"},
+              "regionCode" => %{"type" => "string"}
+            },
+            "required" => ["countryCode"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.ageassurance.getState",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" => "Can not update or delete posts.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "inheritAud" => true,
+              "lxm" => ["app.bsky.video.uploadVideo", "app.bsky.video.getJobStatus", "app.bsky.video.getUploadLimits"],
+              "resource" => "rpc",
+              "type" => "permission"
+            },
+            %{
+              "action" => ["create"],
+              "collection" => ["app.bsky.feed.post", "app.bsky.feed.postgate", "app.bsky.feed.threadgate"],
+              "resource" => "repo",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Create Bluesky Posts",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authCreatePosts",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" => "Clean up public account history: posts, reposts, and likes.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "action" => ["delete"],
+              "collection" => [
+                "app.bsky.feed.like",
+                "app.bsky.feed.post",
+                "app.bsky.feed.postgate",
+                "app.bsky.feed.repost",
+                "app.bsky.feed.threadgate"
+              ],
+              "resource" => "repo",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Delete Bluesky Content",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authDeleteContent",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" =>
+            "Manage all public content and interactions, private preferences and subscriptions, and other Bluesky-specific app features and data.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "inheritAud" => true,
+              "lxm" => [
+                "app.bsky.actor.getPreferences",
+                "app.bsky.actor.getProfile",
+                "app.bsky.actor.getProfiles",
+                "app.bsky.actor.getSuggestions",
+                "app.bsky.actor.putPreferences",
+                "app.bsky.actor.searchActors",
+                "app.bsky.actor.searchActorsTypeahead",
+                "app.bsky.bookmark.createBookmark",
+                "app.bsky.bookmark.deleteBookmark",
+                "app.bsky.bookmark.getBookmarks",
+                "app.bsky.contact.dismissMatch",
+                "app.bsky.contact.getMatches",
+                "app.bsky.contact.getSyncStatus",
+                "app.bsky.contact.importContacts",
+                "app.bsky.contact.removeData",
+                "app.bsky.contact.startPhoneVerification",
+                "app.bsky.contact.verifyPhone",
+                "app.bsky.feed.describeFeedGenerator",
+                "app.bsky.feed.getActorFeeds",
+                "app.bsky.feed.getActorLikes",
+                "app.bsky.feed.getAuthorFeed",
+                "app.bsky.feed.getFeed",
+                "app.bsky.feed.getFeedGenerator",
+                "app.bsky.feed.getFeedGenerators",
+                "app.bsky.feed.getFeedSkeleton",
+                "app.bsky.feed.getLikes",
+                "app.bsky.feed.getListFeed",
+                "app.bsky.feed.getPostThread",
+                "app.bsky.feed.getPosts",
+                "app.bsky.feed.getQuotes",
+                "app.bsky.feed.getRepostedBy",
+                "app.bsky.feed.getSuggestedFeeds",
+                "app.bsky.feed.getTimeline",
+                "app.bsky.feed.searchPosts",
+                "app.bsky.feed.sendInteractions",
+                "app.bsky.graph.getActorStarterPacks",
+                "app.bsky.graph.getBlocks",
+                "app.bsky.graph.getFollowers",
+                "app.bsky.graph.getFollows",
+                "app.bsky.graph.getKnownFollowers",
+                "app.bsky.graph.getList",
+                "app.bsky.graph.getListBlocks",
+                "app.bsky.graph.getListMutes",
+                "app.bsky.graph.getLists",
+                "app.bsky.graph.getListsWithMembership",
+                "app.bsky.graph.getMutes",
+                "app.bsky.graph.getRelationships",
+                "app.bsky.graph.getStarterPack",
+                "app.bsky.graph.getStarterPacks",
+                "app.bsky.graph.getStarterPacksWithMembership",
+                "app.bsky.graph.getSuggestedFollowsByActor",
+                "app.bsky.graph.muteActor",
+                "app.bsky.graph.muteActorList",
+                "app.bsky.graph.muteThread",
+                "app.bsky.graph.searchStarterPacks",
+                "app.bsky.graph.unmuteActor",
+                "app.bsky.graph.unmuteActorList",
+                "app.bsky.graph.unmuteThread",
+                "app.bsky.labeler.getServices",
+                "app.bsky.notification.getPreferences",
+                "app.bsky.notification.getUnreadCount",
+                "app.bsky.notification.listActivitySubscriptions",
+                "app.bsky.notification.listNotifications",
+                "app.bsky.notification.putActivitySubscription",
+                "app.bsky.notification.putPreferences",
+                "app.bsky.notification.putPreferencesV2",
+                "app.bsky.notification.registerPush",
+                "app.bsky.notification.unregisterPush",
+                "app.bsky.notification.updateSeen",
+                "app.bsky.unspecced.getAgeAssuranceState",
+                "app.bsky.unspecced.getConfig",
+                "app.bsky.unspecced.getOnboardingSuggestedStarterPacks",
+                "app.bsky.unspecced.getPopularFeedGenerators",
+                "app.bsky.unspecced.getPostThreadOtherV2",
+                "app.bsky.unspecced.getPostThreadV2",
+                "app.bsky.unspecced.getSuggestedFeeds",
+                "app.bsky.unspecced.getSuggestedFeedsSkeleton",
+                "app.bsky.unspecced.getSuggestedStarterPacks",
+                "app.bsky.unspecced.getSuggestedStarterPacksSkeleton",
+                "app.bsky.unspecced.getSuggestedUsers",
+                "app.bsky.unspecced.getSuggestedUsersSkeleton",
+                "app.bsky.unspecced.getSuggestionsSkeleton",
+                "app.bsky.unspecced.getTaggedSuggestions",
+                "app.bsky.unspecced.getTrendingTopics",
+                "app.bsky.unspecced.getTrends",
+                "app.bsky.unspecced.getTrendsSkeleton",
+                "app.bsky.unspecced.initAgeAssurance",
+                "app.bsky.unspecced.searchActorsSkeleton",
+                "app.bsky.unspecced.searchPostsSkeleton",
+                "app.bsky.unspecced.searchStarterPacksSkeleton",
+                "app.bsky.video.getJobStatus",
+                "app.bsky.video.getUploadLimits",
+                "app.bsky.video.uploadVideo"
+              ],
+              "resource" => "rpc",
+              "type" => "permission"
+            },
+            %{
+              "action" => ["create", "update", "delete"],
+              "collection" => [
+                "app.bsky.actor.profile",
+                "app.bsky.actor.status",
+                "app.bsky.feed.like",
+                "app.bsky.feed.post",
+                "app.bsky.feed.postgate",
+                "app.bsky.feed.repost",
+                "app.bsky.feed.threadgate",
+                "app.bsky.graph.block",
+                "app.bsky.graph.follow",
+                "app.bsky.graph.list",
+                "app.bsky.graph.listblock",
+                "app.bsky.graph.listitem",
+                "app.bsky.graph.starterpack",
+                "app.bsky.notification.declaration"
+              ],
+              "resource" => "repo",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Full Bluesky Social App Permissions",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authFullApp",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" => "Configure feed generator declaration records.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "action" => ["create", "update", "delete"],
+              "collection" => ["app.bsky.feed.generator"],
+              "resource" => "repo",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Manage Hosted Feeds",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authManageFeedDeclarations",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" => "Configure labeler declaration records.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "action" => ["create", "update", "delete"],
+              "collection" => ["app.bsky.labeler.service"],
+              "resource" => "repo",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Manage Hosted Labeling Service",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authManageLabelerService",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" => "Control over blocks, mutes, mod lists, mod services, and preferences.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "inheritAud" => true,
+              "lxm" => [
+                "app.bsky.actor.getPreferences",
+                "app.bsky.actor.putPreferences",
+                "app.bsky.graph.muteActor",
+                "app.bsky.graph.muteActorList",
+                "app.bsky.graph.muteThread",
+                "app.bsky.graph.unmuteActor",
+                "app.bsky.graph.unmuteActorList",
+                "app.bsky.graph.unmuteThread"
+              ],
+              "resource" => "rpc",
+              "type" => "permission"
+            },
+            %{
+              "action" => ["create", "update", "delete"],
+              "collection" => ["app.bsky.graph.block", "app.bsky.graph.listblock"],
+              "resource" => "repo",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Manage Personal Moderation",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authManageModeration",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" => "View and configure notifications for the Bluesky app.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "inheritAud" => true,
+              "lxm" => [
+                "app.bsky.notification.getPreferences",
+                "app.bsky.notification.getUnreadCount",
+                "app.bsky.notification.listActivitySubscriptions",
+                "app.bsky.notification.listNotifications",
+                "app.bsky.notification.putActivitySubscription",
+                "app.bsky.notification.putPreferences",
+                "app.bsky.notification.putPreferencesV2",
+                "app.bsky.notification.registerPush",
+                "app.bsky.notification.unregisterPush",
+                "app.bsky.notification.updateSeen"
+              ],
+              "resource" => "rpc",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Manage Bluesky Notifications",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authManageNotifications",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" => "Update profile data, as well as status and public chat visibility.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "action" => ["create", "update", "delete"],
+              "collection" => ["app.bsky.actor.profile", "app.bsky.actor.status", "app.bsky.notification.declaration"],
+              "resource" => "repo",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Manage Bluesky Profile",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authManageProfile",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "detail" =>
+            "View Bluesky network content from account perspective, and read all notifications and preferences.",
+          "detail:lang" => %{},
+          "permissions" => [
+            %{
+              "inheritAud" => true,
+              "lxm" => [
+                "app.bsky.actor.getPreferences",
+                "app.bsky.actor.getProfile",
+                "app.bsky.actor.getProfiles",
+                "app.bsky.actor.getSuggestions",
+                "app.bsky.actor.searchActors",
+                "app.bsky.actor.searchActorsTypeahead",
+                "app.bsky.bookmark.getBookmarks",
+                "app.bsky.feed.describeFeedGenerator",
+                "app.bsky.feed.getActorFeeds",
+                "app.bsky.feed.getActorLikes",
+                "app.bsky.feed.getAuthorFeed",
+                "app.bsky.feed.getFeed",
+                "app.bsky.feed.getFeedGenerator",
+                "app.bsky.feed.getFeedGenerators",
+                "app.bsky.feed.getFeedSkeleton",
+                "app.bsky.feed.getLikes",
+                "app.bsky.feed.getListFeed",
+                "app.bsky.feed.getPostThread",
+                "app.bsky.feed.getPosts",
+                "app.bsky.feed.getQuotes",
+                "app.bsky.feed.getRepostedBy",
+                "app.bsky.feed.getSuggestedFeeds",
+                "app.bsky.feed.getTimeline",
+                "app.bsky.feed.searchPosts",
+                "app.bsky.graph.getActorStarterPacks",
+                "app.bsky.graph.getBlocks",
+                "app.bsky.graph.getFollowers",
+                "app.bsky.graph.getFollows",
+                "app.bsky.graph.getKnownFollowers",
+                "app.bsky.graph.getListBlocks",
+                "app.bsky.graph.getListMutes",
+                "app.bsky.graph.getLists",
+                "app.bsky.graph.getListsWithMembership",
+                "app.bsky.graph.getMutes",
+                "app.bsky.graph.getRelationships",
+                "app.bsky.graph.getStarterPack",
+                "app.bsky.graph.getStarterPacks",
+                "app.bsky.graph.getStarterPacksWithMembership",
+                "app.bsky.graph.getSuggestedFollowsByActor",
+                "app.bsky.graph.searchStarterPacks",
+                "app.bsky.labeler.getServices",
+                "app.bsky.notification.getPreferences",
+                "app.bsky.notification.getUnreadCount",
+                "app.bsky.notification.listActivitySubscriptions",
+                "app.bsky.notification.listNotifications",
+                "app.bsky.notification.updateSeen",
+                "app.bsky.unspecced.getAgeAssuranceState",
+                "app.bsky.unspecced.getConfig",
+                "app.bsky.unspecced.getOnboardingSuggestedStarterPacks",
+                "app.bsky.unspecced.getPopularFeedGenerators",
+                "app.bsky.unspecced.getPostThreadOtherV2",
+                "app.bsky.unspecced.getPostThreadV2",
+                "app.bsky.unspecced.getSuggestedFeeds",
+                "app.bsky.unspecced.getSuggestedFeedsSkeleton",
+                "app.bsky.unspecced.getSuggestedStarterPacks",
+                "app.bsky.unspecced.getSuggestedStarterPacksSkeleton",
+                "app.bsky.unspecced.getSuggestedUsers",
+                "app.bsky.unspecced.getSuggestedUsersSkeleton",
+                "app.bsky.unspecced.getSuggestionsSkeleton",
+                "app.bsky.unspecced.getTaggedSuggestions",
+                "app.bsky.unspecced.getTrendingTopics",
+                "app.bsky.unspecced.getTrends",
+                "app.bsky.unspecced.getTrendsSkeleton",
+                "app.bsky.unspecced.searchActorsSkeleton",
+                "app.bsky.unspecced.searchPostsSkeleton",
+                "app.bsky.unspecced.searchStarterPacksSkeleton",
+                "app.bsky.video.getUploadLimits"
+              ],
+              "resource" => "rpc",
+              "type" => "permission"
+            }
+          ],
+          "title" => "Read-only access to all content",
+          "title:lang" => %{},
+          "type" => "permission-set"
+        }
+      },
+      "id" => "app.bsky.authViewAll",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Creates a private bookmark for the specified record. Currently, only `app.bsky.feed.post` records are supported. Requires authentication.",
+          "errors" => [
+            %{
+              "description" => "The URI to be bookmarked is for an unsupported collection.",
+              "name" => "UnsupportedCollection"
+            }
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cid" => %{"format" => "cid", "type" => "string"},
+                "uri" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["uri", "cid"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.bookmark.createBookmark",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "bookmark" => %{
+          "description" => "Object used to store bookmark data in stash.",
+          "properties" => %{
+            "subject" => %{
+              "description" =>
+                "A strong ref to the record to be bookmarked. Currently, only `app.bsky.feed.post` records are supported.",
+              "ref" => "com.atproto.repo.strongRef",
+              "type" => "ref"
+            }
+          },
+          "required" => ["subject"],
+          "type" => "object"
+        },
+        "bookmarkView" => %{
+          "properties" => %{
+            "createdAt" => %{"format" => "datetime", "type" => "string"},
+            "item" => %{
+              "refs" => [
+                "app.bsky.feed.defs#blockedPost",
+                "app.bsky.feed.defs#notFoundPost",
+                "app.bsky.feed.defs#postView"
+              ],
+              "type" => "union"
+            },
+            "subject" => %{
+              "description" => "A strong ref to the bookmarked record.",
+              "ref" => "com.atproto.repo.strongRef",
+              "type" => "ref"
+            }
+          },
+          "required" => ["subject", "item"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.bookmark.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Deletes a private bookmark for the specified record. Currently, only `app.bsky.feed.post` records are supported. Requires authentication.",
+          "errors" => [
+            %{
+              "description" => "The URI to be bookmarked is for an unsupported collection.",
+              "name" => "UnsupportedCollection"
+            }
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "uri" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["uri"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.bookmark.deleteBookmark",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Gets views of records bookmarked by the authenticated user. Requires authentication.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "bookmarks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.bookmark.defs#bookmarkView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"}
+              },
+              "required" => ["bookmarks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.bookmark.getBookmarks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "matchAndContactIndex" => %{
+          "description" =>
+            "Associates a profile with the positional index of the contact import input in the call to `app.bsky.contact.importContacts`, so clients can know which phone caused a particular match.",
+          "properties" => %{
+            "contactIndex" => %{
+              "description" => "The index of this match in the import contact input.",
+              "maximum" => 999,
+              "minimum" => 0,
+              "type" => "integer"
+            },
+            "match" => %{
+              "description" => "Profile of the matched user.",
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            }
+          },
+          "required" => ["match", "contactIndex"],
+          "type" => "object"
+        },
+        "notification" => %{
+          "description" => "A stash object to be sent via bsync representing a notification to be created.",
+          "properties" => %{
+            "from" => %{
+              "description" => "The DID of who this notification comes from.",
+              "format" => "did",
+              "type" => "string"
+            },
+            "to" => %{
+              "description" => "The DID of who this notification should go to.",
+              "format" => "did",
+              "type" => "string"
+            }
+          },
+          "required" => ["from", "to"],
+          "type" => "object"
+        },
+        "syncStatus" => %{
+          "properties" => %{
+            "matchesCount" => %{
+              "description" =>
+                "Number of existing contact matches resulting of the user imports and of their imported contacts having imported the user. Matches stop being counted when the user either follows the matched contact or dismisses the match.",
+              "minimum" => 0,
+              "type" => "integer"
+            },
+            "syncedAt" => %{
+              "description" => "Last date when contacts where imported.",
+              "format" => "datetime",
+              "type" => "string"
+            }
+          },
+          "required" => ["syncedAt", "matchesCount"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.contact.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Removes a match that was found via contact import. It shouldn't appear again if the same contact is re-imported. Requires authentication.",
+          "errors" => [%{"name" => "InvalidDid"}, %{"name" => "InternalError"}],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "subject" => %{
+                  "description" => "The subject's DID to dismiss the match with.",
+                  "format" => "did",
+                  "type" => "string"
+                }
+              },
+              "required" => ["subject"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.contact.dismissMatch",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Returns the matched contacts (contacts that were mutually imported). Excludes dismissed matches. Requires authentication.",
+          "errors" => [
+            %{"name" => "InvalidDid"},
+            %{"name" => "InvalidLimit"},
+            %{"name" => "InvalidCursor"},
+            %{"name" => "InternalError"}
+          ],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "matches" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["matches"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.contact.getMatches",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Gets the user's current contact import status. Requires authentication.",
+          "errors" => [%{"name" => "InvalidDid"}, %{"name" => "InternalError"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "syncStatus" => %{
+                  "description" =>
+                    "If present, indicates the user has imported their contacts. If not present, indicates the user never used the feature or called `app.bsky.contact.removeData` and didn't import again since.",
+                  "ref" => "app.bsky.contact.defs#syncStatus",
+                  "type" => "ref"
+                }
+              },
+              "type" => "object"
+            }
+          },
+          "parameters" => %{"properties" => %{}, "type" => "params"},
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.contact.getSyncStatus",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Import contacts for securely matching with other users. This follows the protocol explained in https://docs.bsky.app/blog/contact-import-rfc. Requires authentication.",
+          "errors" => [
+            %{"name" => "InvalidDid"},
+            %{"name" => "InvalidContacts"},
+            %{"name" => "TooManyContacts"},
+            %{"name" => "InvalidToken"},
+            %{"name" => "InternalError"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "contacts" => %{
+                  "description" =>
+                    "List of phone numbers in global E.164 format (e.g., '+12125550123'). Phone numbers that cannot be normalized into a valid phone number will be discarded. Should not repeat the 'phone' input used in `app.bsky.contact.verifyPhone`.",
+                  "items" => %{"type" => "string"},
+                  "maxLength" => 1000,
+                  "minLength" => 1,
+                  "type" => "array"
+                },
+                "token" => %{
+                  "description" =>
+                    "JWT to authenticate the call. Use the JWT received as a response to the call to `app.bsky.contact.verifyPhone`.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["token", "contacts"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "matchesAndContactIndexes" => %{
+                  "description" =>
+                    "The users that matched during import and their indexes on the input contacts, so the client can correlate with its local list.",
+                  "items" => %{
+                    "ref" => "app.bsky.contact.defs#matchAndContactIndex",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["matchesAndContactIndexes"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.contact.importContacts",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Removes all stored hashes used for contact matching, existing matches, and sync status. Requires authentication.",
+          "errors" => [%{"name" => "InvalidDid"}, %{"name" => "InternalError"}],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.contact.removeData",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "System endpoint to send notifications related to contact imports. Requires role authentication.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "from" => %{
+                  "description" => "The DID of who this notification comes from.",
+                  "format" => "did",
+                  "type" => "string"
+                },
+                "to" => %{
+                  "description" => "The DID of who this notification should go to.",
+                  "format" => "did",
+                  "type" => "string"
+                }
+              },
+              "required" => ["from", "to"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.contact.sendNotification",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Starts a phone verification flow. The phone passed will receive a code via SMS that should be passed to `app.bsky.contact.verifyPhone`. Requires authentication.",
+          "errors" => [
+            %{"name" => "RateLimitExceeded"},
+            %{"name" => "InvalidDid"},
+            %{"name" => "InvalidPhone"},
+            %{"name" => "InternalError"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "phone" => %{
+                  "description" => "The phone number to receive the code via SMS.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["phone"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.contact.startPhoneVerification",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Verifies control over a phone number with a code received via SMS and starts a contact import session. Requires authentication.",
+          "errors" => [
+            %{"name" => "RateLimitExceeded"},
+            %{"name" => "InvalidDid"},
+            %{"name" => "InvalidPhone"},
+            %{"name" => "InvalidCode"},
+            %{"name" => "InternalError"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "code" => %{
+                  "description" =>
+                    "The code received via SMS as a result of the call to `app.bsky.contact.startPhoneVerification`.",
+                  "type" => "string"
+                },
+                "phone" => %{
+                  "description" =>
+                    "The phone number to verify. Should be the same as the one passed to `app.bsky.contact.startPhoneVerification`.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["phone", "code"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "token" => %{
+                  "description" =>
+                    "JWT to be used in a call to `app.bsky.contact.importContacts`. It is only valid for a single call.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["token"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.contact.verifyPhone",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Inserts a draft using private storage (stash). An upper limit of drafts might be enforced. Requires authentication.",
+          "errors" => [
+            %{
+              "description" => "Trying to insert a new draft when the limit was already reached.",
+              "name" => "DraftLimitReached"
+            }
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "draft" => %{
+                  "ref" => "app.bsky.draft.defs#draft",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["draft"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "id" => %{
+                  "description" => "The ID of the created draft.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["id"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.draft.createDraft",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "draft" => %{
+          "description" => "A draft containing an array of draft posts.",
+          "properties" => %{
+            "deviceId" => %{
+              "description" => "UUIDv4 identifier of the device that created this draft.",
+              "maxLength" => 100,
+              "type" => "string"
+            },
+            "deviceName" => %{
+              "description" => "The device and/or platform on which the draft was created.",
+              "maxLength" => 100,
+              "type" => "string"
+            },
+            "langs" => %{
+              "description" => "Indicates human language of posts primary text content.",
+              "items" => %{"format" => "language", "type" => "string"},
+              "maxLength" => 3,
+              "type" => "array"
+            },
+            "postgateEmbeddingRules" => %{
+              "description" => "Embedding rules for the postgates to be created when this draft is published.",
+              "items" => %{
+                "refs" => ["app.bsky.feed.postgate#disableRule"],
+                "type" => "union"
+              },
+              "maxLength" => 5,
+              "type" => "array"
+            },
+            "posts" => %{
+              "description" => "Array of draft posts that compose this draft.",
+              "items" => %{"ref" => "#draftPost", "type" => "ref"},
+              "maxLength" => 100,
+              "minLength" => 1,
+              "type" => "array"
+            },
+            "threadgateAllow" => %{
+              "description" => "Allow-rules for the threadgate to be created when this draft is published.",
+              "items" => %{
+                "refs" => [
+                  "app.bsky.feed.threadgate#mentionRule",
+                  "app.bsky.feed.threadgate#followerRule",
+                  "app.bsky.feed.threadgate#followingRule",
+                  "app.bsky.feed.threadgate#listRule"
+                ],
+                "type" => "union"
+              },
+              "maxLength" => 5,
+              "type" => "array"
+            }
+          },
+          "required" => ["posts"],
+          "type" => "object"
+        },
+        "draftEmbedCaption" => %{
+          "properties" => %{
+            "content" => %{"maxLength" => 10000, "type" => "string"},
+            "lang" => %{"format" => "language", "type" => "string"}
+          },
+          "required" => ["lang", "content"],
+          "type" => "object"
+        },
+        "draftEmbedExternal" => %{
+          "properties" => %{"uri" => %{"format" => "uri", "type" => "string"}},
+          "required" => ["uri"],
+          "type" => "object"
+        },
+        "draftEmbedGallery" => %{
+          "properties" => %{
+            "items" => %{"ref" => "#draftEmbedGalleryItems", "type" => "ref"}
+          },
+          "required" => ["items"],
+          "type" => "object"
+        },
+        "draftEmbedGalleryItems" => %{
+          "description" =>
+            "The schema-level maxLength of 20 is a future-proof ceiling. Clients should currently enforce a soft limit of 10 items in authoring UIs.",
+          "items" => %{"refs" => ["#draftEmbedImage"], "type" => "union"},
+          "maxLength" => 20,
+          "type" => "array"
+        },
+        "draftEmbedImage" => %{
+          "properties" => %{
+            "alt" => %{"maxGraphemes" => 2000, "type" => "string"},
+            "localRef" => %{"ref" => "#draftEmbedLocalRef", "type" => "ref"}
+          },
+          "required" => ["localRef"],
+          "type" => "object"
+        },
+        "draftEmbedLocalRef" => %{
+          "properties" => %{
+            "path" => %{
+              "description" =>
+                "Local, on-device ref to file to be embedded. Embeds are currently device-bound for drafts.",
+              "maxLength" => 1024,
+              "minLength" => 1,
+              "type" => "string"
+            }
+          },
+          "required" => ["path"],
+          "type" => "object"
+        },
+        "draftEmbedRecord" => %{
+          "properties" => %{
+            "record" => %{"ref" => "com.atproto.repo.strongRef", "type" => "ref"}
+          },
+          "required" => ["record"],
+          "type" => "object"
+        },
+        "draftEmbedVideo" => %{
+          "properties" => %{
+            "alt" => %{"maxGraphemes" => 2000, "type" => "string"},
+            "captions" => %{
+              "items" => %{"ref" => "#draftEmbedCaption", "type" => "ref"},
+              "maxLength" => 20,
+              "type" => "array"
+            },
+            "localRef" => %{"ref" => "#draftEmbedLocalRef", "type" => "ref"}
+          },
+          "required" => ["localRef"],
+          "type" => "object"
+        },
+        "draftPost" => %{
+          "description" => "One of the posts that compose a draft.",
+          "properties" => %{
+            "embedExternals" => %{
+              "items" => %{"ref" => "#draftEmbedExternal", "type" => "ref"},
+              "maxLength" => 1,
+              "type" => "array"
+            },
+            "embedGallery" => %{"ref" => "#draftEmbedGallery", "type" => "ref"},
+            "embedImages" => %{
+              "items" => %{"ref" => "#draftEmbedImage", "type" => "ref"},
+              "maxLength" => 4,
+              "type" => "array"
+            },
+            "embedRecords" => %{
+              "items" => %{"ref" => "#draftEmbedRecord", "type" => "ref"},
+              "maxLength" => 1,
+              "type" => "array"
+            },
+            "embedVideos" => %{
+              "items" => %{"ref" => "#draftEmbedVideo", "type" => "ref"},
+              "maxLength" => 1,
+              "type" => "array"
+            },
+            "labels" => %{
+              "description" => "Self-label values for this post. Effectively content warnings.",
+              "refs" => ["com.atproto.label.defs#selfLabels"],
+              "type" => "union"
+            },
+            "text" => %{
+              "description" =>
+                "The primary post content. It has a higher limit than post contents to allow storing a larger text that can later be refined into smaller posts.",
+              "maxGraphemes" => 1000,
+              "maxLength" => 10000,
+              "type" => "string"
+            }
+          },
+          "required" => ["text"],
+          "type" => "object"
+        },
+        "draftView" => %{
+          "description" => "View to present drafts data to users.",
+          "properties" => %{
+            "createdAt" => %{
+              "description" => "The time the draft was created.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "draft" => %{"ref" => "#draft", "type" => "ref"},
+            "id" => %{
+              "description" => "A TID to be used as a draft identifier.",
+              "format" => "tid",
+              "type" => "string"
+            },
+            "updatedAt" => %{
+              "description" => "The time the draft was last updated.",
+              "format" => "datetime",
+              "type" => "string"
+            }
+          },
+          "required" => ["id", "draft", "createdAt", "updatedAt"],
+          "type" => "object"
+        },
+        "draftWithId" => %{
+          "description" => "A draft with an identifier, used to store drafts in private storage (stash).",
+          "properties" => %{
+            "draft" => %{"ref" => "#draft", "type" => "ref"},
+            "id" => %{
+              "description" => "A TID to be used as a draft identifier.",
+              "format" => "tid",
+              "type" => "string"
+            }
+          },
+          "required" => ["id", "draft"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.draft.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Deletes a draft by ID. Requires authentication.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"id" => %{"format" => "tid", "type" => "string"}},
+              "required" => ["id"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.draft.deleteDraft",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Gets views of user drafts. Requires authentication.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "drafts" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.draft.defs#draftView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["drafts"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.draft.getDrafts",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Updates a draft using private storage (stash). If the draft ID points to a non-existing ID, the update will be silently ignored. This is done because updates don't enforce draft limit, so it accepts all writes, but will ignore invalid ones. Requires authentication.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "draft" => %{
+                  "ref" => "app.bsky.draft.defs#draftWithId",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["draft"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.draft.updateDraft",
       "lexicon" => 1
     },
     %{
@@ -1107,6 +3080,67 @@ defmodule Tempest.Lexicon.Bundled do
       },
       "description" => "An assortment of media embedded in a Bluesky record (eg, a post).",
       "id" => "app.bsky.embed.gallery",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Resolve one or more AT-URIs into the data needed to render an enhanced external embed. Returns `associatedRefs` (strongRefs to embed into a post's external.associatedRefs), the raw `associatedRecords`, and a hydrated `view`. The response is empty (`{}`) when no records were resolvable, or when validation determined the resolved records don't actually back the requested URL; clients should fall back to their own link-card rendering in that case and skip writing strongRefs to the post.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "associatedRecords" => %{
+                  "items" => %{
+                    "description" =>
+                      "The raw record data of the Atmosphere records that backed this view. This is returned for convenience, to avoid the need for the client to separately fetch the record data for the associatedRefs. Example: the site.standard.document and site.standard.publication records that backed this view.",
+                    "type" => "unknown"
+                  },
+                  "type" => "array"
+                },
+                "associatedRefs" => %{
+                  "description" =>
+                    "StrongRefs (URI+CID) of the Atmosphere records that backed this view, suitable for embedding into a post's external.associatedRefs.",
+                  "items" => %{
+                    "ref" => "com.atproto.repo.strongRef",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "view" => %{
+                  "description" =>
+                    "Hydrated view of the embed. Present only when the resolved records back the requested URL and supply enough information to populate the required `viewExternal` fields. Omitted alongside the rest of the response when no records resolved or validation failed.",
+                  "ref" => "app.bsky.embed.external#view",
+                  "type" => "ref"
+                }
+              },
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "uris" => %{
+                "description" =>
+                  "AT-URIs of any Atmosphere records that can be resolved and used to construct #externalView views. Example: a site.standard.document and optionally its associated site.standard.publication.",
+                "items" => %{"format" => "at-uri", "type" => "string"},
+                "maxLength" => 4,
+                "type" => "array"
+              },
+              "url" => %{
+                "description" =>
+                  "The canonical web URL the embed represents (typically the URL the user pasted into the composer). Used as the returned view's `uri`. May be used for validation in the future.",
+                "format" => "uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["url", "uris"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.embed.getEmbedExternalView",
       "lexicon" => 1
     },
     %{
@@ -1749,6 +3783,827 @@ defmodule Tempest.Lexicon.Bundled do
     },
     %{
       "defs" => %{
+        "feed" => %{
+          "properties" => %{"uri" => %{"format" => "at-uri", "type" => "string"}},
+          "required" => ["uri"],
+          "type" => "object"
+        },
+        "links" => %{
+          "properties" => %{
+            "privacyPolicy" => %{"type" => "string"},
+            "termsOfService" => %{"type" => "string"}
+          },
+          "type" => "object"
+        },
+        "main" => %{
+          "description" =>
+            "Get information about a feed generator, including policies and offered feed URIs. Does not require auth; implemented by Feed Generator services (not App View).",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "feeds" => %{
+                  "items" => %{"ref" => "#feed", "type" => "ref"},
+                  "type" => "array"
+                },
+                "links" => %{"ref" => "#links", "type" => "ref"}
+              },
+              "required" => ["did", "feeds"],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.describeFeedGenerator",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Record declaring of the existence of a feed generator, and containing metadata about it. The record can exist in any repository.",
+          "key" => "any",
+          "record" => %{
+            "properties" => %{
+              "acceptsInteractions" => %{
+                "description" =>
+                  "Declaration that a feed accepts feedback interactions from a client through app.bsky.feed.sendInteractions",
+                "type" => "boolean"
+              },
+              "avatar" => %{
+                "accept" => ["image/png", "image/jpeg"],
+                "maxSize" => 1_000_000,
+                "type" => "blob"
+              },
+              "contentMode" => %{
+                "knownValues" => ["app.bsky.feed.defs#contentModeUnspecified", "app.bsky.feed.defs#contentModeVideo"],
+                "type" => "string"
+              },
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "description" => %{
+                "maxGraphemes" => 300,
+                "maxLength" => 3000,
+                "type" => "string"
+              },
+              "descriptionFacets" => %{
+                "items" => %{"ref" => "app.bsky.richtext.facet", "type" => "ref"},
+                "type" => "array"
+              },
+              "did" => %{"format" => "did", "type" => "string"},
+              "displayName" => %{
+                "maxGraphemes" => 24,
+                "maxLength" => 240,
+                "type" => "string"
+              },
+              "labels" => %{
+                "description" => "Self-label values",
+                "refs" => ["com.atproto.label.defs#selfLabels"],
+                "type" => "union"
+              }
+            },
+            "required" => ["did", "displayName", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.feed.generator",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of feeds (feed generator records) created by the actor (in the actor's repo).",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feeds" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#generatorView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feeds"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"},
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getActorFeeds",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a list of posts liked by an actor. Requires auth, actor must be the requesting account.",
+          "errors" => [%{"name" => "BlockedActor"}, %{"name" => "BlockedByActor"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feed" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#feedViewPost",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feed"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"},
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getActorLikes",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a view of an actor's 'author feed' (post and reposts by the author). Does not require auth.",
+          "errors" => [%{"name" => "BlockedActor"}, %{"name" => "BlockedByActor"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feed" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#feedViewPost",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feed"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"},
+              "cursor" => %{"type" => "string"},
+              "filter" => %{
+                "default" => "posts_with_replies",
+                "description" => "Combinations of post/repost types to include in response.",
+                "knownValues" => [
+                  "posts_with_replies",
+                  "posts_no_replies",
+                  "posts_with_media",
+                  "posts_and_author_threads",
+                  "posts_with_video"
+                ],
+                "type" => "string"
+              },
+              "includePins" => %{"default" => false, "type" => "boolean"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getAuthorFeed",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a hydrated feed from an actor's selected feed generator. Implemented by App View.",
+          "errors" => [%{"name" => "UnknownFeed"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feed" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#feedViewPost",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feed"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "feed" => %{"format" => "at-uri", "type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["feed"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getFeed",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get information about a feed generator. Implemented by AppView.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "isOnline" => %{
+                  "description" =>
+                    "Indicates whether the feed generator service has been online recently, or else seems to be inactive.",
+                  "type" => "boolean"
+                },
+                "isValid" => %{
+                  "description" =>
+                    "Indicates whether the feed generator service is compatible with the record declaration.",
+                  "type" => "boolean"
+                },
+                "view" => %{
+                  "ref" => "app.bsky.feed.defs#generatorView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["view", "isOnline", "isValid"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "feed" => %{
+                "description" => "AT-URI of the feed generator record.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["feed"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getFeedGenerator",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get information about a list of feed generators.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "feeds" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#generatorView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feeds"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "feeds" => %{
+                "items" => %{"format" => "at-uri", "type" => "string"},
+                "type" => "array"
+              }
+            },
+            "required" => ["feeds"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getFeedGenerators",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of a feed provided by a feed generator. Auth is optional, depending on provider requirements, and provides the DID of the requester. Implemented by Feed Generator Service.",
+          "errors" => [%{"name" => "UnknownFeed"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feed" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#skeletonFeedPost",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "reqId" => %{
+                  "description" => "Unique identifier per request that may be passed back alongside interactions.",
+                  "maxLength" => 100,
+                  "type" => "string"
+                }
+              },
+              "required" => ["feed"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "feed" => %{
+                "description" => "Reference to feed generator record describing the specific feed being requested.",
+                "format" => "at-uri",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["feed"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getFeedSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "like" => %{
+          "properties" => %{
+            "actor" => %{
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            },
+            "createdAt" => %{"format" => "datetime", "type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"}
+          },
+          "required" => ["indexedAt", "createdAt", "actor"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" => "Get like records which reference a subject (by AT-URI and CID).",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cid" => %{"format" => "cid", "type" => "string"},
+                "cursor" => %{"type" => "string"},
+                "likes" => %{
+                  "items" => %{"ref" => "#like", "type" => "ref"},
+                  "type" => "array"
+                },
+                "uri" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["uri", "likes"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cid" => %{
+                "description" => "CID of the subject record (aka, specific version of record), to filter likes.",
+                "format" => "cid",
+                "type" => "string"
+              },
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "uri" => %{
+                "description" => "AT-URI of the subject (eg, a post record).",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["uri"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getLikes",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a feed of recent posts from a list (posts and reposts from any actors on the list). Does not require auth.",
+          "errors" => [%{"name" => "UnknownList"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feed" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#feedViewPost",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feed"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "list" => %{
+                "description" => "Reference (AT-URI) to the list record.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["list"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getListFeed",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get posts in a thread. Does not require auth, but additional metadata and filtering will be applied for authed requests.",
+          "errors" => [%{"name" => "NotFound"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "thread" => %{
+                  "refs" => [
+                    "app.bsky.feed.defs#threadViewPost",
+                    "app.bsky.feed.defs#notFoundPost",
+                    "app.bsky.feed.defs#blockedPost"
+                  ],
+                  "type" => "union"
+                },
+                "threadgate" => %{
+                  "ref" => "app.bsky.feed.defs#threadgateView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["thread"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "depth" => %{
+                "default" => 6,
+                "description" => "How many levels of reply depth should be included in response.",
+                "maximum" => 1000,
+                "minimum" => 0,
+                "type" => "integer"
+              },
+              "parentHeight" => %{
+                "default" => 80,
+                "description" => "How many levels of parent (and grandparent, etc) post to include.",
+                "maximum" => 1000,
+                "minimum" => 0,
+                "type" => "integer"
+              },
+              "uri" => %{
+                "description" => "Reference (AT-URI) to post record.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["uri"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getPostThread",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Gets post views for a specified list of posts (by AT-URI). This is sometimes referred to as 'hydrating' a 'feed skeleton'.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "posts" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#postView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["posts"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "uris" => %{
+                "description" => "List of post AT-URIs to return hydrated views for.",
+                "items" => %{"format" => "at-uri", "type" => "string"},
+                "maxLength" => 25,
+                "type" => "array"
+              }
+            },
+            "required" => ["uris"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getPosts",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of quotes for a given post.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cid" => %{"format" => "cid", "type" => "string"},
+                "cursor" => %{"type" => "string"},
+                "posts" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#postView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "uri" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["uri", "posts"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cid" => %{
+                "description" => "If supplied, filters to quotes of specific version (by CID) of the post record.",
+                "format" => "cid",
+                "type" => "string"
+              },
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "uri" => %{
+                "description" => "Reference (AT-URI) of post record",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["uri"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getQuotes",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of reposts for a given post.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cid" => %{"format" => "cid", "type" => "string"},
+                "cursor" => %{"type" => "string"},
+                "repostedBy" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "uri" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["uri", "repostedBy"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cid" => %{
+                "description" => "If supplied, filters to reposts of specific version (by CID) of the post record.",
+                "format" => "cid",
+                "type" => "string"
+              },
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "uri" => %{
+                "description" => "Reference (AT-URI) of post record",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["uri"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getRepostedBy",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested feeds (feed generators) for the requesting account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feeds" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#generatorView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feeds"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getSuggestedFeeds",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a view of the requesting account's home timeline. This is expected to be some form of reverse-chronological feed.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feed" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#feedViewPost",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feed"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "algorithm" => %{
+                "description" =>
+                  "Variant 'algorithm' for timeline. Implementation-specific. NOTE: most feed flexibility has been moved to feed generator mechanism.",
+                "type" => "string"
+              },
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.getTimeline",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Record declaring a 'like' of a piece of subject content.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "subject" => %{
+                "ref" => "com.atproto.repo.strongRef",
+                "type" => "ref"
+              },
+              "via" => %{"ref" => "com.atproto.repo.strongRef", "type" => "ref"}
+            },
+            "required" => ["subject", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.feed.like",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
         "entity" => %{
           "description" => "Deprecated: use facets instead.",
           "properties" => %{
@@ -1893,6 +4748,171 @@ defmodule Tempest.Lexicon.Bundled do
     },
     %{
       "defs" => %{
+        "main" => %{
+          "description" => "Record representing a 'repost' of an existing Bluesky post.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "subject" => %{
+                "ref" => "com.atproto.repo.strongRef",
+                "type" => "ref"
+              },
+              "via" => %{"ref" => "com.atproto.repo.strongRef", "type" => "ref"}
+            },
+            "required" => ["subject", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.feed.repost",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Find posts matching search criteria, returning views of those posts. Note that this API endpoint may require authentication (eg, not public) for some service providers and implementations.",
+          "errors" => [%{"name" => "BadQueryString"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "hitsTotal" => %{
+                  "description" =>
+                    "Count of search hits. Optional, may be rounded/truncated, and may not be possible to paginate through all hits.",
+                  "type" => "integer"
+                },
+                "posts" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#postView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["posts"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "author" => %{
+                "description" => "Filter to posts by the given account. Handles are resolved to DID before query-time.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "cursor" => %{
+                "description" =>
+                  "Optional pagination mechanism; may not necessarily allow scrolling through entire result set.",
+                "type" => "string"
+              },
+              "domain" => %{
+                "description" =>
+                  "Filter to posts with URLs (facet links or embeds) linking to the given domain (hostname). Server may apply hostname normalization.",
+                "type" => "string"
+              },
+              "lang" => %{
+                "description" =>
+                  "Filter to posts in the given language. Expected to be based on post language field, though server may override language detection.",
+                "format" => "language",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "mentions" => %{
+                "description" =>
+                  "Filter to posts which mention the given account. Handles are resolved to DID before query-time. Only matches rich-text facet mentions.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "q" => %{
+                "description" =>
+                  "Search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.",
+                "type" => "string"
+              },
+              "since" => %{
+                "description" =>
+                  "Filter results for posts after the indicated datetime (inclusive). Expected to use 'sortAt' timestamp, which may not match 'createdAt'. Can be a datetime, or just an ISO date (YYYY-MM-DD).",
+                "type" => "string"
+              },
+              "sort" => %{
+                "default" => "latest",
+                "description" => "Specifies the ranking order of results.",
+                "knownValues" => ["top", "latest"],
+                "type" => "string"
+              },
+              "tag" => %{
+                "description" =>
+                  "Filter to posts with the given tag (hashtag), based on rich-text facet or tag field. Do not include the hash (#) prefix. Multiple tags can be specified, with 'AND' matching.",
+                "items" => %{
+                  "maxGraphemes" => 64,
+                  "maxLength" => 640,
+                  "type" => "string"
+                },
+                "type" => "array"
+              },
+              "until" => %{
+                "description" =>
+                  "Filter results for posts before the indicated datetime (not inclusive). Expected to use 'sortAt' timestamp, which may not match 'createdAt'. Can be a datetime, or just an ISO date (YYY-MM-DD).",
+                "type" => "string"
+              },
+              "url" => %{
+                "description" =>
+                  "Filter to posts with links (facet links or embeds) pointing to this URL. Server may apply URL normalization or fuzzy matching.",
+                "format" => "uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["q"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.feed.searchPosts",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Send information about interactions with feed items back to the feed generator that served them.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "feed" => %{"format" => "at-uri", "type" => "string"},
+                "interactions" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#interaction",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["interactions"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{"properties" => %{}, "type" => "object"}
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.feed.sendInteractions",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
         "followerRule" => %{
           "description" => "Allow replies from actors who follow you.",
           "properties" => %{},
@@ -1950,6 +4970,30 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "app.bsky.feed.threadgate",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Record declaring a 'block' relationship against another account. NOTE: blocks are public in Bluesky; see blog posts for details.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "subject" => %{
+                "description" => "DID of the account to be blocked.",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "required" => ["subject", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.graph.block",
       "lexicon" => 1
     },
     %{
@@ -2164,6 +5208,1116 @@ defmodule Tempest.Lexicon.Bundled do
     },
     %{
       "defs" => %{
+        "main" => %{
+          "description" =>
+            "Record declaring a social 'follow' relationship of another account. Duplicate follows will be ignored by the AppView.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "subject" => %{"format" => "did", "type" => "string"},
+              "via" => %{"ref" => "com.atproto.repo.strongRef", "type" => "ref"}
+            },
+            "required" => ["subject", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.graph.follow",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of starter packs created by the actor.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "starterPacks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#starterPackViewBasic",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"},
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getActorStarterPacks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Enumerates which accounts the requesting account is currently blocking. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "blocks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"}
+              },
+              "required" => ["blocks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getBlocks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Enumerates accounts which follow a specified account (actor).",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "followers" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "subject" => %{
+                  "ref" => "app.bsky.actor.defs#profileView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["subject", "followers"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"},
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getFollowers",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Enumerates accounts which a specified account (actor) follows.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "follows" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "subject" => %{
+                  "ref" => "app.bsky.actor.defs#profileView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["subject", "follows"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"},
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getFollows",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Enumerates accounts which follow a specified account (actor) and are followed by the viewer.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "followers" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "subject" => %{
+                  "ref" => "app.bsky.actor.defs#profileView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["subject", "followers"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"},
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getKnownFollowers",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Gets a 'view' (with additional context) of a specified list.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "items" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#listItemView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "list" => %{
+                  "ref" => "app.bsky.graph.defs#listView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["list", "items"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "list" => %{
+                "description" => "Reference (AT-URI) of the list record to hydrate.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["list"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getList",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get mod lists that the requesting account (actor) is blocking. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "lists" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#listView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["lists"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getListBlocks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Enumerates mod lists that the requesting account (actor) currently has muted. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "lists" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#listView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["lists"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getListMutes",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Enumerates the lists created by a specified account (actor).",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "lists" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#listView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["lists"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{
+                "description" => "The account (actor) to enumerate lists from.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "purposes" => %{
+                "description" => "Optional filter by list purpose. If not specified, all supported types are returned.",
+                "items" => %{
+                  "knownValues" => ["modlist", "curatelist"],
+                  "type" => "string"
+                },
+                "type" => "array"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getLists",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "listWithMembership" => %{
+          "description" => "A list and an optional list item indicating membership of a target user to that list.",
+          "properties" => %{
+            "list" => %{"ref" => "app.bsky.graph.defs#listView", "type" => "ref"},
+            "listItem" => %{
+              "ref" => "app.bsky.graph.defs#listItemView",
+              "type" => "ref"
+            }
+          },
+          "required" => ["list"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" =>
+            "Enumerates the lists created by the session user, and includes membership information about `actor` in those lists. Only supports curation and moderation lists (no reference lists, used in starter packs). Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "listsWithMembership" => %{
+                  "items" => %{"ref" => "#listWithMembership", "type" => "ref"},
+                  "type" => "array"
+                }
+              },
+              "required" => ["listsWithMembership"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{
+                "description" => "The account (actor) to check for membership.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "purposes" => %{
+                "description" => "Optional filter by list purpose. If not specified, all supported types are returned.",
+                "items" => %{
+                  "knownValues" => ["modlist", "curatelist"],
+                  "type" => "string"
+                },
+                "type" => "array"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getListsWithMembership",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Enumerates accounts that the requesting account (actor) currently has muted. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "mutes" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["mutes"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getMutes",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Enumerates public relationships between one account, and a list of other accounts. Does not require auth.",
+          "errors" => [
+            %{
+              "description" => "the primary actor at-identifier could not be resolved",
+              "name" => "ActorNotFound"
+            }
+          ],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actor" => %{"format" => "did", "type" => "string"},
+                "relationships" => %{
+                  "items" => %{
+                    "refs" => ["app.bsky.graph.defs#relationship", "app.bsky.graph.defs#notFoundActor"],
+                    "type" => "union"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["relationships"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{
+                "description" => "Primary account requesting relationships for.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "others" => %{
+                "description" => "List of 'other' accounts to be related back to the primary.",
+                "items" => %{"format" => "at-identifier", "type" => "string"},
+                "maxLength" => 30,
+                "type" => "array"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getRelationships",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Gets a view of a starter pack.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "starterPack" => %{
+                  "ref" => "app.bsky.graph.defs#starterPackView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["starterPack"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "starterPack" => %{
+                "description" => "Reference (AT-URI) of the starter pack record.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["starterPack"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getStarterPack",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get views for a list of starter packs.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "starterPacks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#starterPackViewBasic",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "uris" => %{
+                "items" => %{"format" => "at-uri", "type" => "string"},
+                "maxLength" => 25,
+                "type" => "array"
+              }
+            },
+            "required" => ["uris"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getStarterPacks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Enumerates the starter packs created by the session user, and includes membership information about `actor` in those starter packs. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "starterPacksWithMembership" => %{
+                  "items" => %{
+                    "ref" => "#starterPackWithMembership",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacksWithMembership"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{
+                "description" => "The account (actor) to check for membership.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        },
+        "starterPackWithMembership" => %{
+          "description" =>
+            "A starter pack and an optional list item indicating membership of a target user to that starter pack.",
+          "properties" => %{
+            "listItem" => %{
+              "ref" => "app.bsky.graph.defs#listItemView",
+              "type" => "ref"
+            },
+            "starterPack" => %{
+              "ref" => "app.bsky.graph.defs#starterPackView",
+              "type" => "ref"
+            }
+          },
+          "required" => ["starterPack"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.graph.getStarterPacksWithMembership",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Enumerates follows similar to a given account (actor). Expected use is to recommend additional accounts immediately after following one account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "isFallback" => %{
+                  "default" => false,
+                  "description" =>
+                    "DEPRECATED, unused. Previously: if true, response has fallen-back to generic results, and is not scoped using relativeToDid",
+                  "type" => "boolean"
+                },
+                "recId" => %{
+                  "description" => "DEPRECATED: use recIdStr instead.",
+                  "type" => "integer"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                },
+                "suggestions" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["suggestions"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "actor" => %{"format" => "at-identifier", "type" => "string"}
+            },
+            "required" => ["actor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.getSuggestedFollowsByActor",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Record representing a list of accounts (actors). Scope includes both moderation-oriented lists and curration-oriented lists.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "avatar" => %{
+                "accept" => ["image/png", "image/jpeg"],
+                "maxSize" => 1_000_000,
+                "type" => "blob"
+              },
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "description" => %{
+                "maxGraphemes" => 300,
+                "maxLength" => 3000,
+                "type" => "string"
+              },
+              "descriptionFacets" => %{
+                "items" => %{"ref" => "app.bsky.richtext.facet", "type" => "ref"},
+                "type" => "array"
+              },
+              "labels" => %{
+                "refs" => ["com.atproto.label.defs#selfLabels"],
+                "type" => "union"
+              },
+              "name" => %{
+                "description" => "Display name for list; can not be empty.",
+                "maxLength" => 64,
+                "minLength" => 1,
+                "type" => "string"
+              },
+              "purpose" => %{
+                "description" => "Defines the purpose of the list (aka, moderation-oriented or curration-oriented)",
+                "ref" => "app.bsky.graph.defs#listPurpose",
+                "type" => "ref"
+              }
+            },
+            "required" => ["name", "purpose", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.graph.list",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Record representing a block relationship against an entire an entire list of accounts (actors).",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "subject" => %{
+                "description" => "Reference (AT-URI) to the mod list record.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["subject", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.graph.listblock",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Record representing an account's inclusion on a specific list. The AppView will ignore duplicate listitem records.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "list" => %{
+                "description" => "Reference (AT-URI) to the list record (app.bsky.graph.list).",
+                "format" => "at-uri",
+                "type" => "string"
+              },
+              "subject" => %{
+                "description" => "The account which is included on the list.",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "required" => ["subject", "list", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.graph.listitem",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Creates a mute relationship for the specified account. Mutes are private in Bluesky. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actor" => %{"format" => "at-identifier", "type" => "string"}
+              },
+              "required" => ["actor"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.graph.muteActor",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Creates a mute relationship for the specified list of accounts. Mutes are private in Bluesky. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "list" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["list"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.graph.muteActorList",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Mutes a thread preventing notifications from the thread and any of its children. Mutes are private in Bluesky. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "root" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["root"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.graph.muteThread",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Find starter packs matching search criteria. Does not require auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "starterPacks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#starterPackViewBasic",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "q" => %{
+                "description" =>
+                  "Search query string. Syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.",
+                "type" => "string"
+              }
+            },
+            "required" => ["q"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.graph.searchStarterPacks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "feedItem" => %{
+          "properties" => %{"uri" => %{"format" => "at-uri", "type" => "string"}},
+          "required" => ["uri"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" => "Record defining a starter pack of actors and feeds for new users.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "description" => %{
+                "maxGraphemes" => 300,
+                "maxLength" => 3000,
+                "type" => "string"
+              },
+              "descriptionFacets" => %{
+                "items" => %{"ref" => "app.bsky.richtext.facet", "type" => "ref"},
+                "type" => "array"
+              },
+              "feeds" => %{
+                "items" => %{"ref" => "#feedItem", "type" => "ref"},
+                "maxLength" => 3,
+                "type" => "array"
+              },
+              "list" => %{
+                "description" => "Reference (AT-URI) to the list record.",
+                "format" => "at-uri",
+                "type" => "string"
+              },
+              "name" => %{
+                "description" => "Display name for starter pack; can not be empty.",
+                "maxGraphemes" => 50,
+                "maxLength" => 500,
+                "minLength" => 1,
+                "type" => "string"
+              }
+            },
+            "required" => ["name", "list", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.graph.starterpack",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Unmutes the specified account. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actor" => %{"format" => "at-identifier", "type" => "string"}
+              },
+              "required" => ["actor"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.graph.unmuteActor",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Unmutes the specified list of accounts. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "list" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["list"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.graph.unmuteActorList",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Unmutes the specified thread. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "root" => %{"format" => "at-uri", "type" => "string"}
+              },
+              "required" => ["root"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.graph.unmuteThread",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Record declaring a verification relationship between two accounts. Verifications are only considered valid by an app if issued by an account the app considers trusted.",
+          "key" => "tid",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{
+                "description" => "Date of when the verification was created.",
+                "format" => "datetime",
+                "type" => "string"
+              },
+              "displayName" => %{
+                "description" =>
+                  "Display name of the subject the verification applies to at the moment of verifying, which might not be the same at the time of viewing. The verification is only valid if the current displayName matches the one at the time of verifying.",
+                "type" => "string"
+              },
+              "handle" => %{
+                "description" =>
+                  "Handle of the subject the verification applies to at the moment of verifying, which might not be the same at the time of viewing. The verification is only valid if the current handle matches the one at the time of verifying.",
+                "format" => "handle",
+                "type" => "string"
+              },
+              "subject" => %{
+                "description" => "DID of the subject the verification applies to.",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "required" => ["subject", "handle", "displayName", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.graph.verification",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
         "labelerPolicies" => %{
           "properties" => %{
             "labelValueDefinitions" => %{
@@ -2268,6 +6422,115 @@ defmodule Tempest.Lexicon.Bundled do
     },
     %{
       "defs" => %{
+        "main" => %{
+          "description" => "Get information about a list of labeler services.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "views" => %{
+                  "items" => %{
+                    "refs" => ["app.bsky.labeler.defs#labelerView", "app.bsky.labeler.defs#labelerViewDetailed"],
+                    "type" => "union"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["views"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "detailed" => %{"default" => false, "type" => "boolean"},
+              "dids" => %{
+                "items" => %{"format" => "did", "type" => "string"},
+                "type" => "array"
+              }
+            },
+            "required" => ["dids"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.labeler.getServices",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "A declaration of the existence of labeler service.",
+          "key" => "literal:self",
+          "record" => %{
+            "properties" => %{
+              "createdAt" => %{"format" => "datetime", "type" => "string"},
+              "labels" => %{
+                "refs" => ["com.atproto.label.defs#selfLabels"],
+                "type" => "union"
+              },
+              "policies" => %{
+                "ref" => "app.bsky.labeler.defs#labelerPolicies",
+                "type" => "ref"
+              },
+              "reasonTypes" => %{
+                "description" =>
+                  "The set of report reason 'codes' which are in-scope for this service to review and action. These usually align to policy categories. If not defined (distinct from empty array), all reason types are allowed.",
+                "items" => %{
+                  "ref" => "com.atproto.moderation.defs#reasonType",
+                  "type" => "ref"
+                },
+                "type" => "array"
+              },
+              "subjectCollections" => %{
+                "description" =>
+                  "Set of record types (collection NSIDs) which can be reported to this service. If not defined (distinct from empty array), default is any record type.",
+                "items" => %{"format" => "nsid", "type" => "string"},
+                "type" => "array"
+              },
+              "subjectTypes" => %{
+                "description" => "The set of subject types (account, record, etc) this service accepts reports on.",
+                "items" => %{
+                  "ref" => "com.atproto.moderation.defs#subjectType",
+                  "type" => "ref"
+                },
+                "type" => "array"
+              }
+            },
+            "required" => ["policies", "createdAt"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.labeler.service",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "A declaration of the user's choices related to notifications that can be produced by them.",
+          "key" => "literal:self",
+          "record" => %{
+            "properties" => %{
+              "allowSubscriptions" => %{
+                "description" =>
+                  "A declaration of the user's preference for allowing activity subscriptions from other users. Absence of a record implies 'followers'.",
+                "knownValues" => ["followers", "mutuals", "none"],
+                "type" => "string"
+              }
+            },
+            "required" => ["allowSubscriptions"],
+            "type" => "object"
+          },
+          "type" => "record"
+        }
+      },
+      "id" => "app.bsky.notification.declaration",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
         "activitySubscription" => %{
           "properties" => %{
             "post" => %{"type" => "boolean"},
@@ -2365,6 +6628,404 @@ defmodule Tempest.Lexicon.Bundled do
     },
     %{
       "defs" => %{
+        "main" => %{
+          "description" => "Get notification-related preferences for an account. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "preferences" => %{
+                  "ref" => "app.bsky.notification.defs#preferences",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["preferences"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{"properties" => %{}, "type" => "params"},
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.notification.getPreferences",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Count the number of unread notifications for the requesting account. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"count" => %{"type" => "integer"}},
+              "required" => ["count"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "priority" => %{"type" => "boolean"},
+              "seenAt" => %{"format" => "datetime", "type" => "string"}
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.notification.getUnreadCount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Enumerate all accounts to which the requesting account is subscribed to receive notifications for. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "subscriptions" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["subscriptions"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.notification.listActivitySubscriptions",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Enumerate notifications for the requesting account. Requires auth.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "notifications" => %{
+                  "items" => %{"ref" => "#notification", "type" => "ref"},
+                  "type" => "array"
+                },
+                "priority" => %{"type" => "boolean"},
+                "seenAt" => %{"format" => "datetime", "type" => "string"}
+              },
+              "required" => ["notifications"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "priority" => %{"type" => "boolean"},
+              "reasons" => %{
+                "description" => "Notification reasons to include in response.",
+                "items" => %{
+                  "description" => "A reason that matches the reason property of #notification.",
+                  "type" => "string"
+                },
+                "type" => "array"
+              },
+              "seenAt" => %{"format" => "datetime", "type" => "string"}
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        },
+        "notification" => %{
+          "properties" => %{
+            "author" => %{
+              "ref" => "app.bsky.actor.defs#profileView",
+              "type" => "ref"
+            },
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "isRead" => %{"type" => "boolean"},
+            "labels" => %{
+              "items" => %{
+                "ref" => "com.atproto.label.defs#label",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "reason" => %{
+              "description" =>
+                "The reason why this notification was delivered - e.g. your post was liked, or you received a new follower.",
+              "knownValues" => [
+                "like",
+                "repost",
+                "follow",
+                "mention",
+                "reply",
+                "quote",
+                "starterpack-joined",
+                "verified",
+                "unverified",
+                "like-via-repost",
+                "repost-via-repost",
+                "subscribed-post",
+                "contact-match"
+              ],
+              "type" => "string"
+            },
+            "reasonSubject" => %{"format" => "at-uri", "type" => "string"},
+            "record" => %{"type" => "unknown"},
+            "uri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["uri", "cid", "author", "reason", "record", "isRead", "indexedAt"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.notification.listNotifications",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Puts an activity subscription entry. The key should be omitted for creation and provided for updates. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "activitySubscription" => %{
+                  "ref" => "app.bsky.notification.defs#activitySubscription",
+                  "type" => "ref"
+                },
+                "subject" => %{"format" => "did", "type" => "string"}
+              },
+              "required" => ["subject", "activitySubscription"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "activitySubscription" => %{
+                  "ref" => "app.bsky.notification.defs#activitySubscription",
+                  "type" => "ref"
+                },
+                "subject" => %{"format" => "did", "type" => "string"}
+              },
+              "required" => ["subject"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.notification.putActivitySubscription",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Set notification-related preferences for an account. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"priority" => %{"type" => "boolean"}},
+              "required" => ["priority"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.notification.putPreferences",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Set notification-related preferences for an account. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "chat" => %{
+                  "ref" => "app.bsky.notification.defs#chatPreference",
+                  "type" => "ref"
+                },
+                "follow" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "like" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "likeViaRepost" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "mention" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "quote" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "reply" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "repost" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "repostViaRepost" => %{
+                  "ref" => "app.bsky.notification.defs#filterablePreference",
+                  "type" => "ref"
+                },
+                "starterpackJoined" => %{
+                  "ref" => "app.bsky.notification.defs#preference",
+                  "type" => "ref"
+                },
+                "subscribedPost" => %{
+                  "ref" => "app.bsky.notification.defs#preference",
+                  "type" => "ref"
+                },
+                "unverified" => %{
+                  "ref" => "app.bsky.notification.defs#preference",
+                  "type" => "ref"
+                },
+                "verified" => %{
+                  "ref" => "app.bsky.notification.defs#preference",
+                  "type" => "ref"
+                }
+              },
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "preferences" => %{
+                  "ref" => "app.bsky.notification.defs#preferences",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["preferences"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.notification.putPreferencesV2",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Register to receive push notifications, via a specified service, for the requesting account. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "ageRestricted" => %{
+                  "description" => "Set to true when the actor is age restricted",
+                  "type" => "boolean"
+                },
+                "appId" => %{"type" => "string"},
+                "platform" => %{
+                  "knownValues" => ["ios", "android", "web"],
+                  "type" => "string"
+                },
+                "serviceDid" => %{"format" => "did", "type" => "string"},
+                "token" => %{"type" => "string"}
+              },
+              "required" => ["serviceDid", "token", "platform", "appId"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.notification.registerPush",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "The inverse of registerPush - inform a specified service that push notifications should no longer be sent to the given token for the requesting account. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "appId" => %{"type" => "string"},
+                "platform" => %{
+                  "knownValues" => ["ios", "android", "web"],
+                  "type" => "string"
+                },
+                "serviceDid" => %{"format" => "did", "type" => "string"},
+                "token" => %{"type" => "string"}
+              },
+              "required" => ["serviceDid", "token", "platform", "appId"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.notification.unregisterPush",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Notify server that the requesting account has seen notifications. Requires auth.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "seenAt" => %{"format" => "datetime", "type" => "string"}
+              },
+              "required" => ["seenAt"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.notification.updateSeen",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
         "byteSlice" => %{
           "description" =>
             "Specifies the sub-string range a facet feature applies to. Start index is inclusive, end index is exclusive. Indices are zero-indexed, counting bytes of the UTF-8 encoded text. NOTE: some languages, like Javascript, use UTF-16 or Unicode codepoints for string slice indexing; in these languages, convert to byte arrays before working with facets.",
@@ -2419,6 +7080,1751 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "app.bsky.richtext.facet",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "ageAssuranceEvent" => %{
+          "description" => "Object used to store age assurance data in stash.",
+          "properties" => %{
+            "attemptId" => %{
+              "description" => "The unique identifier for this instance of the age assurance flow, in UUID format.",
+              "type" => "string"
+            },
+            "completeIp" => %{
+              "description" => "The IP address used when completing the AA flow.",
+              "type" => "string"
+            },
+            "completeUa" => %{
+              "description" => "The user agent used when completing the AA flow.",
+              "type" => "string"
+            },
+            "createdAt" => %{
+              "description" => "The date and time of this write operation.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "email" => %{
+              "description" => "The email used for AA.",
+              "type" => "string"
+            },
+            "initIp" => %{
+              "description" => "The IP address used when initiating the AA flow.",
+              "type" => "string"
+            },
+            "initUa" => %{
+              "description" => "The user agent used when initiating the AA flow.",
+              "type" => "string"
+            },
+            "status" => %{
+              "description" => "The status of the age assurance process.",
+              "knownValues" => ["unknown", "pending", "assured"],
+              "type" => "string"
+            }
+          },
+          "required" => ["createdAt", "status", "attemptId"],
+          "type" => "object"
+        },
+        "ageAssuranceState" => %{
+          "description" =>
+            "The computed state of the age assurance process, returned to the user in question on certain authenticated requests.",
+          "properties" => %{
+            "lastInitiatedAt" => %{
+              "description" => "The timestamp when this state was last updated.",
+              "format" => "datetime",
+              "type" => "string"
+            },
+            "status" => %{
+              "description" => "The status of the age assurance process.",
+              "knownValues" => ["unknown", "pending", "assured", "blocked"],
+              "type" => "string"
+            }
+          },
+          "required" => ["status"],
+          "type" => "object"
+        },
+        "skeletonSearchActor" => %{
+          "properties" => %{"did" => %{"format" => "did", "type" => "string"}},
+          "required" => ["did"],
+          "type" => "object"
+        },
+        "skeletonSearchPost" => %{
+          "properties" => %{"uri" => %{"format" => "at-uri", "type" => "string"}},
+          "required" => ["uri"],
+          "type" => "object"
+        },
+        "skeletonSearchStarterPack" => %{
+          "properties" => %{"uri" => %{"format" => "at-uri", "type" => "string"}},
+          "required" => ["uri"],
+          "type" => "object"
+        },
+        "skeletonTrend" => %{
+          "properties" => %{
+            "category" => %{"type" => "string"},
+            "dids" => %{
+              "items" => %{"format" => "did", "type" => "string"},
+              "type" => "array"
+            },
+            "displayName" => %{"type" => "string"},
+            "link" => %{"type" => "string"},
+            "postCount" => %{"type" => "integer"},
+            "startedAt" => %{"format" => "datetime", "type" => "string"},
+            "status" => %{"knownValues" => ["hot"], "type" => "string"},
+            "topic" => %{"type" => "string"}
+          },
+          "required" => ["topic", "displayName", "link", "startedAt", "postCount", "dids"],
+          "type" => "object"
+        },
+        "threadItemBlocked" => %{
+          "properties" => %{
+            "author" => %{
+              "ref" => "app.bsky.feed.defs#blockedAuthor",
+              "type" => "ref"
+            }
+          },
+          "required" => ["author"],
+          "type" => "object"
+        },
+        "threadItemNoUnauthenticated" => %{
+          "properties" => %{},
+          "type" => "object"
+        },
+        "threadItemNotFound" => %{"properties" => %{}, "type" => "object"},
+        "threadItemPost" => %{
+          "properties" => %{
+            "hiddenByThreadgate" => %{
+              "description" =>
+                "The threadgate created by the author indicates this post as a reply to be hidden for everyone consuming the thread.",
+              "type" => "boolean"
+            },
+            "moreParents" => %{
+              "description" =>
+                "This post has more parents that were not present in the response. This is just a boolean, without the number of parents.",
+              "type" => "boolean"
+            },
+            "moreReplies" => %{
+              "description" =>
+                "This post has more replies that were not present in the response. This is a numeric value, which is best-effort and might not be accurate.",
+              "type" => "integer"
+            },
+            "mutedByViewer" => %{
+              "description" => "This is by an account muted by the viewer requesting it.",
+              "type" => "boolean"
+            },
+            "opThread" => %{
+              "description" =>
+                "This post is part of a contiguous thread by the OP from the thread root. Many different OP threads can happen in the same thread.",
+              "type" => "boolean"
+            },
+            "post" => %{"ref" => "app.bsky.feed.defs#postView", "type" => "ref"}
+          },
+          "required" => ["post", "moreParents", "moreReplies", "opThread", "hiddenByThreadgate", "mutedByViewer"],
+          "type" => "object"
+        },
+        "trendView" => %{
+          "properties" => %{
+            "actors" => %{
+              "items" => %{
+                "ref" => "app.bsky.actor.defs#profileViewBasic",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "category" => %{"type" => "string"},
+            "displayName" => %{"type" => "string"},
+            "link" => %{"type" => "string"},
+            "postCount" => %{"type" => "integer"},
+            "startedAt" => %{"format" => "datetime", "type" => "string"},
+            "status" => %{"knownValues" => ["hot"], "type" => "string"},
+            "topic" => %{"type" => "string"}
+          },
+          "required" => ["topic", "displayName", "link", "startedAt", "postCount", "actors"],
+          "type" => "object"
+        },
+        "trendingTopic" => %{
+          "properties" => %{
+            "description" => %{"type" => "string"},
+            "displayName" => %{"type" => "string"},
+            "link" => %{"type" => "string"},
+            "topic" => %{"type" => "string"}
+          },
+          "required" => ["topic", "link"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.unspecced.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Returns the current state of the age assurance process for an account. This is used to check if the user has completed age assurance or if further action is required.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "ref" => "app.bsky.unspecced.defs#ageAssuranceState",
+              "type" => "ref"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getAgeAssuranceState",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "liveNowConfig" => %{
+          "properties" => %{
+            "did" => %{"format" => "did", "type" => "string"},
+            "domains" => %{"items" => %{"type" => "string"}, "type" => "array"}
+          },
+          "required" => ["did", "domains"],
+          "type" => "object"
+        },
+        "main" => %{
+          "description" => "Get miscellaneous runtime configuration.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "checkEmailConfirmed" => %{"type" => "boolean"},
+                "liveNow" => %{
+                  "items" => %{"ref" => "#liveNowConfig", "type" => "ref"},
+                  "type" => "array"
+                }
+              },
+              "required" => [],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getConfig",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested starterpacks for onboarding",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "starterPacks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#starterPackView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getOnboardingSuggestedStarterPacks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested starterpacks for onboarding. Intended to be called and hydrated by app.bsky.unspecced.getOnboardingSuggestedStarterPacks",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "starterPacks" => %{
+                  "items" => %{"format" => "at-uri", "type" => "string"},
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getOnboardingSuggestedStarterPacksSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested users for onboarding. Intended to be called and hydrated by app.bsky.unspecced.getSuggestedOnboardingUsers",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "dids" => %{
+                  "items" => %{"format" => "did", "type" => "string"},
+                  "type" => "array"
+                },
+                "recId" => %{
+                  "description" => "DEPRECATED: use recIdStr instead.",
+                  "type" => "string"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["dids"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getOnboardingSuggestedUsersSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "An unspecced view of globally popular feed generators.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "feeds" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#generatorView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feeds"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "query" => %{"type" => "string"}
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getPopularFeedGenerators",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "(NOTE: this endpoint is under development and WILL change without notice. Don't use it until it is moved out of `unspecced` or your application WILL break) Get additional posts under a thread e.g. replies hidden by threadgate. Based on an anchor post at any depth of the tree, returns top-level replies below that anchor. It does not include ancestors nor the anchor itself. This should be called after exhausting `app.bsky.unspecced.getPostThreadV2`. Does not require auth, but additional metadata and filtering will be applied for authed requests.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "thread" => %{
+                  "description" =>
+                    "A flat list of other thread items. The depth of each item is indicated by the depth property inside the item.",
+                  "items" => %{"ref" => "#threadItem", "type" => "ref"},
+                  "type" => "array"
+                }
+              },
+              "required" => ["thread"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "anchor" => %{
+                "description" => "Reference (AT-URI) to post record. This is the anchor post.",
+                "format" => "at-uri",
+                "type" => "string"
+              }
+            },
+            "required" => ["anchor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        },
+        "threadItem" => %{
+          "properties" => %{
+            "depth" => %{
+              "description" =>
+                "The nesting level of this item in the thread. Depth 0 means the anchor item. Items above have negative depths, items below have positive depths.",
+              "type" => "integer"
+            },
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "value" => %{
+              "refs" => ["app.bsky.unspecced.defs#threadItemPost"],
+              "type" => "union"
+            }
+          },
+          "required" => ["uri", "depth", "value"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.unspecced.getPostThreadOtherV2",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "(NOTE: this endpoint is under development and WILL change without notice. Don't use it until it is moved out of `unspecced` or your application WILL break) Get posts in a thread. It is based in an anchor post at any depth of the tree, and returns posts above it (recursively resolving the parent, without further branching to their replies) and below it (recursive replies, with branching to their replies). Does not require auth, but additional metadata and filtering will be applied for authed requests.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "hasOtherReplies" => %{
+                  "description" =>
+                    "Whether this thread has additional replies. If true, a call can be made to the `getPostThreadOtherV2` endpoint to retrieve them.",
+                  "type" => "boolean"
+                },
+                "thread" => %{
+                  "description" =>
+                    "A flat list of thread items. The depth of each item is indicated by the depth property inside the item.",
+                  "items" => %{"ref" => "#threadItem", "type" => "ref"},
+                  "type" => "array"
+                },
+                "threadgate" => %{
+                  "ref" => "app.bsky.feed.defs#threadgateView",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["thread", "hasOtherReplies"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "above" => %{
+                "default" => true,
+                "description" => "Whether to include parents above the anchor.",
+                "type" => "boolean"
+              },
+              "anchor" => %{
+                "description" =>
+                  "Reference (AT-URI) to post record. This is the anchor post, and the thread will be built around it. It can be any post in the tree, not necessarily a root post.",
+                "format" => "at-uri",
+                "type" => "string"
+              },
+              "below" => %{
+                "default" => 6,
+                "description" => "How many levels of replies to include below the anchor.",
+                "maximum" => 20,
+                "minimum" => 0,
+                "type" => "integer"
+              },
+              "branchingFactor" => %{
+                "default" => 10,
+                "description" =>
+                  "Maximum of replies to include at each level of the thread, except for the direct replies to the anchor, which are (NOTE: currently, during unspecced phase) all returned (NOTE: later they might be paginated).",
+                "maximum" => 100,
+                "minimum" => 0,
+                "type" => "integer"
+              },
+              "sort" => %{
+                "default" => "oldest",
+                "description" => "Sorting for the thread replies.",
+                "knownValues" => ["newest", "oldest", "top"],
+                "type" => "string"
+              }
+            },
+            "required" => ["anchor"],
+            "type" => "params"
+          },
+          "type" => "query"
+        },
+        "threadItem" => %{
+          "properties" => %{
+            "depth" => %{
+              "description" =>
+                "The nesting level of this item in the thread. Depth 0 means the anchor item. Items above have negative depths, items below have positive depths.",
+              "type" => "integer"
+            },
+            "uri" => %{"format" => "at-uri", "type" => "string"},
+            "value" => %{
+              "refs" => [
+                "app.bsky.unspecced.defs#threadItemPost",
+                "app.bsky.unspecced.defs#threadItemNoUnauthenticated",
+                "app.bsky.unspecced.defs#threadItemNotFound",
+                "app.bsky.unspecced.defs#threadItemBlocked"
+              ],
+              "type" => "union"
+            }
+          },
+          "required" => ["uri", "depth", "value"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.unspecced.getPostThreadV2",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested feeds",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "feeds" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.feed.defs#generatorView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["feeds"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedFeeds",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested feeds. Intended to be called and hydrated by app.bsky.unspecced.getSuggestedFeeds",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "feeds" => %{
+                  "items" => %{"format" => "at-uri", "type" => "string"},
+                  "type" => "array"
+                }
+              },
+              "required" => ["feeds"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedFeedsSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested users for onboarding",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "recId" => %{
+                  "description" => "DEPRECATED: use recIdStr instead.",
+                  "type" => "string"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedOnboardingUsers",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested starterpacks",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "starterPacks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.graph.defs#starterPackView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedStarterPacks",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested starterpacks. Intended to be called and hydrated by app.bsky.unspecced.getSuggestedStarterpacks",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "starterPacks" => %{
+                  "items" => %{"format" => "at-uri", "type" => "string"},
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedStarterPacksSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested users",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "recId" => %{
+                  "description" => "DEPRECATED: use recIdStr instead.",
+                  "type" => "string"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsers",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested users for the Discover page",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsersForDiscover",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested users for the Discover page. Intended to be called and hydrated by app.bsky.unspecced.getSuggestedUsersForDiscover",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "dids" => %{
+                  "items" => %{"format" => "did", "type" => "string"},
+                  "type" => "array"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["dids"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsersForDiscoverSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested users for the Explore page",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsersForExplore",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested users for the Explore page. Intended to be called and hydrated by app.bsky.unspecced.getSuggestedUsersForExplore",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "dids" => %{
+                  "items" => %{"format" => "did", "type" => "string"},
+                  "type" => "array"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["dids"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsersForExploreSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggested users for the See More page",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.actor.defs#profileView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsersForSeeMore",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested users for the See More page. Intended to be called and hydrated by app.bsky.unspecced.getSuggestedUsersForSeeMore",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "dids" => %{
+                  "items" => %{"format" => "did", "type" => "string"},
+                  "type" => "array"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["dids"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsersForSeeMoreSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested users. Intended to be called and hydrated by app.bsky.unspecced.getSuggestedUsers",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "dids" => %{
+                  "items" => %{"format" => "did", "type" => "string"},
+                  "type" => "array"
+                },
+                "recId" => %{
+                  "description" => "DEPRECATED: use recIdStr instead.",
+                  "type" => "string"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["dids"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "category" => %{
+                "description" => "Category of users to get suggestions for.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 50,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestedUsersSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get a skeleton of suggested actors. Intended to be called and then hydrated through app.bsky.actor.getSuggestions",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#skeletonSearchActor",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"},
+                "recId" => %{
+                  "description" => "DEPRECATED: use recIdStr instead.",
+                  "type" => "integer"
+                },
+                "recIdStr" => %{
+                  "description" => "Snowflake for this recommendation, use when submitting recommendation events.",
+                  "type" => "string"
+                },
+                "relativeToDid" => %{
+                  "description" =>
+                    "DID of the account these suggestions are relative to. If this is returned undefined, suggestions are based on the viewer.",
+                  "format" => "did",
+                  "type" => "string"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "relativeToDid" => %{
+                "description" =>
+                  "DID of the account to get suggestions relative to. If not provided, suggestions will be based on the viewer.",
+                "format" => "did",
+                "type" => "string"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries). Used to boost followed accounts in ranking.",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getSuggestionsSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of suggestions (feeds and users) tagged with categories",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "suggestions" => %{
+                  "items" => %{"ref" => "#suggestion", "type" => "ref"},
+                  "type" => "array"
+                }
+              },
+              "required" => ["suggestions"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{"properties" => %{}, "type" => "params"},
+          "type" => "query"
+        },
+        "suggestion" => %{
+          "properties" => %{
+            "subject" => %{"format" => "uri", "type" => "string"},
+            "subjectType" => %{
+              "knownValues" => ["actor", "feed"],
+              "type" => "string"
+            },
+            "tag" => %{"type" => "string"}
+          },
+          "required" => ["tag", "subjectType", "subject"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.unspecced.getTaggedSuggestions",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get a list of trending topics",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "suggested" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#trendingTopic",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "topics" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#trendingTopic",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["topics", "suggested"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries). Used to boost followed accounts in ranking.",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getTrendingTopics",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get the current trends on the network",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "trends" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#trendView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["trends"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getTrends",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Get the skeleton of trends on the network. Intended to be called and then hydrated through app.bsky.unspecced.getTrends",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "trends" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#skeletonTrend",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["trends"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "limit" => %{
+                "default" => 10,
+                "maximum" => 25,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.getTrendsSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Initiate age assurance for an account. This is a one-time action that will start the process of verifying the user's age.",
+          "errors" => [
+            %{"name" => "InvalidEmail"},
+            %{"name" => "DidTooLong"},
+            %{"name" => "InvalidInitiation"}
+          ],
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "countryCode" => %{
+                  "description" => "An ISO 3166-1 alpha-2 code of the user's location.",
+                  "type" => "string"
+                },
+                "email" => %{
+                  "description" => "The user's email address to receive assurance instructions.",
+                  "type" => "string"
+                },
+                "language" => %{
+                  "description" => "The user's preferred language for communication during the assurance process.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["email", "language", "countryCode"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "ref" => "app.bsky.unspecced.defs#ageAssuranceState",
+              "type" => "ref"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.unspecced.initAgeAssurance",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Backend Actors (profile) search, returns only skeleton.",
+          "errors" => [%{"name" => "BadQueryString"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "actors" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#skeletonSearchActor",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"},
+                "hitsTotal" => %{
+                  "description" =>
+                    "Count of search hits. Optional, may be rounded/truncated, and may not be possible to paginate through all hits.",
+                  "type" => "integer"
+                }
+              },
+              "required" => ["actors"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{
+                "description" =>
+                  "Optional pagination mechanism; may not necessarily allow scrolling through entire result set.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "q" => %{
+                "description" =>
+                  "Search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended. For typeahead search, only simple term match is supported, not full syntax.",
+                "type" => "string"
+              },
+              "typeahead" => %{
+                "description" => "If true, acts as fast/simple 'typeahead' query.",
+                "type" => "boolean"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries). Used to boost followed accounts in ranking.",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "required" => ["q"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.searchActorsSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Backend Posts search, returns only skeleton",
+          "errors" => [%{"name" => "BadQueryString"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "hitsTotal" => %{
+                  "description" =>
+                    "Count of search hits. Optional, may be rounded/truncated, and may not be possible to paginate through all hits.",
+                  "type" => "integer"
+                },
+                "posts" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#skeletonSearchPost",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["posts"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "author" => %{
+                "description" => "Filter to posts by the given account. Handles are resolved to DID before query-time.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "cursor" => %{
+                "description" =>
+                  "Optional pagination mechanism; may not necessarily allow scrolling through entire result set.",
+                "type" => "string"
+              },
+              "domain" => %{
+                "description" =>
+                  "Filter to posts with URLs (facet links or embeds) linking to the given domain (hostname). Server may apply hostname normalization.",
+                "type" => "string"
+              },
+              "lang" => %{
+                "description" =>
+                  "Filter to posts in the given language. Expected to be based on post language field, though server may override language detection.",
+                "format" => "language",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "mentions" => %{
+                "description" =>
+                  "Filter to posts which mention the given account. Handles are resolved to DID before query-time. Only matches rich-text facet mentions.",
+                "format" => "at-identifier",
+                "type" => "string"
+              },
+              "q" => %{
+                "description" =>
+                  "Search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.",
+                "type" => "string"
+              },
+              "since" => %{
+                "description" =>
+                  "Filter results for posts after the indicated datetime (inclusive). Expected to use 'sortAt' timestamp, which may not match 'createdAt'. Can be a datetime, or just an ISO date (YYYY-MM-DD).",
+                "type" => "string"
+              },
+              "sort" => %{
+                "default" => "latest",
+                "description" => "Specifies the ranking order of results.",
+                "knownValues" => ["top", "latest"],
+                "type" => "string"
+              },
+              "tag" => %{
+                "description" =>
+                  "Filter to posts with the given tag (hashtag), based on rich-text facet or tag field. Do not include the hash (#) prefix. Multiple tags can be specified, with 'AND' matching.",
+                "items" => %{
+                  "maxGraphemes" => 64,
+                  "maxLength" => 640,
+                  "type" => "string"
+                },
+                "type" => "array"
+              },
+              "until" => %{
+                "description" =>
+                  "Filter results for posts before the indicated datetime (not inclusive). Expected to use 'sortAt' timestamp, which may not match 'createdAt'. Can be a datetime, or just an ISO date (YYY-MM-DD).",
+                "type" => "string"
+              },
+              "url" => %{
+                "description" =>
+                  "Filter to posts with links (facet links or embeds) pointing to this URL. Server may apply URL normalization or fuzzy matching.",
+                "format" => "uri",
+                "type" => "string"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries). Used for 'from:me' queries.",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "required" => ["q"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.searchPostsSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Backend Starter Pack search, returns only skeleton.",
+          "errors" => [%{"name" => "BadQueryString"}],
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "cursor" => %{"type" => "string"},
+                "hitsTotal" => %{
+                  "description" =>
+                    "Count of search hits. Optional, may be rounded/truncated, and may not be possible to paginate through all hits.",
+                  "type" => "integer"
+                },
+                "starterPacks" => %{
+                  "items" => %{
+                    "ref" => "app.bsky.unspecced.defs#skeletonSearchStarterPack",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["starterPacks"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{
+                "description" =>
+                  "Optional pagination mechanism; may not necessarily allow scrolling through entire result set.",
+                "type" => "string"
+              },
+              "limit" => %{
+                "default" => 25,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "q" => %{
+                "description" =>
+                  "Search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.",
+                "type" => "string"
+              },
+              "viewer" => %{
+                "description" =>
+                  "DID of the account making the request (not included for public/unauthenticated queries).",
+                "format" => "did",
+                "type" => "string"
+              }
+            },
+            "required" => ["q"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.unspecced.searchStarterPacksSkeleton",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "jobStatus" => %{
+          "properties" => %{
+            "blob" => %{"type" => "blob"},
+            "did" => %{"format" => "did", "type" => "string"},
+            "error" => %{"type" => "string"},
+            "jobId" => %{"type" => "string"},
+            "message" => %{"type" => "string"},
+            "progress" => %{
+              "description" => "Progress within the current processing state.",
+              "maximum" => 100,
+              "minimum" => 0,
+              "type" => "integer"
+            },
+            "state" => %{
+              "description" =>
+                "The state of the video processing job. All values not listed as a known value indicate that the job is in process.",
+              "knownValues" => ["JOB_STATE_COMPLETED", "JOB_STATE_FAILED"],
+              "type" => "string"
+            }
+          },
+          "required" => ["jobId", "did", "state"],
+          "type" => "object"
+        }
+      },
+      "id" => "app.bsky.video.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get status details for a video processing job.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "jobStatus" => %{
+                  "ref" => "app.bsky.video.defs#jobStatus",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["jobStatus"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{"jobId" => %{"type" => "string"}},
+            "required" => ["jobId"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.video.getJobStatus",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get video upload limits for the authenticated user.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "canUpload" => %{"type" => "boolean"},
+                "error" => %{"type" => "string"},
+                "message" => %{"type" => "string"},
+                "remainingDailyBytes" => %{"type" => "integer"},
+                "remainingDailyVideos" => %{"type" => "integer"}
+              },
+              "required" => ["canUpload"],
+              "type" => "object"
+            }
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "app.bsky.video.getUploadLimits",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Upload a video to be processed then stored on the PDS.",
+          "input" => %{"encoding" => "video/mp4"},
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "jobStatus" => %{
+                  "ref" => "app.bsky.video.defs#jobStatus",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["jobStatus"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "app.bsky.video.uploadVideo",
       "lexicon" => 1
     },
     %{

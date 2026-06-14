@@ -198,6 +198,62 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert response["value"]["text"] == "hello from bsky-shaped post"
   end
 
+  test "createRecord validates and persists Bluesky like records", %{conn: conn} do
+    account = create_account!(conn, "records-bsky-like.test", "records-bsky-like@example.com")
+
+    post =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.feed.post",
+        "rkey" => "3mo7hac7efyou",
+        "validate" => true,
+        "record" => %{
+          "$type" => "app.bsky.feed.post",
+          "text" => "liked post",
+          "createdAt" => "2026-06-13T19:45:00.000Z"
+        }
+      })
+      |> json_response(200)
+
+    liked_uri = "at://#{account["did"]}/app.bsky.feed.post/3mo7hac7efyou"
+
+    liked =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.feed.like",
+        "rkey" => "3mo7hac7egabc",
+        "validate" => true,
+        "record" => %{
+          "$type" => "app.bsky.feed.like",
+          "subject" => %{"uri" => liked_uri, "cid" => post["cid"]},
+          "createdAt" => "2026-06-13T19:46:00.000Z"
+        }
+      })
+      |> json_response(200)
+
+    assert liked["uri"] == "at://#{account["did"]}/app.bsky.feed.like/3mo7hac7egabc"
+    assert liked["validationStatus"] == "valid"
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 2
+
+    response =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.feed.like",
+        "rkey" => "3mo7hac7egabc"
+      })
+      |> json_response(200)
+
+    assert response["cid"] == liked["cid"]
+    assert response["value"]["subject"]["uri"] == liked_uri
+    assert response["value"]["subject"]["cid"] == post["cid"]
+  end
+
   test "putRecord enforces swapRecord and swapCommit before replacing a record", %{conn: conn} do
     account = create_account!(conn, "records-erin.test", "records-erin@example.com")
     created = create_profile!(conn, account, "Erin")

@@ -16,7 +16,7 @@ defmodule Tempest.Lexicon.Document do
   ]
 
   @schema_types MapSet.new(
-                  ~w(array blob boolean bytes cid-link integer object params permission procedure query record ref string subscription token union unknown)
+                  ~w(array blob boolean bytes cid-link integer object params permission permission-set procedure query record ref string subscription token union unknown)
                 )
 
   def validate_documents(documents, opts \\ [])
