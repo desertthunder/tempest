@@ -43,11 +43,10 @@ defmodule Tempest.Xrpc.Proxy do
       |> Keyword.merge(options)
       |> Keyword.merge(
         method: conn.method,
-        url: url(target.base_url, nsid),
+        url: url(target.base_url, nsid, conn),
         headers: forwarded_headers(conn, target, nsid),
         retry: false
       )
-      |> maybe_query(conn, params)
       |> maybe_json(conn, params)
 
     case Req.request(request) do
@@ -56,7 +55,11 @@ defmodule Tempest.Xrpc.Proxy do
     end
   end
 
-  defp url(upstream, nsid), do: String.trim_trailing(upstream, "/") <> "/xrpc/" <> nsid
+  defp url(upstream, nsid, %{method: "GET", query_string: query_string}) when query_string != "" do
+    String.trim_trailing(upstream, "/") <> "/xrpc/" <> nsid <> "?" <> query_string
+  end
+
+  defp url(upstream, nsid, _conn), do: String.trim_trailing(upstream, "/") <> "/xrpc/" <> nsid
 
   defp proxy_target(conn) do
     case atproto_proxy_header(conn) do
@@ -117,12 +120,6 @@ defmodule Tempest.Xrpc.Proxy do
   end
 
   defp service_endpoint(_document, _service_id), do: {:error, :proxy_service_not_found}
-
-  defp maybe_query(request, %{method: "GET"}, params) do
-    Keyword.put(request, :params, Map.drop(params, ["method"]))
-  end
-
-  defp maybe_query(request, _conn, _params), do: request
 
   defp maybe_json(request, %{method: "POST"}, params) do
     Keyword.put(request, :json, Map.drop(params, ["method"]))

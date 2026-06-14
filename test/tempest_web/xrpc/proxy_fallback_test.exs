@@ -39,6 +39,30 @@ defmodule TempestWeb.Xrpc.ProxyFallbackTest do
     assert json_response(proxy_conn, 200) == %{"feed" => []}
   end
 
+  test "unknown service queries preserve repeated parameters", %{conn: conn} do
+    Application.put_env(:tempest, Tempest.Xrpc.Proxy,
+      upstream_base_url: "https://appview.example",
+      http_req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.request_path == "/xrpc/app.bsky.feed.getFeedGenerators"
+
+      assert req_conn.query_string ==
+               "feeds=at%3A%2F%2Fdid%3Aplc%3Aone%2Fapp.bsky.feed.generator%2Falpha&feeds=at%3A%2F%2Fdid%3Aplc%3Atwo%2Fapp.bsky.feed.generator%2Fbeta&actors=did%3Aplc%3Aone&actors=did%3Aplc%3Atwo"
+
+      Req.Test.json(req_conn, %{"feeds" => []})
+    end)
+
+    proxy_conn =
+      get(
+        conn,
+        "/xrpc/app.bsky.feed.getFeedGenerators?feeds=at%3A%2F%2Fdid%3Aplc%3Aone%2Fapp.bsky.feed.generator%2Falpha&feeds=at%3A%2F%2Fdid%3Aplc%3Atwo%2Fapp.bsky.feed.generator%2Fbeta&actors=did%3Aplc%3Aone&actors=did%3Aplc%3Atwo"
+      )
+
+    assert json_response(proxy_conn, 200) == %{"feeds" => []}
+  end
+
   test "unknown app.bsky procedures proxy JSON bodies and service auth to configured AppView", %{conn: conn} do
     Application.put_env(:tempest, Tempest.Xrpc.Proxy,
       upstream_base_url: "https://appview.example",
