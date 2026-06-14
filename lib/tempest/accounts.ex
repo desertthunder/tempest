@@ -8,6 +8,7 @@ defmodule Tempest.Accounts do
   alias Tempest.Accounts.{Account, AppPasswords, AuthContext, Password, Session, Tokens}
   alias Tempest.Identity
   alias Tempest.Identity.KeyStore
+  alias Tempest.Identity.Multikey
   alias Tempest.RepoCore.{CarVerifier, Drisl}
   alias Tempest.{Repo, RepoStorage, Security, Sequencer}
 
@@ -630,7 +631,7 @@ defmodule Tempest.Accounts do
   defp signing_key_response(account, key) do
     %{
       "did" => account.did,
-      "signingKey" => key.public_key_multibase,
+      "signingKey" => Multikey.encode_secp256k1_did_key!(key.public_key_multibase),
       "verificationMethod" => account.did <> key.kid
     }
   end

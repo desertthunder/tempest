@@ -27,6 +27,13 @@ defmodule Tempest.Identity.Multikey do
     end
   end
 
+  def encode_secp256k1_public_key!(public_key) do
+    case encode_secp256k1_public_key(public_key) do
+      {:ok, multikey} -> multikey
+      {:error, reason} -> raise ArgumentError, "invalid secp256k1 public key: #{inspect(reason)}"
+    end
+  end
+
   def decode_secp256k1_public_key(multibase, opts \\ [])
 
   def decode_secp256k1_public_key(multibase, opts) when is_binary(multibase) do

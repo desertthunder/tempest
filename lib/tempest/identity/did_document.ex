@@ -4,7 +4,7 @@ defmodule Tempest.Identity.DidDocument do
   """
 
   alias Tempest.Accounts.Account
-  alias Tempest.Identity.KeyStore
+  alias Tempest.Identity.{KeyStore, Multikey}
 
   def build(%Account{} = account) do
     signing_key = KeyStore.active_key_for_account(account)
@@ -19,7 +19,7 @@ defmodule Tempest.Identity.DidDocument do
           "id" => verification_id,
           "type" => "Multikey",
           "controller" => account.did,
-          "publicKeyMultibase" => signing_key.public_key_multibase
+          "publicKeyMultibase" => Multikey.encode_secp256k1_public_key!(signing_key.public_key_multibase)
         }
       ],
       "service" => [

@@ -51,7 +51,7 @@ defmodule TempestWeb.Xrpc.IdentityHandlesTest do
 
     assert document["id"] == account["did"]
     assert DidDocument.claims_handle?(document, "brigid.test")
-    assert [%{"type" => "Multikey", "publicKeyMultibase" => "u" <> _public_key}] = document["verificationMethod"]
+    assert [%{"type" => "Multikey", "publicKeyMultibase" => "z" <> _public_key}] = document["verificationMethod"]
 
     assert [%{"type" => "AtprotoPersonalDataServer", "serviceEndpoint" => "http://localhost:4002"}] =
              document["service"]

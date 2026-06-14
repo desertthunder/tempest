@@ -185,6 +185,7 @@ defmodule TempestWeb.Xrpc.AccountsSessionsTest do
     assert first["did"] == account["did"]
     assert first["verificationMethod"] == account["did"] <> "#atproto"
     assert first["signingKey"] == second["signingKey"]
+    assert String.starts_with?(first["signingKey"], "did:key:z")
   end
 
   test "createAccount with an existing DID requires service auth and starts deactivated", %{conn: conn} do
