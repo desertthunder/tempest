@@ -142,6 +142,10 @@ if lexicon_paths = System.get_env("TEMPEST_LEXICON_PATHS") do
   config :tempest, Tempest.Lexicon.Registry, paths: paths
 end
 
+if appview_url = System.get_env("TEMPEST_APPVIEW_URL") do
+  config :tempest, Tempest.Xrpc.Proxy, upstream_base_url: String.trim_trailing(appview_url, "/")
+end
+
 if System.get_env("TEMPEST_LEXICON_EXTERNAL_RESOLVER") in ["1", "true", "TRUE"] do
   config :tempest, Tempest.Lexicon.Registry, external_resolver: [enabled?: true]
 end
