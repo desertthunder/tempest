@@ -47,7 +47,7 @@ defmodule Tempest.Accounts.Tokens do
   end
 
   def verify_access_token(token) when is_binary(token) do
-    case verify_session_jwt(token, "access", @access_max_age_seconds) do
+    case verify_session_jwt(token, :access, @access_max_age_seconds) do
       {:ok, claims} -> {:ok, claims}
       {:error, _reason} -> Phoenix.Token.verify(Endpoint, @access_salt, token, max_age: @access_max_age_seconds)
     end
@@ -258,17 +258,17 @@ defmodule Tempest.Accounts.Tokens do
     end
   end
 
-  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, "access")
+  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, :access)
        when typ in ["at+jwt", "JWT"],
        do: :ok
 
-  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, "refresh")
+  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, :refresh)
        when typ in ["refresh+jwt", "JWT"],
        do: :ok
 
   defp validate_session_jwt_header(_header, _expected_typ), do: {:error, :invalid}
 
-  defp validate_session_claim_shape(%{"typ" => "access", "scope" => "com.atproto.access"} = claims, "access") do
+  defp validate_session_claim_shape(%{"typ" => "access", "scope" => "com.atproto.access"} = claims, :access) do
     with did when is_binary(did) and did != "" <- Map.get(claims, "sub"),
          ^did <- Map.get(claims, "iss"),
          account_id when is_integer(account_id) <- Map.get(claims, "account_id"),
@@ -279,7 +279,7 @@ defmodule Tempest.Accounts.Tokens do
     end
   end
 
-  defp validate_session_claim_shape(%{"typ" => "refresh", "scope" => "com.atproto.refresh"} = claims, "refresh") do
+  defp validate_session_claim_shape(%{"typ" => "refresh", "scope" => "com.atproto.refresh"} = claims, :refresh) do
     with did when is_binary(did) and did != "" <- Map.get(claims, "sub"),
          ^did <- Map.get(claims, "iss") do
       :ok
@@ -291,14 +291,15 @@ defmodule Tempest.Accounts.Tokens do
   defp validate_session_claim_shape(_claims, _expected_typ), do: {:error, :invalid}
 
   defp validate_session_claims(
-         %{"typ" => expected_typ, "sub" => did, "iss" => did, "aud" => aud, "iat" => iat, "exp" => exp},
+         %{"typ" => typ, "sub" => did, "iss" => did, "aud" => aud, "iat" => iat, "exp" => exp},
          expected_typ,
          max_age_seconds
        )
-       when is_integer(iat) and is_integer(exp) do
+       when is_binary(typ) and is_integer(iat) and is_integer(exp) do
     now = DateTime.utc_now() |> DateTime.to_unix()
 
     cond do
+      typ != Atom.to_string(expected_typ) -> {:error, :invalid}
       aud != service_did() -> {:error, :invalid}
       iat > now + 60 -> {:error, :invalid}
       exp <= now -> {:error, :expired_token}
