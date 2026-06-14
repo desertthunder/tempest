@@ -42,27 +42,10 @@ defmodule TempestWeb.DocLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <main id="tempest-docs" class="tempest-home doc-viewer-page">
+    <main id="tempest-docs" class="doc-viewer-page">
       <div class="tempest-home__desktop" aria-label="Tempest desktop">
         <div class="tempest-home__workarea">
-          <nav class="desktop-icons" aria-label="Desktop shortcuts">
-            <.link class="desktop-icon" href="https://github.com/desertthunder/tempest" target="_blank">
-              <img src={~p"/images/icons/github.svg"} alt="" width="40" height="40" />
-              <span>GitHub</span>
-            </.link>
-            <.link class="desktop-icon" navigate={~p"/stats"}>
-              <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
-              <span>Stats</span>
-            </.link>
-            <.link class="desktop-icon" navigate={~p"/docs"}>
-              <img src={~p"/images/icons/browser.svg"} alt="" width="40" height="40" />
-              <span>Docs</span>
-            </.link>
-            <a class="desktop-icon" href="#about-computer">
-              <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
-              <span>My Computer</span>
-            </a>
-          </nav>
+          <.desktop_shortcuts />
 
           <div class="tempest-home__windows doc-viewer-page__windows">
             <section class="doc-browser" aria-labelledby="doc-browser-title">
@@ -117,10 +100,17 @@ defmodule TempestWeb.DocLive do
                   <img src={~p"/images/icons/search.svg"} alt="" width="18" height="18" />
                   <span>Search</span>
                 </.link>
-                <a class="doc-browser__tool" href="#doc-content">
+                <button
+                  class="doc-browser__tool"
+                  id="doc-copy-markdown"
+                  type="button"
+                  phx-hook=".CopyMarkdownToast"
+                  data-doc-source="doc-markdown-source"
+                  data-toast-target="doc-copy-toast"
+                >
                   <img src={~p"/images/icons/print.svg"} alt="" width="18" height="18" />
                   <span>Print</span>
-                </a>
+                </button>
               </nav>
 
               <div class="doc-browser__location" aria-label="Current document location">
@@ -166,6 +156,7 @@ defmodule TempestWeb.DocLive do
                   <div class="doc-browser__article">
                     {raw(@document.html)}
                   </div>
+                  <textarea id="doc-markdown-source" class="sr-only" aria-hidden="true" readonly>{@document.markdown}</textarea>
 
                   <nav class="doc-browser__pager" aria-label="Adjacent reference documents">
                     <%= if @previous_document do %>
@@ -206,46 +197,76 @@ defmodule TempestWeb.DocLive do
                 <a href={~p"/xrpc/_health"}>/xrpc/_health</a>
                 <span>v{@app_version}</span>
               </footer>
+              <div id="doc-copy-toast" class="doc-browser__toast" role="status" aria-live="polite" aria-atomic="true"></div>
             </section>
           </div>
         </div>
 
-        <section id="about-computer" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-computer-title">
-          <a href="#" class="modal__backdrop" aria-label="Close About this Computer"></a>
-          <div class="win-window modal__window">
-            <header class="win-window__titlebar">
-              <span id="about-computer-title" class="win-window__title">About this Computer</span>
-              <a href="#" class="win-window__close" aria-label="Close">x</a>
-            </header>
-            <div class="win-window__body about-computer">
-              <img src={~p"/images/icons/computer.svg"} alt="" width="56" height="56" />
-              <div>
-                <h2>Tempest PDS</h2>
-                <p>A Personal Data Server on the BEAM.</p>
-                <dl class="facts-list about-computer__facts">
-                  <dt>version</dt>
-                  <dd>v{@app_version}</dd>
-                  <dt>host</dt>
-                  <dd>{@host}</dd>
-                  <dt>rendered</dt>
-                  <dd>{@rendered_at}</dd>
-                  <dt>source</dt>
-                  <dd><a href="https://github.com/desertthunder/tempest">github.com/desertthunder/tempest</a></dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <footer class="taskbar">
-          <.link class="taskbar__start" navigate={~p"/"}>
-            <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
-          </.link>
-          <span class="taskbar__app">tempest docs / {@host}</span>
-          <span class="taskbar__tray" aria-label="Current UTC time">{@rendered_at}</span>
-        </footer>
+        <.about_computer_modal app_version={@app_version} host={@host} rendered_at={@rendered_at} />
+        <.taskbar app_label="tempest docs" host={@host} rendered_at={@rendered_at} />
       </div>
     </main>
+
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".CopyMarkdownToast">
+      export default {
+        mounted() {
+          const source = document.getElementById(this.el.dataset.docSource)
+          this.toast = document.getElementById(this.el.dataset.toastTarget)
+          this.toastTimer = null
+          this.onCopyClick = async () => {
+            const text = source?.value ||
+              document.querySelector("#doc-content")?.innerText ||
+              ""
+            let copied = false
+            if (navigator.clipboard?.writeText) {
+              try {
+                await navigator.clipboard.writeText(text)
+                copied = true
+              } catch (_error) {
+                copied = false
+              }
+            }
+
+            if (!copied && document.execCommand) {
+              const temporaryTextArea = document.createElement("textarea")
+              temporaryTextArea.value = text
+              temporaryTextArea.style.position = "fixed"
+              temporaryTextArea.style.opacity = "0"
+              document.body.appendChild(temporaryTextArea)
+              temporaryTextArea.focus()
+              temporaryTextArea.select()
+              try {
+                copied = document.execCommand("copy")
+              } catch (_error) {
+                copied = false
+              } finally {
+                document.body.removeChild(temporaryTextArea)
+              }
+            }
+
+            this.showToast(copied ? "Copied markdown to clipboard." : "Could not copy markdown.")
+          }
+
+          this.el.addEventListener("click", this.onCopyClick)
+        },
+        showToast(message) {
+          if (!this.toast) {
+            return
+          }
+
+          clearTimeout(this.toastTimer)
+          this.toast.textContent = message
+          this.toast.classList.add("is-visible")
+          this.toastTimer = window.setTimeout(() => {
+            this.toast.classList.remove("is-visible")
+          }, 1800)
+        },
+        destroyed() {
+          this.el.removeEventListener("click", this.onCopyClick)
+          clearTimeout(this.toastTimer)
+        }
+      }
+    </script>
 
     <Layouts.flash_group flash={@flash} />
     """

@@ -7,7 +7,8 @@ defmodule TempestWeb.PageControllerTest do
 
     assert html =~ ~s(id="tempest-home")
     assert html =~ "Personal Data Server"
-    assert html =~ "Live Status"
+    assert html =~ "WELCOME.EXE"
+    assert html =~ ~s(id="home-status-cards")
     assert html =~ "Protocol Surface"
     refute html =~ "Public Stats"
     refute html =~ "Endpoint Surface"

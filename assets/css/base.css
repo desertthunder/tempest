@@ -1,6 +1,9 @@
 body {
   color: var(--text);
-  background: var(--win-desktop);
+  background-color: var(--win-desktop);
+  background-image: var(--win-desktop-texture);
+  background-position: var(--win-desktop-texture-position);
+  background-size: var(--win-desktop-texture-size);
   font-family: var(--font-ui);
   font-size: var(--step-0);
   line-height: var(--leading-copy);

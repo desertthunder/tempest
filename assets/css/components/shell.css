@@ -2,7 +2,10 @@
 .operator-account {
   min-height: 100vh;
   padding: clamp(0.75rem, 2vw, 1.35rem);
-  background: var(--win-desktop);
+  background-color: var(--win-desktop);
+  background-image: var(--win-desktop-texture);
+  background-position: var(--win-desktop-texture-position);
+  background-size: var(--win-desktop-texture-size);
 }
 
 .tempest-home {
@@ -87,10 +90,26 @@
   image-rendering: pixelated;
 }
 
-.tempest-home__hero {
+.tempest-home__hero,
+.tempest-home__hero-main {
   display: grid;
   align-items: stretch;
   gap: var(--space-5);
+}
+
+.tempest-home__hero-main {
+  grid-template-columns: 1fr;
+}
+
+.tempest-home__status-grid {
+  padding-block-start: var(--space-4);
+  border-top: 1px dotted var(--win-shadow);
+}
+
+@media (min-width: 54rem) {
+  .tempest-home__hero-main {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.45fr);
+  }
 }
 
 .tempest-home__intro {
@@ -621,7 +640,10 @@
   min-height: 100vh;
   padding: clamp(0.75rem, 2vw, 1.35rem);
   padding-block-start: calc(2.7rem + clamp(0.75rem, 2vw, 1.35rem));
-  background: var(--win-desktop);
+  background-color: var(--win-desktop);
+  background-image: var(--win-desktop-texture);
+  background-position: var(--win-desktop-texture-position);
+  background-size: var(--win-desktop-texture-size);
 }
 
 .stats-dashboard__desktop {

@@ -1,6 +1,9 @@
 .app-shell {
   min-height: 100vh;
-  background: var(--win-desktop);
+  background-color: var(--win-desktop);
+  background-image: var(--win-desktop-texture);
+  background-position: var(--win-desktop-texture-position);
+  background-size: var(--win-desktop-texture-size);
 }
 
 .app-header {

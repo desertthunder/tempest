@@ -7,6 +7,92 @@ defmodule TempestWeb.CoreComponents do
 
   alias Phoenix.LiveView.JS
 
+  use Phoenix.VerifiedRoutes,
+    endpoint: TempestWeb.Endpoint,
+    router: TempestWeb.Router,
+    statics: TempestWeb.static_paths()
+
+  @doc """
+  Renders the shared desktop shortcut column.
+  """
+  def desktop_shortcuts(assigns) do
+    ~H"""
+    <nav class="desktop-icons" aria-label="Desktop shortcuts">
+      <.link class="desktop-icon" href="https://github.com/desertthunder/tempest" target="_blank">
+        <img src={~p"/images/icons/github.svg"} alt="" width="40" height="40" />
+        <span>GitHub</span>
+      </.link>
+      <.link class="desktop-icon" href="https://desertthunder.dev" target="_blank">
+        <img src={~p"/images/icons/vim.svg"} alt="" width="40" height="40" />
+        <span>Developer</span>
+      </.link>
+      <.link class="desktop-icon" navigate={~p"/stats"}>
+        <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
+        <span>Stats</span>
+      </.link>
+      <.link class="desktop-icon" navigate={~p"/docs"}>
+        <img src={~p"/images/icons/browser.svg"} alt="" width="40" height="40" />
+        <span>Docs</span>
+      </.link>
+      <a class="desktop-icon" href="#about-computer">
+        <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
+        <span>My Computer</span>
+      </a>
+    </nav>
+    """
+  end
+
+  attr :app_version, :any, required: true
+  attr :host, :string, required: true
+  attr :rendered_at, :string, required: true
+
+  def about_computer_modal(assigns) do
+    ~H"""
+    <section id="about-computer" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-computer-title">
+      <a href="#" class="modal__backdrop" aria-label="Close About this Computer"></a>
+      <div class="win-window modal__window">
+        <header class="win-window__titlebar">
+          <span id="about-computer-title" class="win-window__title">About this Computer</span>
+          <a href="#" class="win-window__close" aria-label="Close">x</a>
+        </header>
+        <div class="win-window__body about-computer">
+          <img src={~p"/images/icons/computer.svg"} alt="" width="56" height="56" />
+          <div>
+            <h2>Tempest PDS</h2>
+            <p>A Personal Data Server on the BEAM.</p>
+            <dl class="facts-list about-computer__facts">
+              <dt>version</dt>
+              <dd>v{@app_version}</dd>
+              <dt>host</dt>
+              <dd>{@host}</dd>
+              <dt>rendered</dt>
+              <dd>{@rendered_at}</dd>
+              <dt>source</dt>
+              <dd><a href="https://github.com/desertthunder/tempest">github.com/desertthunder/tempest</a></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+    """
+  end
+
+  attr :app_label, :string, required: true
+  attr :host, :string, required: true
+  attr :rendered_at, :string, required: true
+
+  def taskbar(assigns) do
+    ~H"""
+    <footer class="taskbar">
+      <.link class="taskbar__start" navigate={~p"/"}>
+        <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
+      </.link>
+      <span class="taskbar__app">{@app_label} / {@host}</span>
+      <span class="taskbar__tray" aria-label="Current UTC time">{@rendered_at}</span>
+    </footer>
+    """
+  end
+
   @doc """
   Renders flash notices.
   """

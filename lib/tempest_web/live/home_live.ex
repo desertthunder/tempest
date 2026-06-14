@@ -36,63 +36,60 @@ defmodule TempestWeb.HomeLive do
     <main id="tempest-home" class="tempest-home">
       <div class="tempest-home__desktop" aria-label="Tempest desktop">
         <div class="tempest-home__workarea">
-          <nav class="desktop-icons" aria-label="Desktop shortcuts">
-            <a class="desktop-icon" href="https://github.com/desertthunder/tempest" target="_blank">
-              <img src={~p"/images/icons/github.svg"} alt="" width="40" height="40" />
-              <span>GitHub</span>
-            </a>
-            <a class="desktop-icon" href={~p"/stats"}>
-              <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
-              <span>Stats</span>
-            </a>
-            <a class="desktop-icon" href={~p"/docs"}>
-              <img src={~p"/images/icons/browser.svg"} alt="" width="40" height="40" />
-              <span>Docs</span>
-            </a>
-            <a class="desktop-icon" href="#about-computer">
-              <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
-              <span>My Computer</span>
-            </a>
-          </nav>
+          <.desktop_shortcuts />
 
           <div class="tempest-home__windows">
             <div class="tempest-home__top-grid">
               <section :if={@live_action == :home} class="win-window win-window--hero" aria-labelledby="tempest-title">
                 <header class="win-window__titlebar">
-                  <span class="win-window__title">LIVE_STATS.EXE</span>
+                  <span class="win-window__title">WELCOME.EXE</span>
                   <span class="win-window__controls" aria-hidden="true">
                     <span></span><span></span><span></span>
                   </span>
                 </header>
 
                 <div class="win-window__body tempest-home__hero">
-                  <div class="tempest-home__intro">
-                    <p class="tempest-home__brand" aria-hidden="true">Tempest PDS</p>
-                    <h1 id="tempest-title" class="tempest-home__title">Personal Data Server</h1>
-                    <p class="tempest-home__subtitle">Live node snapshot for <strong>{@host}</strong></p>
-                    <p class="stats-dashboard__muted">Refreshed {@rendered_at} · every 15s while connected</p>
+                  <div class="tempest-home__hero-main">
+                    <div class="tempest-home__intro">
+                      <p class="tempest-home__brand" aria-hidden="true">Tempest PDS</p>
+                      <h1 id="tempest-title" class="tempest-home__title">Personal Data Server</h1>
+                      <p class="tempest-home__subtitle">Live node snapshot for <strong>{@host}</strong></p>
+                      <p class="stats-dashboard__muted">Refreshed {@rendered_at}</p>
+                    </div>
+
+                    <aside id="server-facts" class="tempest-home__server-card" aria-label="Server configuration">
+                      <dl class="facts-list facts-list--compact">
+                        <dt>status</dt>
+                        <dd>{@health_status}</dd>
+                        <dt>host</dt>
+                        <dd>{@host}</dd>
+                        <dt>version</dt>
+                        <dd>v{@app_version}</dd>
+                        <dt>uptime</dt>
+                        <dd>{@summary["uptimeSeconds"]}s</dd>
+                        <dt>surface</dt>
+                        <dd>{@public_endpoint_count} public / {@endpoint_count} total</dd>
+                        <dt>updated</dt>
+                        <dd>{@summary["generatedAt"]}</dd>
+                      </dl>
+                    </aside>
                   </div>
 
-                  <aside id="server-facts" class="tempest-home__server-card" aria-label="Server configuration">
-                    <dl class="facts-list facts-list--compact">
-                      <dt>status</dt>
-                      <dd>{@health_status}</dd>
-                      <dt>host</dt>
-                      <dd>{@host}</dd>
-                      <dt>version</dt>
-                      <dd>v{@app_version}</dd>
-                      <dt>uptime</dt>
-                      <dd>{@summary["uptimeSeconds"]}s</dd>
-                      <dt>surface</dt>
-                      <dd>{@public_endpoint_count} public / {@endpoint_count} total</dd>
-                      <dt>updated</dt>
-                      <dd>{@summary["generatedAt"]}</dd>
-                    </dl>
-                  </aside>
+                  <div id="home-status-cards" class="status-grid tempest-home__status-grid" aria-label="Node metrics">
+                    <article :for={card <- @center_cards} id={card.id} class="status-card">
+                      <h2 class="status-card__label">{card.label}</h2>
+                      <p class="status-card__state">
+                        <span class={["status-light", card.light_class]}></span>
+                        {card.state}
+                      </p>
+                      <p class="status-card__value">{card.value}</p>
+                      <p>{card.note}</p>
+                    </article>
+                  </div>
                 </div>
               </section>
 
-              <section class="win-window" aria-labelledby="center-cards-title">
+              <section :if={@live_action == :stats} class="win-window" aria-labelledby="center-cards-title">
                 <header class="win-window__titlebar">
                   <span id="center-cards-title" class="win-window__title">{@center_title}</span>
                 </header>
@@ -157,40 +154,8 @@ defmodule TempestWeb.HomeLive do
           </div>
         </div>
 
-        <section id="about-computer" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-computer-title">
-          <a href="#" class="modal__backdrop" aria-label="Close About this Computer"></a>
-          <div class="win-window modal__window">
-            <header class="win-window__titlebar">
-              <span id="about-computer-title" class="win-window__title">About this Computer</span>
-              <a href="#" class="win-window__close" aria-label="Close">×</a>
-            </header>
-            <div class="win-window__body about-computer">
-              <img src={~p"/images/icons/computer.svg"} alt="" width="56" height="56" />
-              <div>
-                <h2>Tempest PDS</h2>
-                <p>A Personal Data Server on the BEAM.</p>
-                <dl class="facts-list about-computer__facts">
-                  <dt>version</dt>
-                  <dd>v{@app_version}</dd>
-                  <dt>host</dt>
-                  <dd>{@host}</dd>
-                  <dt>rendered</dt>
-                  <dd>{@rendered_at}</dd>
-                  <dt>source</dt>
-                  <dd><a href="https://github.com/desertthunder/tempest">github.com/desertthunder/tempest</a></dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <footer class="taskbar">
-          <.link class="taskbar__start" navigate={~p"/"}>
-            <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
-          </.link>
-          <span class="taskbar__app">tempest pds / {@host}</span>
-          <span class="taskbar__tray" aria-label="Current UTC time">{@rendered_at}</span>
-        </footer>
+        <.about_computer_modal app_version={@app_version} host={@host} rendered_at={@rendered_at} />
+        <.taskbar app_label="tempest pds" host={@host} rendered_at={@rendered_at} />
       </div>
     </main>
 
