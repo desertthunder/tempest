@@ -41,6 +41,7 @@ defmodule TempestWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/stats", PageController, :stats
     get "/account", OperatorAccountController, :dashboard
     get "/account/repo", OperatorAccountController, :repo
     get "/account/blobs", OperatorAccountController, :blobs
@@ -93,6 +94,7 @@ defmodule TempestWeb.Router do
   scope "/xrpc", TempestWeb do
     pipe_through :xrpc
 
+    get "/_stats", HealthController, :stats
     get "/_health", HealthController, :show
     get "/_admin/status", AdminController, :status
     get "/com.atproto.sync.subscribeRepos", FirehoseController, :subscribe_repos
