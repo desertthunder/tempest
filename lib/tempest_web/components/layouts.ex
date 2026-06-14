@@ -6,6 +6,29 @@ defmodule TempestWeb.Layouts do
 
   embed_templates "layouts/*"
 
+  @site_name "Tempest PDS"
+  @site_description "Tempest is an AT Protocol Personal Data Server built with Elixir and Phoenix."
+
+  def site_name, do: @site_name
+
+  def site_description, do: @site_description
+
+  def site_title(assigns) when is_map(assigns) do
+    case assigns[:page_title] do
+      title when is_binary(title) and title != "" -> "#{title} · AT Protocol"
+      _title -> @site_name
+    end
+  end
+
+  def public_url(path \\ "") when is_binary(path) do
+    base_url =
+      Tempest.Config.load!()
+      |> Map.fetch!(:public_url)
+      |> String.trim_trailing("/")
+
+    base_url <> path
+  end
+
   attr :flash, :map, required: true, doc: "the map of flash messages"
 
   attr :current_scope, :map,
