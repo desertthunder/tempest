@@ -1,5 +1,5 @@
 defmodule Tempest.DocsTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Tempest.Docs
 
@@ -30,6 +30,20 @@ defmodule Tempest.DocsTest do
       assert document.title == "Architecture"
       assert document.updated == "2026-06-03"
       assert document.markdown =~ "## Concepts"
+    end
+
+    test "fetches a known document when runtime cwd does not contain docs/reference" do
+      original_cwd = File.cwd!()
+
+      try do
+        File.cd!(System.tmp_dir!())
+
+        assert {:ok, document} = Docs.fetch_document("architecture")
+        assert document.title == "Architecture"
+        assert document.html =~ "<h2>Concepts</h2>"
+      after
+        File.cd!(original_cwd)
+      end
     end
 
     test "rejects unknown slugs and path traversal attempts" do

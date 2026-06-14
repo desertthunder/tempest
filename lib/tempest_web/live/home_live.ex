@@ -306,7 +306,7 @@ defmodule TempestWeb.HomeLive do
         label: "Accounts",
         state: "#{hosted} active",
         value: "#{total} known account rows",
-        note: "Live account totals come from the public stats pipeline, not placeholder copy.",
+        note: "Live account totals come from the an aggregator pipeline.",
         light_class: "status-light--ok"
       },
       %{

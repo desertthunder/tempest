@@ -44,6 +44,16 @@ defmodule Tempest.Docs do
     %{slug: "xrpc", path: "xrpc.md", title: "XRPC HTTP Surface"}
   ]
 
+  @reference_source_root Path.expand("../../docs/reference", __DIR__)
+
+  for entry <- @documents do
+    @external_resource Path.join(@reference_source_root, entry.path)
+  end
+
+  @embedded_markdown Map.new(@documents, fn entry ->
+                       {entry.path, File.read!(Path.join(@reference_source_root, entry.path))}
+                     end)
+
   @markdown_options [
     extension: [
       autolink: true,
@@ -135,9 +145,19 @@ defmodule Tempest.Docs do
     path = Path.expand(entry.path, root)
 
     if inside_reference_root?(path, root) do
-      File.read(path)
+      case File.read(path) do
+        {:ok, markdown} -> {:ok, markdown}
+        {:error, _reason} -> embedded_manifest_file(entry)
+      end
     else
       {:error, :not_found}
+    end
+  end
+
+  defp embedded_manifest_file(entry) do
+    case Map.fetch(@embedded_markdown, entry.path) do
+      {:ok, markdown} -> {:ok, markdown}
+      :error -> {:error, :not_found}
     end
   end
 
