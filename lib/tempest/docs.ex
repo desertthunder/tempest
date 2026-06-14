@@ -47,14 +47,26 @@ defmodule Tempest.Docs do
   ]
 
   @reference_source_root Path.expand("../../docs/reference", __DIR__)
+  @desktop_documents [
+    %{slug: "changelog", path: "CHANGELOG.md", title: "Changelog"}
+  ]
+  @project_source_root Path.expand("../..", __DIR__)
 
   for entry <- @documents do
     @external_resource Path.join(@reference_source_root, entry.path)
   end
 
+  for entry <- @desktop_documents do
+    @external_resource Path.join(@project_source_root, entry.path)
+  end
+
   @embedded_markdown Map.new(@documents, fn entry ->
                        {entry.path, File.read!(Path.join(@reference_source_root, entry.path))}
                      end)
+
+  @embedded_desktop_markdown Map.new(@desktop_documents, fn entry ->
+                               {entry.path, File.read!(Path.join(@project_source_root, entry.path))}
+                             end)
 
   @markdown_options [
     extension: [
@@ -94,6 +106,35 @@ defmodule Tempest.Docs do
       _ -> {:error, :not_found}
     end
   end
+
+  @doc "Fetches and renders a known desktop document by fixed manifest slug."
+  @spec fetch_desktop_document(String.t()) :: {:ok, document()} | {:error, :not_found}
+  def fetch_desktop_document(slug) when is_binary(slug) do
+    with {:ok, entry} <- lookup_desktop_manifest(slug),
+         {:ok, markdown} <- read_desktop_manifest_file(entry) do
+      {frontmatter, body} = split_frontmatter(markdown)
+      title = Map.get(frontmatter, "title") || entry.title
+      updated = Map.get(frontmatter, "updated")
+      html = MDEx.to_html!(body, @markdown_options)
+
+      {:ok,
+       %__MODULE__{
+         slug: entry.slug,
+         path: entry.path,
+         title: title,
+         updated: updated,
+         markdown: body,
+         html: html
+       }}
+    else
+      _ -> {:error, :not_found}
+    end
+  end
+
+  @doc "Returns the public route for a known desktop document slug."
+  @spec desktop_document_path(document() | String.t()) :: String.t()
+  def desktop_document_path(%__MODULE__{slug: slug}), do: desktop_document_path(slug)
+  def desktop_document_path("changelog"), do: "/changelog"
 
   @doc "Returns a known reference document by slug or raises `Ecto.NoResultsError`."
   @spec get_document!(String.t()) :: document()
@@ -136,6 +177,17 @@ defmodule Tempest.Docs do
     end
   end
 
+  defp lookup_desktop_manifest(slug) do
+    if valid_slug?(slug) do
+      case Enum.find(@desktop_documents, &(&1.slug == slug)) do
+        nil -> {:error, :not_found}
+        entry -> {:ok, entry}
+      end
+    else
+      {:error, :not_found}
+    end
+  end
+
   defp valid_slug?(slug), do: Regex.match?(~r/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/, slug)
 
   defp manifest_document(entry) do
@@ -156,8 +208,29 @@ defmodule Tempest.Docs do
     end
   end
 
+  defp read_desktop_manifest_file(entry) do
+    root = project_root()
+    path = Path.expand(entry.path, root)
+
+    if inside_project_root?(path, root) do
+      case File.read(path) do
+        {:ok, markdown} -> {:ok, markdown}
+        {:error, _reason} -> embedded_desktop_manifest_file(entry)
+      end
+    else
+      {:error, :not_found}
+    end
+  end
+
   defp embedded_manifest_file(entry) do
     case Map.fetch(@embedded_markdown, entry.path) do
+      {:ok, markdown} -> {:ok, markdown}
+      :error -> {:error, :not_found}
+    end
+  end
+
+  defp embedded_desktop_manifest_file(entry) do
+    case Map.fetch(@embedded_desktop_markdown, entry.path) do
       {:ok, markdown} -> {:ok, markdown}
       :error -> {:error, :not_found}
     end
@@ -167,7 +240,15 @@ defmodule Tempest.Docs do
     Path.expand("docs/reference", File.cwd!())
   end
 
+  defp project_root do
+    Path.expand(".", File.cwd!())
+  end
+
   defp inside_reference_root?(path, root) do
+    path == root or String.starts_with?(path, root <> "/")
+  end
+
+  defp inside_project_root?(path, root) do
     path == root or String.starts_with?(path, root <> "/")
   end
 

@@ -42,6 +42,7 @@ defmodule TempestWeb.Router do
 
     live "/", HomeLive, :home
     live "/stats", HomeLive, :stats
+    live "/changelog", ChangelogLive, :show
     live "/docs", DocLive, :show
     live "/docs/:slug", DocLive, :show
     get "/account", OperatorAccountController, :dashboard

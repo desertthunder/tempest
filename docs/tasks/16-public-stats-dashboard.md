@@ -53,14 +53,14 @@ keeping admin-only operations and sensitive internals private.
 - [x] T16-28: Extend leak regression tests for the expanded public stats shape.
 - [x] T16-29: Extend `test/smoke/public-stats.hurl` to cover the new JSON fields
       and `/stats` sections.
-- [ ] T16-30: Add the public changelog document route described in the stats
+- [x] T16-30: Add the public changelog document route described in the stats
       spec.
-- [ ] T16-31: Keep changelog source lookup constrained to a fixed manifest entry.
-- [ ] T16-32: Style `/changelog` as a word processor document window.
-- [ ] T16-33: Link `/changelog` from the desktop shortcuts.
-- [ ] T16-34: Add ConnCase coverage for `/changelog`, its desktop shortcut, and
+- [x] T16-31: Keep changelog source lookup constrained to a fixed manifest entry.
+- [x] T16-32: Style `/changelog` as a word processor document window.
+- [x] T16-33: Link `/changelog` from the desktop shortcuts.
+- [x] T16-34: Add ConnCase coverage for `/changelog`, its desktop shortcut, and
       rejection of arbitrary file/path rendering.
-- [ ] T16-35: Add a changelog smoke check to the public stats or docs smoke
+- [x] T16-35: Add a changelog smoke check to the public stats or docs smoke
       suite, depending on where the route is implemented.
 
 ## Integration Tests

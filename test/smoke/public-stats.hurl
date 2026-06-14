@@ -55,6 +55,16 @@ body contains "Weekly Commits"
 body contains "id=\"collection-summaries\""
 body contains "commit-histogram__bar"
 
+GET {{base_url}}/changelog
+HTTP 200
+[Asserts]
+header "content-type" contains "text/html"
+body contains "Tempest Write - CHANGELOG.md"
+body contains "id=\"changelog-document\""
+body contains "id=\"changelog-source\""
+body contains "/images/icons/page.svg"
+body contains "v0.1.0"
+
 GET {{base_url}}/xrpc/_admin/status
 HTTP 401
 [Asserts]

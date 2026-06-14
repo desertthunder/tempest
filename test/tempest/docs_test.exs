@@ -86,10 +86,36 @@ defmodule Tempest.DocsTest do
     end
   end
 
+  describe "fetch_desktop_document/1" do
+    test "fetches the changelog from a fixed desktop document manifest" do
+      assert {:ok, document} = Docs.fetch_desktop_document("changelog")
+
+      assert document.slug == "changelog"
+      assert document.path == "CHANGELOG.md"
+      assert document.title == "Changelog"
+      assert document.markdown =~ "## v0.1.0"
+      assert document.html =~ "<h2>v0.1.0</h2>"
+    end
+
+    test "rejects unknown desktop documents and path traversal attempts" do
+      assert Docs.fetch_desktop_document("missing") == {:error, :not_found}
+      assert Docs.fetch_desktop_document("../config/prod.exs") == {:error, :not_found}
+      assert Docs.fetch_desktop_document("..%2F..%2Fconfig%2Fprod.exs") == {:error, :not_found}
+      assert Docs.fetch_desktop_document("CHANGELOG.md") == {:error, :not_found}
+      assert Docs.fetch_desktop_document("architecture") == {:error, :not_found}
+    end
+  end
+
   describe "document_path/1" do
     test "uses /docs for the reference index and /docs/:slug for other docs" do
       assert Docs.document_path("reference") == "/docs"
       assert Docs.document_path("architecture") == "/docs/architecture"
+    end
+  end
+
+  describe "desktop_document_path/1" do
+    test "uses /changelog for the changelog desktop document" do
+      assert Docs.desktop_document_path("changelog") == "/changelog"
     end
   end
 end

@@ -38,7 +38,7 @@ Generate secrets from a trusted local machine:
 
 ```bash
 mix phx.gen.secret
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest argon
+uv run --project scripts tempest argon
 ```
 
 Store the raw `ADMIN_TOKEN` in a password manager. Railway gets only

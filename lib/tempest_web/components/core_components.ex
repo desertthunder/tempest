@@ -18,6 +18,22 @@ defmodule TempestWeb.CoreComponents do
   def desktop_shortcuts(assigns) do
     ~H"""
     <nav class="desktop-icons" aria-label="Desktop shortcuts">
+      <a class="desktop-icon" href="#about-computer">
+        <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
+        <span>My Computer</span>
+      </a>
+      <.link class="desktop-icon" navigate={~p"/changelog"}>
+        <img src={~p"/images/icons/page.svg"} alt="" width="40" height="40" />
+        <span>Changelog</span>
+      </.link>
+      <.link class="desktop-icon" navigate={~p"/docs"}>
+        <img src={~p"/images/icons/browser.svg"} alt="" width="40" height="40" />
+        <span>Docs</span>
+      </.link>
+      <.link class="desktop-icon" navigate={~p"/stats"}>
+        <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
+        <span>Stats</span>
+      </.link>
       <.link class="desktop-icon" href="https://github.com/desertthunder/tempest" target="_blank">
         <img src={~p"/images/icons/github.svg"} alt="" width="40" height="40" />
         <span>GitHub</span>
@@ -26,18 +42,6 @@ defmodule TempestWeb.CoreComponents do
         <img src={~p"/images/icons/vim.svg"} alt="" width="40" height="40" />
         <span>Developer</span>
       </.link>
-      <.link class="desktop-icon" navigate={~p"/stats"}>
-        <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
-        <span>Stats</span>
-      </.link>
-      <.link class="desktop-icon" navigate={~p"/docs"}>
-        <img src={~p"/images/icons/browser.svg"} alt="" width="40" height="40" />
-        <span>Docs</span>
-      </.link>
-      <a class="desktop-icon" href="#about-computer">
-        <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
-        <span>My Computer</span>
-      </a>
     </nav>
     """
   end

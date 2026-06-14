@@ -68,7 +68,7 @@ export TEMPEST_PASSWORD
 read -rs OLD_AUTH_FACTOR_TOKEN
 export OLD_AUTH_FACTOR_TOKEN
 
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest
+uv run --project scripts tempest
 ```
 
 Use `read -rs` or single quotes for passwords. Unquoted shell assignments can
@@ -78,23 +78,23 @@ literally.
 Run individual steps when resuming or inspecting a failure:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest service-auth
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest source-session-status
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest export-car
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest list-source-blobs
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest download-source-blobs
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest create-account
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest import-repo
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest status
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest missing-blobs
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest upload-missing-blobs
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-recommended
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-sign
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-submit
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest activate
+uv run --project scripts tempest login-source
+uv run --project scripts tempest service-auth
+uv run --project scripts tempest source-session-status
+uv run --project scripts tempest export-car
+uv run --project scripts tempest list-source-blobs
+uv run --project scripts tempest download-source-blobs
+uv run --project scripts tempest create-account
+uv run --project scripts tempest refresh-session
+uv run --project scripts tempest import-repo
+uv run --project scripts tempest status
+uv run --project scripts tempest missing-blobs
+uv run --project scripts tempest upload-missing-blobs
+uv run --project scripts tempest plc-recommended
+uv run --project scripts tempest plc-request-token
+uv run --project scripts tempest plc-sign
+uv run --project scripts tempest plc-submit
+uv run --project scripts tempest activate
 ```
 
 The same project also exposes the admin-token Argon2 helper as
@@ -174,10 +174,10 @@ operation through Tempest's PLC client boundary.
 For the current `did:plc` migration, use the CLI helpers:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-recommended
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+uv run --project scripts tempest refresh-session
+uv run --project scripts tempest plc-recommended
+uv run --project scripts tempest login-source
+uv run --project scripts tempest plc-request-token
 ```
 
 `plc-request-token` writes `.sandbox/plc_token.json` when the source PDS returns
@@ -186,7 +186,7 @@ that case export it before signing:
 
 ```bash
 export PLC_TOKEN="code-from-email"
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-sign
+uv run --project scripts tempest plc-sign
 ```
 
 If `plc-request-token` returns `Bad token scope`, refresh the source session with
@@ -205,15 +205,15 @@ PLC operations, and set `OLD_LOGIN_PDS` to the Bluesky entryway:
 export OLD_PDS="https://jellybaby.us-east.host.bsky.network"
 export OLD_AUTH_PDS="$OLD_PDS"
 export OLD_LOGIN_PDS="https://bsky.social"
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+uv run --project scripts tempest login-source
+uv run --project scripts tempest plc-request-token
 ```
 
 If login succeeds but `plc-request-token` still returns `Bad token scope`, check
 that the saved token works for ordinary old-PDS auth:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest source-session-status
+uv run --project scripts tempest source-session-status
 ```
 
 If `source-session-status` succeeds while `plc-request-token` fails, the source
@@ -229,7 +229,7 @@ jq '.operation.services.atproto_pds.endpoint' .sandbox/plc_signed_operation.json
 Then submit the signed PLC operation through Tempest:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-submit
+uv run --project scripts tempest plc-submit
 curl -fsS "https://plc.directory/$DID" | jq '.service'
 ```
 
@@ -240,9 +240,9 @@ deployment.
 Activate the account:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest activate
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest status
+uv run --project scripts tempest refresh-session
+uv run --project scripts tempest activate
+uv run --project scripts tempest status
 ```
 
 The equivalent curl call is:

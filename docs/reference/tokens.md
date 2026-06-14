@@ -76,7 +76,7 @@ The migration CLI reads the same environment variables as the curl examples and
 writes the same artifacts:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
+uv run --project scripts tempest login-source
 ```
 
 Use the account password or a Bluesky app password:
@@ -109,7 +109,7 @@ jq '{did, handle, has_access: (.accessJwt != null), has_refresh: (.refreshJwt !=
 Ask the old PDS for service auth scoped to account creation on Tempest:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest service-auth
+uv run --project scripts tempest service-auth
 ```
 
 The equivalent curl call is:
@@ -152,13 +152,13 @@ must have:
 Generate `TEMPEST_ADMIN_TOKEN_HASH` through the same uv project:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest argon
+uv run --project scripts tempest argon
 ```
 
 The `ar` and `arg2` aliases run the same helper:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest ar --only-hash
+uv run --project scripts tempest ar --only-hash
 ```
 
 ## PLC Operation Token
@@ -168,8 +168,8 @@ After repo import and blob upload, the `did:plc` document must be updated so
 issuing a short-lived token or emailing a one-time code:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-recommended
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+uv run --project scripts tempest plc-recommended
+uv run --project scripts tempest plc-request-token
 ```
 
 If `.sandbox/plc_token.json` contains a `token`, the CLI will read it. If the
@@ -179,7 +179,7 @@ export it only for the signing step:
 ```bash
 read -rs PLC_TOKEN
 export PLC_TOKEN
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-sign
+uv run --project scripts tempest plc-sign
 ```
 
 The signed operation is written to `.sandbox/plc_signed_operation.json`.
@@ -201,7 +201,7 @@ After a successful `login-source`, verify whether the same token works for
 ordinary old-PDS auth:
 
 ```bash
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest source-session-status
+uv run --project scripts tempest source-session-status
 ```
 
 If that succeeds while `plc-request-token` fails, the saved source session is
@@ -226,8 +226,8 @@ host while leaving `OLD_PDS` unchanged for repo and blob export and
 export OLD_PDS="https://jellybaby.us-east.host.bsky.network"
 export OLD_AUTH_PDS="$OLD_PDS"
 export OLD_LOGIN_PDS="https://bsky.social"
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest login-source
-UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-token
+uv run --project scripts tempest login-source
+uv run --project scripts tempest plc-request-token
 ```
 
 ## Safety Notes
@@ -248,7 +248,7 @@ UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest plc-request-toke
   Tempest session:
 
   ```bash
-  UV_CACHE_DIR=.sandbox/uv-cache uv run --project scripts tempest refresh-session
+  uv run --project scripts tempest refresh-session
   ```
 
 - Keep the old PDS account active until Tempest passes repo, blob, firehose,
