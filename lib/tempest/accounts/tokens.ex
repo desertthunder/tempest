@@ -47,7 +47,7 @@ defmodule Tempest.Accounts.Tokens do
   end
 
   def verify_access_token(token) when is_binary(token) do
-    case verify_session_jwt(token, :access, @access_max_age_seconds) do
+    case verify_access_session_jwt(token) do
       {:ok, claims} -> {:ok, claims}
       {:error, _reason} -> Phoenix.Token.verify(Endpoint, @access_salt, token, max_age: @access_max_age_seconds)
     end
@@ -244,31 +244,27 @@ defmodule Tempest.Accounts.Tokens do
     compact
   end
 
-  defp verify_session_jwt(token, expected_typ, max_age_seconds) do
+  defp verify_access_session_jwt(token) do
     with {:ok, header} <- peek_service_auth_header(token),
-         :ok <- validate_session_jwt_header(header, expected_typ),
+         :ok <- validate_access_session_jwt_header(header),
          {:ok, unverified_claims} <- peek_service_auth_claims(token),
-         :ok <- validate_session_claim_shape(unverified_claims, expected_typ),
+         :ok <- validate_access_session_claim_shape(unverified_claims),
          {:ok, public_jwk} <- service_auth_public_jwk(unverified_claims["iss"], header["kid"]),
          {:ok, claims} <- verify_service_auth_signature(token, public_jwk),
-         :ok <- validate_session_claims(claims, expected_typ, max_age_seconds) do
+         :ok <- validate_access_session_claims(claims) do
       {:ok, claims}
     else
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, :access)
+  defp validate_access_session_jwt_header(%{"alg" => "ES256K", "typ" => typ})
        when typ in ["at+jwt", "JWT"],
        do: :ok
 
-  defp validate_session_jwt_header(%{"alg" => "ES256K", "typ" => typ}, :refresh)
-       when typ in ["refresh+jwt", "JWT"],
-       do: :ok
+  defp validate_access_session_jwt_header(_header), do: {:error, :invalid}
 
-  defp validate_session_jwt_header(_header, _expected_typ), do: {:error, :invalid}
-
-  defp validate_session_claim_shape(%{"typ" => "access", "scope" => "com.atproto.access"} = claims, :access) do
+  defp validate_access_session_claim_shape(%{"typ" => "access", "scope" => "com.atproto.access"} = claims) do
     with did when is_binary(did) and did != "" <- Map.get(claims, "sub"),
          ^did <- Map.get(claims, "iss"),
          account_id when is_integer(account_id) <- Map.get(claims, "account_id"),
@@ -279,36 +275,30 @@ defmodule Tempest.Accounts.Tokens do
     end
   end
 
-  defp validate_session_claim_shape(%{"typ" => "refresh", "scope" => "com.atproto.refresh"} = claims, :refresh) do
-    with did when is_binary(did) and did != "" <- Map.get(claims, "sub"),
-         ^did <- Map.get(claims, "iss") do
-      :ok
-    else
-      _other -> {:error, :invalid}
-    end
-  end
+  defp validate_access_session_claim_shape(_claims), do: {:error, :invalid}
 
-  defp validate_session_claim_shape(_claims, _expected_typ), do: {:error, :invalid}
-
-  defp validate_session_claims(
-         %{"typ" => typ, "sub" => did, "iss" => did, "aud" => aud, "iat" => iat, "exp" => exp},
-         expected_typ,
-         max_age_seconds
-       )
+  defp validate_access_session_claims(%{
+         "typ" => typ,
+         "sub" => did,
+         "iss" => did,
+         "aud" => aud,
+         "iat" => iat,
+         "exp" => exp
+       })
        when is_binary(typ) and is_integer(iat) and is_integer(exp) do
     now = DateTime.utc_now() |> DateTime.to_unix()
 
     cond do
-      typ != Atom.to_string(expected_typ) -> {:error, :invalid}
+      typ != "access" -> {:error, :invalid}
       aud != service_did() -> {:error, :invalid}
       iat > now + 60 -> {:error, :invalid}
       exp <= now -> {:error, :expired_token}
-      exp - iat > max_age_seconds -> {:error, :invalid}
+      exp - iat > @access_max_age_seconds -> {:error, :invalid}
       true -> :ok
     end
   end
 
-  defp validate_session_claims(_claims, _expected_typ, _max_age_seconds), do: {:error, :invalid}
+  defp validate_access_session_claims(_claims), do: {:error, :invalid}
 
   defp service_did do
     "did:web:" <> Tempest.Config.load!().hostname

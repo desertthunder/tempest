@@ -147,7 +147,6 @@ defmodule Tempest.Identity.Multikey do
     do_base58btc_encode(div(value, 58), char <> acc)
   end
 
-  defp modular_pow(_base, 0, modulus), do: rem(1, modulus)
   defp modular_pow(base, exponent, modulus), do: modular_pow(rem(base, modulus), exponent, modulus, 1)
 
   defp modular_pow(_base, 0, _modulus, result), do: result
