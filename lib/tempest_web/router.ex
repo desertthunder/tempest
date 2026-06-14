@@ -42,6 +42,8 @@ defmodule TempestWeb.Router do
 
     live "/", HomeLive, :home
     live "/stats", HomeLive, :stats
+    live "/docs", DocLive, :show
+    live "/docs/:slug", DocLive, :show
     get "/account", OperatorAccountController, :dashboard
     get "/account/repo", OperatorAccountController, :repo
     get "/account/blobs", OperatorAccountController, :blobs

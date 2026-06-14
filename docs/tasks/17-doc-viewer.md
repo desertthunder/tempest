@@ -20,18 +20,18 @@ Netscape Navigator-inspired shell and a web 1.0 design (with a sidebar & search)
 - [x] T17-04: Add server-side Markdown rendering for trusted local reference docs
       with `MDEx`
 - [x] T17-05: Add relative-link rewriting for links between known reference docs.
-- [ ] T17-06: Add `TempestWeb.DocController` with `index` and `show` actions.
-- [ ] T17-07: Add public routes `GET /docs` and `GET /docs/:slug` under the
+- [x] T17-06: Add `TempestWeb.DocController` with `index` and `show` actions.
+- [x] T17-07: Add public routes `GET /docs` and `GET /docs/:slug` under the
       browser pipeline.
-- [ ] T17-08: Add `TempestWeb.DocHTML` templates for the doc viewer.
-- [ ] T17-09: Build the Netscape-style chrome: title bar, toolbar buttons,
+- [x] T17-08: Add `TempestWeb.DocHTML` templates for the doc viewer.
+- [x] T17-09: Build the Netscape-style chrome: title bar, toolbar buttons,
       location bar, bookmarks pane, document pane, and footer.
-- [ ] T17-10: Add responsive CSS through the existing vanilla CSS structure
+- [x] T17-10: Add responsive CSS through the existing vanilla CSS structure
       (`assets/css/app.css` plus component files such as
-      `assets/css/components/docs.css`).
-- [ ] T17-11: Add accessible focus, contrast, heading, and navigation behavior.
-- [ ] T17-12: Add previous/next document links based on manifest order.
-- [ ] T17-13: Link the docs viewer from the home page and any relevant public
+      `assets/css/components/doc-viewer.css`).
+- [x] T17-11: Add accessible focus, contrast, heading, and navigation behavior.
+- [x] T17-12: Add previous/next document links based on manifest order.
+- [x] T17-13: Link the docs viewer from the home page and any relevant public
       navigation.
 - [ ] T17-14: Add ConnCase tests for `/docs`, `/docs/architecture`, unknown slugs,
       sidebar navigation, relative-link rewriting, and path traversal rejection.

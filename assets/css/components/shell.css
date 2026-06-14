@@ -458,7 +458,8 @@
     inset 0 1px 0 var(--win-light);
 }
 
-.taskbar__start {
+.taskbar__start,
+.taskbar__start:visited {
   display: inline-flex;
   place-items: center;
   gap: var(--space-1);
@@ -470,6 +471,13 @@
   padding-inline: var(--space-3);
   line-height: 1;
   font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.taskbar__start:hover {
+  color: var(--text);
+  background: var(--surface-raised);
 }
 
 .taskbar__start img {

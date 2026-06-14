@@ -25,6 +25,7 @@ defmodule TempestWeb.Layouts do
         </a>
         <nav aria-label="Project links">
           <ul class="app-header__nav">
+            <li><a href={~p"/docs"} class="button">Docs</a></li>
             <li><a href="https://github.com/owais/tempest" class="button">GitHub</a></li>
             <li><a href="https://atproto.com/" class="button button--primary">AT Protocol</a></li>
           </ul>

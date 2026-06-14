@@ -98,6 +98,21 @@ defmodule Tempest.Docs do
   def document_path("reference"), do: "/docs"
   def document_path(slug) when is_binary(slug), do: "/docs/" <> slug
 
+  @doc "Returns previous and next manifest documents for a known slug."
+  @spec adjacent_documents(String.t()) :: {document() | nil, document() | nil}
+  def adjacent_documents(slug) when is_binary(slug) do
+    documents = list_documents()
+    index = Enum.find_index(documents, &(&1.slug == slug))
+
+    if index do
+      previous_document = if index > 0, do: Enum.at(documents, index - 1)
+
+      {previous_document, Enum.at(documents, index + 1)}
+    else
+      {nil, nil}
+    end
+  end
+
   defp lookup_manifest(slug) do
     if valid_slug?(slug) do
       case Enum.find(@documents, &(&1.slug == slug)) do

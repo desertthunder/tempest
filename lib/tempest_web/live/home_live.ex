@@ -45,6 +45,10 @@ defmodule TempestWeb.HomeLive do
               <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
               <span>Stats</span>
             </a>
+            <a class="desktop-icon" href={~p"/docs"}>
+              <img src={~p"/images/icons/browser.svg"} alt="" width="40" height="40" />
+              <span>Docs</span>
+            </a>
             <a class="desktop-icon" href="#about-computer">
               <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
               <span>My Computer</span>
@@ -53,7 +57,7 @@ defmodule TempestWeb.HomeLive do
 
           <div class="tempest-home__windows">
             <div class="tempest-home__top-grid">
-              <section class="win-window win-window--hero" aria-labelledby="tempest-title">
+              <section :if={@live_action == :home} class="win-window win-window--hero" aria-labelledby="tempest-title">
                 <header class="win-window__titlebar">
                   <span class="win-window__title">LIVE_STATS.EXE</span>
                   <span class="win-window__controls" aria-hidden="true">
@@ -181,9 +185,9 @@ defmodule TempestWeb.HomeLive do
         </section>
 
         <footer class="taskbar">
-          <span class="taskbar__start">
+          <.link class="taskbar__start" navigate={~p"/"}>
             <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
-          </span>
+          </.link>
           <span class="taskbar__app">tempest pds / {@host}</span>
           <span class="taskbar__tray" aria-label="Current UTC time">{@rendered_at}</span>
         </footer>
