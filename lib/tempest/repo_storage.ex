@@ -537,6 +537,16 @@ defmodule Tempest.RepoStorage do
   end
 
   @doc """
+  Returns the latest commit insertion timestamp for public activity windows.
+  """
+  def latest_commit_at(did, %Config{} = config \\ Config.load!()) when is_binary(did) do
+    with {:ok, conn, _path} <- open_repo(config, did) do
+      result = scalar_value(conn, "SELECT MAX(inserted_at) FROM commits", [])
+      close_and_return(result, conn)
+    end
+  end
+
+  @doc """
   Returns sanitized public profile blob CIDs from the current actor profile.
   """
   def public_profile_blobs(did, %Config{} = config \\ Config.load!()) when is_binary(did) do

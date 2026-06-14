@@ -42,7 +42,7 @@ TempestWeb.Router
   ├─ /.well-known/atproto-did    -> WellKnownController
   ├─ /account/*                  -> OperatorAccountController
   ├─ /admin/*                    -> AdminController
-  └─ /                            -> PageController
+  └─ /                            -> HomeLive
         │
         ▼
 Contexts

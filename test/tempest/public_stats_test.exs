@@ -142,6 +142,29 @@ defmodule Tempest.PublicStatsTest do
     refute expanded =~ Config.load!().data_dir
   end
 
+  test "commit weeks anchor to latest observed commit activity" do
+    account = create_account!("public-stats-old-commit.test", "public-stats-old-commit@example.com")
+    signing_key = KeyStore.active_key_for_account(account)
+
+    assert {:ok, _profile} =
+             RepoStorage.create_record(account, signing_key, %{
+               collection: "app.bsky.actor.profile",
+               rkey: "self",
+               swap_commit: nil,
+               record: %{"$type" => "app.bsky.actor.profile", "displayName" => "Old Commit"}
+             })
+
+    set_commit_inserted_at!(account.did, "2026-05-16T15:28:49Z")
+
+    summary = PublicStats.summary()
+
+    assert List.last(summary["commitWeeks"]) == %{
+             "weekStart" => "2026-05-11",
+             "weekEnd" => "2026-05-17",
+             "commitCount" => 2
+           }
+  end
+
   test "health is degraded when a repo scan fails" do
     account = create_account!("public-stats-scan-failure.test", "public-stats-scan-failure@example.com")
     path = Config.load!() |> Config.repo_db_path(account.did)
@@ -188,5 +211,15 @@ defmodule Tempest.PublicStatsTest do
   defp assert_blob_url(url, did, cid) do
     assert %URI{path: "/xrpc/com.atproto.sync.getBlob", query: query} = URI.parse(url)
     assert %{"did" => ^did, "cid" => ^cid} = URI.decode_query(query)
+  end
+
+  defp set_commit_inserted_at!(did, inserted_at) do
+    path = Config.load!() |> Config.repo_db_path(did)
+    {:ok, conn} = Exqlite.Sqlite3.open(path)
+    {:ok, statement} = Exqlite.Sqlite3.prepare(conn, "UPDATE commits SET inserted_at = ?1")
+    :ok = Exqlite.Sqlite3.bind(statement, [inserted_at])
+    :done = Exqlite.Sqlite3.step(conn, statement)
+    :ok = Exqlite.Sqlite3.release(conn, statement)
+    :ok = Exqlite.Sqlite3.close(conn)
   end
 end

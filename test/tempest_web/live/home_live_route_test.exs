@@ -1,4 +1,4 @@
-defmodule TempestWeb.PageControllerTest do
+defmodule TempestWeb.HomeLiveRouteTest do
   use TempestWeb.ConnCase
 
   test "GET /", %{conn: conn} do

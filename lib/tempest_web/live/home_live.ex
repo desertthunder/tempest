@@ -61,8 +61,6 @@ defmodule TempestWeb.HomeLive do
                       <dl class="facts-list facts-list--compact">
                         <dt>status</dt>
                         <dd>{@health_status}</dd>
-                        <dt>host</dt>
-                        <dd>{@host}</dd>
                         <dt>version</dt>
                         <dd>v{@app_version}</dd>
                         <dt>uptime</dt>
@@ -239,9 +237,10 @@ defmodule TempestWeb.HomeLive do
               <h2 id="resources-title" class="resource-strip__title">Internet Shortcuts</h2>
               <nav id="resource-links" class="resource-strip__links" aria-label="AT Protocol resources">
                 <a href="https://atproto.com">AT Protocol</a>
-                <a href="https://atproto.com/guides/self-hosting">Self-hosting Guide</a>
                 <a href="https://github.com/bluesky-social/atproto">ATProto Source</a>
+                <a href="https://atmosphereaccount.com/">ATmosphere</a>
                 <a href="https://bsky.app">Bluesky</a>
+                <a href="https://atproto.com/guides/self-hosting">Self-hosting Guide</a>
               </nav>
             </section>
           </div>

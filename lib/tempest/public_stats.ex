@@ -18,10 +18,11 @@ defmodule Tempest.PublicStats do
   """
   def summary(opts \\ []) do
     config = Keyword.get_lazy(opts, :config, &Config.load!/0)
-    accounts = hosted_accounts(@user_limit)
-    week_ranges = commit_week_ranges()
+    accounts = hosted_accounts()
+    users = Enum.take(accounts, @user_limit)
+    week_ranges = commit_week_ranges(accounts, config)
     repo_scan = scan_repos(config)
-    details = scan_details(accounts, week_ranges, config)
+    details = scan_details(accounts, users, week_ranges, config)
     health = health(config, repo_scan.error_count + details.error_count)
 
     %{
@@ -54,14 +55,15 @@ defmodule Tempest.PublicStats do
     }
   end
 
-  defp scan_details(accounts, week_ranges, config) do
+  defp scan_details(accounts, users, week_ranges, config) do
     week_starts = Enum.map(week_ranges, & &1.week_start)
+    user_dids = MapSet.new(users, & &1.did)
 
     accounts
     |> Enum.reduce(empty_detail_scan(), fn account, acc ->
       case repo_status_counts(account.did, config) do
         {:ok, counts} ->
-          scan_account_details(account, counts, week_starts, config, acc)
+          scan_account_details(account, counts, week_starts, user_dids, config, acc)
 
         {:error, _reason} ->
           acc
@@ -70,16 +72,21 @@ defmodule Tempest.PublicStats do
     |> Map.update!(:users, &Enum.reverse/1)
   end
 
-  defp scan_account_details(account, counts, week_starts, config, acc) do
+  defp scan_account_details(account, counts, week_starts, user_dids, config, acc) do
     with {:ok, profile} <- repo_profile_blobs(account.did, config),
          {:ok, latest_record} <- repo_latest_public_record(account.did, config),
          {:ok, commit_week_counts} <- repo_commit_week_counts(account.did, week_starts, config),
          {:ok, collection_summaries} <- repo_collection_summaries(account.did, config) do
-      user = public_user(account, counts, profile)
+      users =
+        if MapSet.member?(user_dids, account.did) do
+          [public_user(account, counts, profile) | acc.users]
+        else
+          acc.users
+        end
 
       %{
         acc
-        | users: [user | acc.users],
+        | users: users,
           latest_record: newest_record(acc.latest_record, public_latest_record(account, latest_record)),
           commit_week_counts: merge_counts(acc.commit_week_counts, commit_week_counts),
           collections: collection_summaries ++ acc.collections
@@ -130,13 +137,24 @@ defmodule Tempest.PublicStats do
     Map.merge(left, right, fn _key, left_count, right_count -> left_count + right_count end)
   end
 
-  defp commit_week_ranges do
+  defp commit_week_ranges(accounts, config) do
     current_week_start =
       Date.utc_today()
       |> week_start()
 
+    range_end =
+      accounts
+      |> Enum.reduce(nil, fn account, latest ->
+        max_iso8601([latest, repo_latest_commit_at(account.did, config)])
+      end)
+      |> week_start_for_iso8601()
+      |> case do
+        {:ok, latest_commit_week_start} -> latest_commit_week_start
+        :error -> current_week_start
+      end
+
     0..(@commit_week_limit - 1)
-    |> Enum.map(fn offset -> Date.add(current_week_start, -7 * offset) end)
+    |> Enum.map(fn offset -> Date.add(range_end, -7 * offset) end)
     |> Enum.reverse()
     |> Enum.map(fn week_start -> %{week_start: week_start, week_end: Date.add(week_start, 6)} end)
   end
@@ -163,11 +181,20 @@ defmodule Tempest.PublicStats do
 
   defp week_start(date), do: Date.add(date, 1 - Date.day_of_week(date))
 
-  defp hosted_accounts(limit) do
+  defp week_start_for_iso8601(value) when is_binary(value) do
+    with {:ok, datetime, _offset} <- DateTime.from_iso8601(value) do
+      {:ok, datetime |> DateTime.to_date() |> week_start()}
+    else
+      _error -> :error
+    end
+  end
+
+  defp week_start_for_iso8601(_value), do: :error
+
+  defp hosted_accounts do
     Account
     |> where([a], a.active == true and a.status == "active")
     |> order_by([a], asc: a.handle, asc: a.did)
-    |> limit(^limit)
     |> Repo.all()
   end
 
@@ -229,6 +256,17 @@ defmodule Tempest.PublicStats do
     _error -> {:error, :repo_commit_weeks_failed}
   catch
     _kind, _reason -> {:error, :repo_commit_weeks_failed}
+  end
+
+  defp repo_latest_commit_at(did, config) do
+    case RepoStorage.latest_commit_at(did, config) do
+      {:ok, latest_commit_at} -> latest_commit_at
+      {:error, _reason} -> nil
+    end
+  rescue
+    _error -> nil
+  catch
+    _kind, _reason -> nil
   end
 
   defp repo_collection_summaries(did, config) do
