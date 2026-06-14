@@ -134,6 +134,10 @@ defmodule Tempest.Sync do
 
   def request_crawl(_params), do: {:error, :invalid_request_body}
 
+  def request_own_crawl do
+    request_crawl(%{"hostname" => Config.load!().hostname})
+  end
+
   defp validate_get_record_params(params) do
     with {:ok, did} <- validate_did_param(params),
          {:ok, collection} <- validate_collection(Map.get(params, "collection")),

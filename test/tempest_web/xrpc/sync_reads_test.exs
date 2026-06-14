@@ -389,6 +389,25 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
     assert json_response(crawl_conn, 200) == %{}
   end
 
+  test "request_own_crawl requests configured relays for the local hostname" do
+    Application.put_env(:tempest, Tempest.Sync,
+      relays: ["https://relay.test"],
+      request_crawl_window_ms: 0,
+      http_req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.method == "POST"
+      assert req_conn.host == "relay.test"
+      assert req_conn.request_path == "/xrpc/com.atproto.sync.requestCrawl"
+      assert {:ok, %{"hostname" => "localhost"}, _conn} = Plug.Conn.read_body(req_conn) |> decode_req_body(req_conn)
+
+      Plug.Conn.send_resp(req_conn, 200, "{}")
+    end)
+
+    assert {:ok, %{}} = Tempest.Sync.request_own_crawl()
+  end
+
   test "requestCrawl is rate limited per hostname", %{conn: conn} do
     Application.put_env(:tempest, Tempest.Sync,
       relays: [],

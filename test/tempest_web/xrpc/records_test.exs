@@ -161,6 +161,42 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert %{"error" => "InvalidRequest"} = json_response(denied_conn, 400)
   end
 
+  test "createRecord persists Bluesky post-shaped records with unknown validation status", %{conn: conn} do
+    account = create_account!(conn, "records-bsky-post.test", "records-bsky-post@example.com")
+
+    created =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.feed.post",
+        "rkey" => "3kpost",
+        "record" => %{
+          "$type" => "app.bsky.feed.post",
+          "text" => "hello from bsky-shaped post",
+          "createdAt" => "2026-06-13T19:45:00.000Z"
+        }
+      })
+      |> json_response(200)
+
+    assert created["uri"] == "at://#{account["did"]}/app.bsky.feed.post/3kpost"
+    assert created["validationStatus"] == "unknown"
+    assert scalar(repo_db(account["did"]), "SELECT COUNT(*) FROM records") == 1
+
+    response =
+      conn
+      |> recycle()
+      |> get(~p"/xrpc/com.atproto.repo.getRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.bsky.feed.post",
+        "rkey" => "3kpost"
+      })
+      |> json_response(200)
+
+    assert response["cid"] == created["cid"]
+    assert response["value"]["text"] == "hello from bsky-shaped post"
+  end
+
   test "putRecord enforces swapRecord and swapCommit before replacing a record", %{conn: conn} do
     account = create_account!(conn, "records-erin.test", "records-erin@example.com")
     created = create_profile!(conn, account, "Erin")

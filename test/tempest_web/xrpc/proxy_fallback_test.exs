@@ -8,8 +8,10 @@ defmodule TempestWeb.Xrpc.ProxyFallbackTest do
     Req.Test.verify_on_exit!(context)
 
     old_config = Application.get_env(:tempest, Tempest.Xrpc.Proxy, [])
+    old_identity_config = Application.get_env(:tempest, Tempest.Identity, [])
 
     on_exit(fn -> Application.put_env(:tempest, Tempest.Xrpc.Proxy, old_config) end)
+    on_exit(fn -> Application.put_env(:tempest, Tempest.Identity, old_identity_config) end)
   end
 
   test "unknown service endpoints proxy to configured AppView", %{conn: conn} do
@@ -81,6 +83,64 @@ defmodule TempestWeb.Xrpc.ProxyFallbackTest do
       |> post(~p"/xrpc/app.bsky.feed.sendInteractions", %{"interactions" => []})
 
     assert %{"error" => "UpstreamPolicy"} = json_response(proxy_conn, 403)
+  end
+
+  test "unknown chat endpoints proxy to the atproto-proxy service endpoint", %{conn: conn} do
+    Application.put_env(:tempest, Tempest.Identity,
+      http_req_options: [
+        plug: fn conn ->
+          assert conn.method == "GET"
+          assert conn.request_path == "/.well-known/did.json"
+
+          Req.Test.json(conn, %{
+            "id" => "did:web:api.bsky.chat",
+            "service" => [
+              %{
+                "id" => "#bsky_chat",
+                "type" => "BskyChat",
+                "serviceEndpoint" => "https://api.bsky.chat"
+              }
+            ]
+          })
+        end
+      ]
+    )
+
+    Application.put_env(:tempest, Tempest.Xrpc.Proxy, http_req_options: [plug: {Req.Test, __MODULE__}])
+
+    account =
+      conn
+      |> put_req_header("content-type", "application/json")
+      |> post(~p"/xrpc/com.atproto.server.createAccount", %{
+        "handle" => "proxy-chat.test",
+        "email" => "proxy-chat@example.com",
+        "password" => "correct horse battery staple"
+      })
+      |> json_response(200)
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.method == "GET"
+      assert req_conn.host == "api.bsky.chat"
+      assert req_conn.request_path == "/xrpc/chat.bsky.convo.listConvos"
+      assert req_conn.query_string == "limit=20"
+
+      assert ["Bearer " <> service_auth] = Plug.Conn.get_req_header(req_conn, "authorization")
+      assert {:ok, claims} = Tokens.verify_service_auth(service_auth)
+      assert claims["iss"] == account["did"]
+      assert claims["aud"] == "did:web:api.bsky.chat"
+      assert claims["lxm"] == "chat.bsky.convo.listConvos"
+
+      Req.Test.json(req_conn, %{"convos" => []})
+    end)
+
+    proxy_conn =
+      conn
+      |> recycle()
+      |> put_req_header("authorization", "Bearer #{account["accessJwt"]}")
+      |> put_req_header("atproto-proxy", "did:web:api.bsky.chat#bsky_chat")
+      |> get(~p"/xrpc/chat.bsky.convo.listConvos", %{"limit" => "20"})
+
+    assert json_response(proxy_conn, 200) == %{"convos" => []}
   end
 
   test "unknown service endpoints return UnknownMethod when no upstream is configured", %{conn: conn} do

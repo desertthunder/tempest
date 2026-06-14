@@ -26,7 +26,11 @@ defmodule Tempest.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Tempest.Supervisor]
-    Supervisor.start_link(children, opts)
+
+    with {:ok, pid} <- Supervisor.start_link(children, opts) do
+      maybe_request_crawl()
+      {:ok, pid}
+    end
   end
 
   # Tell Phoenix to update the endpoint configuration
@@ -34,6 +38,14 @@ defmodule Tempest.Application do
   @impl true
   def config_change(changed, _new, removed) do
     TempestWeb.Endpoint.config_change(changed, removed)
+    :ok
+  end
+
+  defp maybe_request_crawl do
+    if Application.get_env(:tempest, :env, :prod) != :test do
+      Task.start(fn -> Tempest.Sync.request_own_crawl() end)
+    end
+
     :ok
   end
 end
