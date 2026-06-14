@@ -72,6 +72,13 @@ See the maintained compatibility matrix:
 - [`docs/reference/pds-compatibility.md`](docs/reference/pds-compatibility.md)
 - Admin UI: `/admin/compatibility`
 
+## Docs
+
+You can also view docs on the [deployed instance](https://tempest.desertthunder.dev/docs)
+and copy the markdown.
+
+![Docs as Netscape Navigator](docs/images/docs.png)
+
 ## Credits
 
 - [Cocoon](https://github.com/haileyok/cocoon) - a PDS written in Go
