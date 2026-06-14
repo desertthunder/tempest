@@ -685,6 +685,31 @@ defmodule TempestWeb.Xrpc.RecordsTest do
     assert response["message"] =~ "avatar"
   end
 
+  test "putRecord rejects unsupported repo data model values with a client error", %{conn: conn} do
+    account = create_account!(conn, "records-float-value.test", "records-float-value@example.com")
+    created = create_note!(conn, account, "floaty", "before")
+
+    rejected_conn =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.putRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.note",
+        "rkey" => "floaty",
+        "validate" => false,
+        "swapRecord" => created["cid"],
+        "record" => %{
+          "$type" => "app.tempest.note",
+          "rating" => 1.5,
+          "text" => "after"
+        }
+      })
+
+    response = json_response(rejected_conn, 400)
+    assert response["error"] == "InvalidRequest"
+    assert response["message"] =~ "unsupported value"
+  end
+
   test "importRepo verifies CARs atomically and keeps post-import revisions monotonic", %{conn: conn} do
     account = create_account!(conn, "records-import.test", "records-import@example.com")
     profile = create_profile!(conn, account, "Imported")

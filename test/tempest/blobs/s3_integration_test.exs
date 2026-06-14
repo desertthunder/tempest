@@ -52,7 +52,7 @@ defmodule Tempest.Blobs.S3IntegrationTest do
       assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
 
       assert Plug.Conn.get_req_header(conn, "x-amz-copy-source") == [
-               "/tempest-test/temp/blobs/#{account["did"]}/#{cid}"
+               "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
              ]
 
       Plug.Conn.send_resp(conn, 200, "")
@@ -87,6 +87,45 @@ defmodule Tempest.Blobs.S3IntegrationTest do
       |> get(~p"/xrpc/com.atproto.sync.getBlob", %{"did" => account["did"], "cid" => cid})
 
     assert response(response, 200) == "s3 integration bytes"
+  end
+
+  test "record writes report S3 promotion failures clearly", %{conn: conn} do
+    account = create_account!(conn)
+    cid = Blobs.cid_for("s3 promotion failure")
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    blob = upload_blob!(conn, account, "s3 promotion failure")["blob"]
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/blobs/#{encoded_did(account["did"])}/#{cid}"
+
+      assert Plug.Conn.get_req_header(conn, "x-amz-copy-source") == [
+               "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+             ]
+
+      Plug.Conn.send_resp(conn, 403, "")
+    end)
+
+    response =
+      conn
+      |> auth_json(account)
+      |> post(~p"/xrpc/com.atproto.repo.createRecord", %{
+        "repo" => account["did"],
+        "collection" => "app.tempest.blob",
+        "rkey" => "s3-failure",
+        "validate" => false,
+        "record" => %{"$type" => "app.tempest.blob", "image" => blob}
+      })
+      |> json_response(502)
+
+    assert response["error"] == "UpstreamFailure"
+    assert response["message"] == "blob storage request failed"
   end
 
   defp create_account!(conn) do

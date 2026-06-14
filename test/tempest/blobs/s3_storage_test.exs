@@ -42,7 +42,7 @@ defmodule Tempest.Blobs.S3StorageTest do
       assert conn.request_path == "/tempest-test/blobs/did%3Aplc%3As3storage/#{cid}"
 
       assert Plug.Conn.get_req_header(conn, "x-amz-copy-source") == [
-               "/tempest-test/temp/blobs/#{did}/#{cid}"
+               "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
              ]
 
       Plug.Conn.send_resp(conn, 200, "")

@@ -38,7 +38,7 @@ defmodule Tempest.Blobs.S3Storage do
          {:ok, request} <-
            request_options(config, destination,
              method: :put,
-             headers: [{"x-amz-copy-source", "/" <> bucket!(config) <> "/" <> source}]
+             headers: [{"x-amz-copy-source", copy_source(config, source)}]
            ) do
       case Req.request(request) do
         {:ok, %{status: status}} when status in 200..299 ->
@@ -129,6 +129,8 @@ defmodule Tempest.Blobs.S3Storage do
     |> String.trim_trailing("/")
     |> Kernel.<>("/" <> URI.encode(bucket) <> "/" <> encode_key(key))
   end
+
+  defp copy_source(config, key), do: "/" <> URI.encode(bucket!(config)) <> "/" <> encode_key(key)
 
   defp encode_key(key) do
     key

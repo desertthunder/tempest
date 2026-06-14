@@ -179,12 +179,24 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:invalid_mime_type), do: {:error, 400, "InvalidRequest", "Content-Type is invalid"}
   defp repo_error(:mime_type_mismatch), do: {:error, 400, "InvalidRequest", "Content-Type does not match blob bytes"}
   defp repo_error(:missing_blob), do: {:error, 400, "InvalidRequest", "record references a missing blob"}
+  defp repo_error(:blob_not_found), do: {:error, 500, "InternalServerError", "uploaded blob bytes could not be found"}
   defp repo_error(:missing_record_type), do: {:error, 400, "InvalidRequest", "record must include a $type field"}
   defp repo_error(:record_type_mismatch), do: {:error, 400, "InvalidRequest", "record $type must match collection"}
   defp repo_error(:unknown_lexicon), do: {:error, 400, "InvalidRequest", "record lexicon is unknown"}
   defp repo_error(:invalid_record), do: {:error, 400, "InvalidRequest", "record is invalid"}
   defp repo_error(:invalid_string), do: {:error, 400, "InvalidRequest", "record contains an invalid string"}
+  defp repo_error(:invalid_map_key), do: {:error, 400, "InvalidRequest", "record contains an invalid object key"}
+  defp repo_error(:invalid_integer_range), do: {:error, 400, "InvalidRequest", "record integer is out of range"}
+  defp repo_error(:unsupported_type), do: {:error, 400, "InvalidRequest", "record contains an unsupported value"}
   defp repo_error(:max_depth_exceeded), do: {:error, 400, "InvalidRequest", "record nesting is too deep"}
+  defp repo_error(:max_items_exceeded), do: {:error, 400, "InvalidRequest", "record has too many values"}
+  defp repo_error(:max_array_length_exceeded), do: {:error, 400, "InvalidRequest", "record array is too long"}
+  defp repo_error(:max_map_length_exceeded), do: {:error, 400, "InvalidRequest", "record object has too many fields"}
+  defp repo_error(:max_string_bytes_exceeded), do: {:error, 400, "InvalidRequest", "record string is too large"}
+
+  defp repo_error(:max_bytestring_bytes_exceeded),
+    do: {:error, 400, "InvalidRequest", "record bytes field is too large"}
+
   defp repo_error(:missing_signing_key), do: {:error, 500, "InternalServerError", "account has no active signing key"}
   defp repo_error({:field_too_small, field}), do: {:error, 400, "InvalidRequest", "#{field} is too small"}
   defp repo_error({:field_too_large, field}), do: {:error, 400, "InvalidRequest", "#{field} is too large"}
@@ -244,6 +256,12 @@ defmodule Tempest.Xrpc.Repo do
 
   defp repo_error({:invalid_block_cid, _reason}),
     do: {:error, 500, "InternalServerError", "repository block CID is invalid"}
+
+  defp repo_error({:s3_status, _status}),
+    do: {:error, 502, "UpstreamFailure", "blob storage request failed"}
+
+  defp repo_error({:missing_s3_config, key}),
+    do: {:error, 500, "InternalServerError", "blob storage config is missing #{key}"}
 
   defp repo_error(_reason), do: {:error, 500, "InternalServerError", "repository write failed"}
 end
