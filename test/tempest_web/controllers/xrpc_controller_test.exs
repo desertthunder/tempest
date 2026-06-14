@@ -10,8 +10,12 @@ defmodule TempestWeb.XrpcControllerTest do
     assert response["did"] == "did:web:localhost"
     assert response["availableUserDomains"] == [".localhost"]
     assert response["inviteCodeRequired"] == false
-    assert response["links"]["privacyPolicy"] == nil
-    assert response["links"]["termsOfService"] == nil
+    assert response["phoneVerificationRequired"] == false
+    assert response["links"] == %{}
+    assert response["contact"] == %{}
+    refute Map.has_key?(response["links"], "privacyPolicy")
+    refute Map.has_key?(response["links"], "termsOfService")
+    refute Map.has_key?(response["contact"], "email")
   end
 
   test "XRPC preflight permits browser ATProto client headers", %{conn: conn} do
