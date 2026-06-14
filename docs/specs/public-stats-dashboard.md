@@ -55,7 +55,7 @@ All detail groups should be bounded
 - users: 12 active hosted users;
 - collections: 10 highest record counts;
 - latest record: 1 most recently updated current record;
-- commit weeks: latest 8 complete or partial Monday-Sunday ranges.
+- commit weeks: latest 4 complete or partial Monday-Sunday ranges.
 
 ## User cards
 

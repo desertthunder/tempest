@@ -11,7 +11,7 @@ defmodule Tempest.PublicStats do
 
   @user_limit 12
   @collection_limit 10
-  @commit_week_limit 8
+  @commit_week_limit 4
 
   @doc """
   Returns public aggregate stats without admin-only fields or local paths.

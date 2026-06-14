@@ -47,11 +47,11 @@ keeping admin-only operations and sensitive internals private.
 - [x] T16-23: Render a compact weekly commit histogram on `/stats`.
 - [x] T16-24: Add repo storage support for collection summaries.
 - [x] T16-25: Add the public `collections` group described in the stats spec.
-- [ ] T16-26: Render collection summary rows on `/stats` with count bars.
-- [ ] T16-27: Extend public stats tests for `users`, avatar/banner URLs,
+- [x] T16-26: Render collection summary rows on `/stats` with count bars.
+- [x] T16-27: Extend public stats tests for `users`, avatar/banner URLs,
       `latestRecord`, `commitWeeks`, and collection summaries.
-- [ ] T16-28: Extend leak regression tests for the expanded public stats shape.
-- [ ] T16-29: Extend `test/smoke/public-stats.hurl` to cover the new JSON fields
+- [x] T16-28: Extend leak regression tests for the expanded public stats shape.
+- [x] T16-29: Extend `test/smoke/public-stats.hurl` to cover the new JSON fields
       and `/stats` sections.
 - [ ] T16-30: Add the public changelog document route described in the stats
       spec.

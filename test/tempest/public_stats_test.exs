@@ -51,7 +51,7 @@ defmodule Tempest.PublicStatsTest do
     assert is_binary(summary["metrics"]["lastIndexedAt"])
     assert is_list(summary["users"])
     assert is_map(summary["latestRecord"])
-    assert length(summary["commitWeeks"]) == 8
+    assert length(summary["commitWeeks"]) == 4
     assert is_list(summary["collections"])
 
     encoded = Jason.encode!(summary)
@@ -126,13 +126,20 @@ defmodule Tempest.PublicStatsTest do
     assert is_binary(cid)
     assert is_binary(indexed_at)
 
-    assert length(summary["commitWeeks"]) == 8
+    assert length(summary["commitWeeks"]) == 4
     assert Enum.all?(summary["commitWeeks"], &match?(%{"weekStart" => _, "weekEnd" => _, "commitCount" => _}, &1))
     assert Enum.any?(summary["commitWeeks"], &(&1["commitCount"] >= 13))
 
     assert length(summary["collections"]) == 10
     assert Enum.all?(summary["collections"], &match?(%{"collection" => _, "recordCount" => _}, &1))
     refute Enum.any?(summary["collections"], &(&1["recordCount"] == 0))
+
+    expanded = Jason.encode!(Map.take(summary, ["users", "latestRecord", "commitWeeks", "collections"]))
+    refute expanded =~ "record_json"
+    refute expanded =~ "displayName"
+    refute expanded =~ "public avatar"
+    refute expanded =~ "public banner"
+    refute expanded =~ Config.load!().data_dir
   end
 
   test "health is degraded when a repo scan fails" do

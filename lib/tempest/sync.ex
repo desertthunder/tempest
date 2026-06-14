@@ -385,7 +385,6 @@ defmodule Tempest.Sync do
         case Req.post(request) do
           {:ok, %{status: status}} when status in 200..299 -> :ok
           {:ok, %{status: status, body: body}} -> {:error, {:relay_status, status, relay_response_preview(body)}}
-          {:ok, %{status: status}} -> {:error, {:relay_status, status}}
           {:error, reason} -> {:error, {:relay_request_failed, reason}}
         end
 

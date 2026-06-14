@@ -31,14 +31,17 @@ defmodule TempestWeb.PublicStatsControllerTest do
       |> get(~p"/stats")
       |> html_response(200)
 
-    assert html =~ ~s(id="tempest-home")
-    assert html =~ "Tempest Public Stats"
-    assert html =~ "Hosted Accounts"
-    assert html =~ "Last Indexed"
-    assert html =~ ~s(id="public-users")
-    assert html =~ "Latest Indexed Record"
-    assert html =~ ~s(id="commit-weeks")
-    assert html =~ ~s(id="collection-summaries")
+    document = LazyHTML.from_fragment(html)
+
+    assert has_selector?(document, "#tempest-home")
+    assert LazyHTML.text(LazyHTML.filter(document, "title")) =~ "Tempest Public Stats"
+    assert has_selector?(document, "#hosted-account-count")
+    assert has_selector?(document, "#last-indexed-at")
+    assert has_selector?(document, "#public-users")
+    assert has_selector?(document, "#latest-indexed-record")
+    assert has_selector?(document, "#commit-weeks")
+    assert has_selector?(document, "#collection-summaries")
+    assert Enum.count(LazyHTML.query(document, ".commit-histogram__bar")) == 4
 
     stats =
       conn
@@ -98,9 +101,21 @@ defmodule TempestWeb.PublicStatsControllerTest do
              Enum.filter(response["users"], &(&1["did"] == account.did))
 
     assert response["latestRecord"]["did"] == account.did
-    assert length(response["commitWeeks"]) == 8
+    assert length(response["commitWeeks"]) == 4
+    assert Enum.all?(response["commitWeeks"], &match?(%{"weekStart" => _, "weekEnd" => _, "commitCount" => _}, &1))
     assert %{"collection" => "app.bsky.actor.profile", "recordCount" => 1} in response["collections"]
     assert %{"collection" => "app.bsky.feed.post", "recordCount" => 1} in response["collections"]
+
+    html =
+      conn
+      |> recycle()
+      |> get(~p"/stats")
+      |> html_response(200)
+
+    document = LazyHTML.from_fragment(html)
+    assert has_selector?(document, "#collection-summaries .collection-summary__row")
+    assert has_selector?(document, "#collection-summaries .collection-summary__track span[style]")
+    assert has_selector?(document, "#commit-weeks .commit-histogram__fill[style]")
 
     encoded = response |> Jason.encode!() |> String.downcase()
 
@@ -114,6 +129,9 @@ defmodule TempestWeb.PublicStatsControllerTest do
           "password",
           "secret",
           "filesystem",
+          "record_json",
+          "displayname",
+          "public stats",
           "stats-public@example.com",
           Tempest.Config.load!().data_dir |> String.downcase()
         ] do
@@ -141,5 +159,11 @@ defmodule TempestWeb.PublicStatsControllerTest do
                "validate" => false,
                "record" => record
              })
+  end
+
+  defp has_selector?(document, selector) do
+    document
+    |> LazyHTML.query(selector)
+    |> Enum.any?()
   end
 end

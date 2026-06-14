@@ -110,7 +110,7 @@ defmodule TempestWeb.HomeLive do
             </div>
 
             <div :if={@live_action == :stats} class="tempest-home__grid">
-              <section class="win-window" aria-labelledby="users-title">
+              <section class="win-window public-users-window" aria-labelledby="users-title">
                 <header class="win-window__titlebar">
                   <span id="users-title" class="win-window__title">Users</span>
                 </header>
@@ -180,7 +180,7 @@ defmodule TempestWeb.HomeLive do
                         style={"height: #{commit_bar_height(week, @max_commit_week_count)}%"}
                       >
                       </div>
-                      <p>{week_label(week)}</p>
+                      <p>{week_range_label(week)}</p>
                       <strong>{week["commitCount"] || 0}</strong>
                     </div>
                   </div>
@@ -425,8 +425,12 @@ defmodule TempestWeb.HomeLive do
 
   defp collection_bar_width(_collection, _max_count), do: 0
 
-  defp week_label(%{"weekStart" => week_start}) when is_binary(week_start), do: String.slice(week_start, 5, 5)
-  defp week_label(_week), do: "n/a"
+  defp week_range_label(%{"weekStart" => week_start, "weekEnd" => week_end})
+       when is_binary(week_start) and is_binary(week_end) do
+    String.slice(week_start, 5, 5) <> "-" <> String.slice(week_end, 5, 5)
+  end
+
+  defp week_range_label(_week), do: "n/a"
 
   defp user_initial(%{"handle" => <<first::binary-size(1), _rest::binary>>}), do: String.upcase(first)
   defp user_initial(_user), do: "?"
