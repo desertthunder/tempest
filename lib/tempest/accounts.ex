@@ -247,7 +247,7 @@ defmodule Tempest.Accounts do
     end
   end
 
-  def get_preferences(%AuthContext{token_type: :access, account: account}) do
+  def get_preferences(%AuthContext{account: account}) do
     case Jason.decode(account.preferences_json || "[]") do
       {:ok, preferences} when is_list(preferences) -> {:ok, %{preferences: preferences}}
       {:ok, _value} -> {:ok, %{preferences: []}}
@@ -255,7 +255,7 @@ defmodule Tempest.Accounts do
     end
   end
 
-  def put_preferences(%AuthContext{token_type: :access, account: account}, params) when is_map(params) do
+  def put_preferences(%AuthContext{account: account}, params) when is_map(params) do
     case Map.get(params, "preferences") do
       preferences when is_list(preferences) ->
         with {:ok, encoded} <- Jason.encode(preferences),
@@ -271,7 +271,7 @@ defmodule Tempest.Accounts do
     end
   end
 
-  def put_preferences(%AuthContext{token_type: :access}, _params), do: {:error, :invalid_preferences}
+  def put_preferences(%AuthContext{}, _params), do: {:error, :invalid_preferences}
 
   def authenticate_access(token) do
     case authenticate_session_access(token) do

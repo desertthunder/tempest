@@ -7,6 +7,7 @@ defmodule Tempest.Xrpc.Proxy do
   alias Tempest.Accounts.Tokens
 
   @service_prefixes ["app.bsky.", "chat.bsky."]
+  @default_http_options [receive_timeout: 60_000, connect_options: [timeout: 5_000]]
 
   def proxyable?(nsid) when is_binary(nsid) do
     Enum.any?(@service_prefixes, &String.starts_with?(nsid, &1))
@@ -38,7 +39,8 @@ defmodule Tempest.Xrpc.Proxy do
       |> Keyword.get(:http_req_options, [])
 
     request =
-      options
+      @default_http_options
+      |> Keyword.merge(options)
       |> Keyword.merge(
         method: conn.method,
         url: url(target.base_url, nsid),

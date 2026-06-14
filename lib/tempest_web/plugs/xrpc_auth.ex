@@ -110,8 +110,45 @@ defmodule TempestWeb.Plugs.XrpcAuth do
 
   defp current_request_url(conn) do
     query = if conn.query_string == "", do: "", else: "?" <> conn.query_string
-    Phoenix.Controller.endpoint_module(conn).url() <> conn.request_path <> query
+    endpoint_url = Phoenix.Controller.endpoint_module(conn).url()
+    forwarded_scheme = forwarded_header(conn, "x-forwarded-proto")
+    forwarded_host = forwarded_header(conn, "x-forwarded-host")
+
+    base_url =
+      if forwarded_scheme || forwarded_host do
+        endpoint_uri = URI.parse(endpoint_url)
+        scheme = forwarded_scheme || endpoint_uri.scheme || Atom.to_string(conn.scheme)
+        host = forwarded_host || host_header(conn) || endpoint_uri.host || conn.host
+
+        scheme <> "://" <> host
+      else
+        endpoint_url
+      end
+
+    base_url <> conn.request_path <> query
   end
+
+  defp forwarded_header(conn, name) do
+    conn
+    |> get_req_header(name)
+    |> List.first()
+    |> first_forwarded_value()
+  end
+
+  defp first_forwarded_value(nil), do: nil
+
+  defp first_forwarded_value(value) when is_binary(value) do
+    value
+    |> String.split(",", parts: 2)
+    |> List.first()
+    |> String.trim()
+    |> case do
+      "" -> nil
+      forwarded -> forwarded
+    end
+  end
+
+  defp host_header(conn), do: conn |> get_req_header("host") |> List.first()
 
   defp reject(conn, status, error, message) do
     conn
