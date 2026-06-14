@@ -20,6 +20,7 @@ COPY config ./config
 RUN mix deps.get --only prod && mix deps.compile
 
 COPY assets ./assets
+COPY CHANGELOG.md ./
 COPY docs ./docs
 COPY lib ./lib
 COPY priv ./priv

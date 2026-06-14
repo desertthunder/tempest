@@ -65,7 +65,10 @@ defmodule Tempest.Docs do
                      end)
 
   @embedded_desktop_markdown Map.new(@desktop_documents, fn entry ->
-                               {entry.path, File.read!(Path.join(@project_source_root, entry.path))}
+                               case File.read(Path.join(@project_source_root, entry.path)) do
+                                 {:ok, markdown} -> {entry.path, markdown}
+                                 {:error, _reason} -> {entry.path, nil}
+                               end
                              end)
 
   @markdown_options [
@@ -230,9 +233,9 @@ defmodule Tempest.Docs do
   end
 
   defp embedded_desktop_manifest_file(entry) do
-    case Map.fetch(@embedded_desktop_markdown, entry.path) do
-      {:ok, markdown} -> {:ok, markdown}
-      :error -> {:error, :not_found}
+    case Map.get(@embedded_desktop_markdown, entry.path) do
+      markdown when is_binary(markdown) -> {:ok, markdown}
+      _missing -> {:error, :not_found}
     end
   end
 

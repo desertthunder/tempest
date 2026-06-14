@@ -97,6 +97,20 @@ defmodule Tempest.DocsTest do
       assert document.html =~ "<h2>v0.1.0</h2>"
     end
 
+    test "fetches the changelog when runtime cwd does not contain CHANGELOG.md" do
+      original_cwd = File.cwd!()
+
+      try do
+        File.cd!(System.tmp_dir!())
+
+        assert {:ok, document} = Docs.fetch_desktop_document("changelog")
+        assert document.path == "CHANGELOG.md"
+        assert document.html =~ "<h2>v0.1.0</h2>"
+      after
+        File.cd!(original_cwd)
+      end
+    end
+
     test "rejects unknown desktop documents and path traversal attempts" do
       assert Docs.fetch_desktop_document("missing") == {:error, :not_found}
       assert Docs.fetch_desktop_document("../config/prod.exs") == {:error, :not_found}
