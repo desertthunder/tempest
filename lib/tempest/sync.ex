@@ -345,11 +345,11 @@ defmodule Tempest.Sync do
             %{acc | requested: acc.requested + 1}
 
           {:skip, reason} ->
-            log_relay_crawl_skip(relay, reason)
+            log_relay_crawl_skip(relay, hostname, reason)
             %{acc | skipped: acc.skipped + 1}
 
           {:error, reason} ->
-            log_relay_crawl_failure(relay, reason)
+            log_relay_crawl_failure(relay, hostname, reason)
             %{acc | failed: acc.failed + 1}
         end
       end)
@@ -363,12 +363,12 @@ defmodule Tempest.Sync do
     {:ok, %{}}
   end
 
-  defp log_relay_crawl_skip(relay, reason) do
-    Logger.warning("skipping requestCrawl relay #{inspect(relay)}: #{inspect(reason)}")
+  defp log_relay_crawl_skip(relay, hostname, reason) do
+    Logger.warning("skipping requestCrawl relay #{inspect(relay)} hostname=#{inspect(hostname)}: #{inspect(reason)}")
   end
 
-  defp log_relay_crawl_failure(relay, reason) do
-    Logger.warning("requestCrawl relay #{inspect(relay)} failed: #{inspect(reason)}")
+  defp log_relay_crawl_failure(relay, hostname, reason) do
+    Logger.warning("requestCrawl relay #{inspect(relay)} hostname=#{inspect(hostname)} failed: #{inspect(reason)}")
   end
 
   defp request_relay_crawl(relay, hostname, req_options) when is_binary(relay) do
@@ -383,6 +383,7 @@ defmodule Tempest.Sync do
 
         case Req.post(request) do
           {:ok, %{status: status}} when status in 200..299 -> :ok
+          {:ok, %{status: status, body: body}} -> {:error, {:relay_status, status, relay_response_preview(body)}}
           {:ok, %{status: status}} -> {:error, {:relay_status, status}}
           {:error, reason} -> {:error, {:relay_request_failed, reason}}
         end
@@ -393,6 +394,10 @@ defmodule Tempest.Sync do
   end
 
   defp request_relay_crawl(_relay, _hostname, _req_options), do: {:skip, :invalid_relay}
+
+  defp relay_response_preview(body) when is_binary(body), do: String.slice(body, 0, 512)
+  defp relay_response_preview(nil), do: ""
+  defp relay_response_preview(body), do: body |> inspect(limit: 20, printable_limit: 512) |> String.slice(0, 512)
 
   defp relay_url(relay) do
     relay = String.trim_trailing(relay, "/")

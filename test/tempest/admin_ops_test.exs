@@ -74,8 +74,13 @@ defmodule Tempest.AdminOpsTest do
   end
 
   test "backup create and restore refuse unsafe overwrite", %{config: config} do
-    backup_dir = Path.join([System.tmp_dir!(), "tempest-backup-test-#{System.unique_integer([:positive])}"])
-    restore_dir = Path.join([System.tmp_dir!(), "tempest-restore-test-#{System.unique_integer([:positive])}"])
+    backup_dir = tmp_path!("backup-test")
+    restore_dir = tmp_path!("restore-test")
+
+    on_exit(fn ->
+      File.rm_rf(backup_dir)
+      File.rm_rf(restore_dir)
+    end)
 
     assert {:ok, %{path: ^backup_dir}} = Backup.create(config: config, path: backup_dir)
     assert File.exists?(Path.join(backup_dir, "manifest.json"))
@@ -276,4 +281,9 @@ defmodule Tempest.AdminOpsTest do
   end
 
   defp path_did(did), do: String.replace(did, ~r/[^A-Za-z0-9._-]/, "_")
+
+  defp tmp_path!(name) do
+    suffix = 8 |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
+    Path.join(System.tmp_dir!(), "tempest-#{name}-#{suffix}")
+  end
 end

@@ -2,6 +2,7 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
   use TempestWeb.ConnCase, async: false
 
   import Ecto.Query
+  import ExUnit.CaptureLog
 
   alias Tempest.Accounts.Account
   alias Tempest.Repo
@@ -407,13 +408,19 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
       end
     end)
 
-    crawl_conn =
-      conn
-      |> recycle()
-      |> put_req_header("content-type", "application/json")
-      |> post(~p"/xrpc/com.atproto.sync.requestCrawl", %{"hostname" => "localhost"})
+    log =
+      capture_log(fn ->
+        crawl_conn =
+          conn
+          |> recycle()
+          |> put_req_header("content-type", "application/json")
+          |> post(~p"/xrpc/com.atproto.sync.requestCrawl", %{"hostname" => "localhost"})
 
-    assert json_response(crawl_conn, 200) == %{}
+        assert json_response(crawl_conn, 200) == %{}
+      end)
+
+    assert log =~ ~s(requestCrawl relay "https://bad-relay.test" hostname="localhost" failed:)
+    assert log =~ "{:relay_status, 503"
   end
 
   test "request_own_crawl requests configured relays for the local hostname" do
