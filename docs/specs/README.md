@@ -18,7 +18,7 @@ Subsystem specifications live in this directory.
 2. [XRPC HTTP Surface](./xrpc.md)
 3. [SQLite Storage](./storage-sqlite.md)
 4. [Accounts and Auth](accounts-auth.md)
-5. [Identity and Handles](identity-handles.md)
+5. [Identity and Handles](./identity-handles.md)
 6. [Repository Core](./repo-core.md)
 7. [Record APIs](./record-apis.md)
 8. [Lexicon Schema Loading and Generation](./lexicon-schemas.md)
@@ -32,7 +32,7 @@ Subsystem specifications live in this directory.
 16. [PDS Compatibility Against Reference Surface](./pds-compatibility.md)
 17. [Public Stats Dashboard](./public-stats-dashboard.md)
 18. [Documentation Viewer](./doc-viewer.md)
-19. [Personal Account Backups](./personal-backups.md)
+19. [Account Management Control Panel](./account-management.md)
 
 ## Source Baseline
 
