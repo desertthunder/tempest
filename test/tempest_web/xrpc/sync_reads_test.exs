@@ -439,7 +439,7 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
       Plug.Conn.send_resp(req_conn, 200, "{}")
     end)
 
-    assert {:ok, %{}} = Tempest.Sync.request_own_crawl()
+    assert {:ok, %{requested: 1, skipped: 0, failed: 0}} = Tempest.Sync.request_own_crawl()
   end
 
   test "request_own_crawl does not consume the public requestCrawl rate limit", %{conn: conn} do
@@ -449,7 +449,7 @@ defmodule TempestWeb.Xrpc.SyncReadsTest do
       http_req_options: [plug: {Req.Test, __MODULE__}]
     )
 
-    assert {:ok, %{}} = Tempest.Sync.request_own_crawl()
+    assert {:ok, %{requested: 0, skipped: 0, failed: 0}} = Tempest.Sync.request_own_crawl()
 
     public_conn =
       conn

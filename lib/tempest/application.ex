@@ -4,6 +4,9 @@ defmodule Tempest.Application do
   @moduledoc false
 
   use Application
+  require Logger
+
+  @crawl_retry_delays_ms [10_000, 30_000, 120_000]
 
   @impl true
   def start(_type, _args) do
@@ -43,9 +46,24 @@ defmodule Tempest.Application do
 
   defp maybe_request_crawl do
     if Application.get_env(:tempest, :env, :prod) != :test do
-      Task.start(fn -> Tempest.Sync.request_own_crawl() end)
+      Task.start(fn -> request_crawl_with_retries(@crawl_retry_delays_ms) end)
     end
 
     :ok
+  end
+
+  defp request_crawl_with_retries([]), do: :ok
+
+  defp request_crawl_with_retries([delay_ms | remaining_delays]) do
+    Process.sleep(delay_ms)
+
+    case Tempest.Sync.request_own_crawl() do
+      {:ok, %{failed: 0}} ->
+        :ok
+
+      {:ok, result} ->
+        Logger.warning("startup requestCrawl will retry after relay failures: #{inspect(result)}")
+        request_crawl_with_retries(remaining_delays)
+    end
   end
 end

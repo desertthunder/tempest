@@ -122,8 +122,9 @@ defmodule Tempest.Sync do
 
   def request_crawl(params) when is_map(params) do
     with {:ok, hostname} <- validate_request_crawl_hostname(Map.get(params, "hostname")),
-         :ok <- check_request_crawl_rate(hostname) do
-      request_configured_relays(hostname)
+         :ok <- check_request_crawl_rate(hostname),
+         {:ok, _result} <- request_configured_relays(hostname) do
+      {:ok, %{}}
     end
   end
 
@@ -360,7 +361,7 @@ defmodule Tempest.Sync do
       failed: result.failed
     })
 
-    {:ok, %{}}
+    {:ok, result}
   end
 
   defp log_relay_crawl_skip(relay, hostname, reason) do
