@@ -423,14 +423,21 @@ defmodule Tempest.RepoStorage do
       result =
         with {:ok, records} <- scalar_count(conn, "SELECT COUNT(*) FROM records", []),
              {:ok, commits} <- scalar_count(conn, "SELECT COUNT(*) FROM commits", []),
+             {:ok, collections} <- scalar_count(conn, "SELECT COUNT(DISTINCT collection) FROM records", []),
              {:ok, blocks} <- scalar_count(conn, "SELECT COUNT(*) FROM blocks", []),
-             {:ok, referenced_cids} <- referenced_blob_cids_from_db(conn) do
+             {:ok, referenced_cids} <- referenced_blob_cids_from_db(conn),
+             {:ok, latest_record_at} <- scalar_value(conn, "SELECT MAX(updated_at) FROM records", []),
+             {:ok, latest_commit_at} <- scalar_value(conn, "SELECT MAX(inserted_at) FROM commits", []) do
           {:ok,
            %{
              repo_count: if(commits > 0, do: 1, else: 0),
              block_count: blocks,
              commit_count: commits,
+             collection_count: collections,
              record_count: records,
+             latest_record_at: latest_record_at,
+             latest_commit_at: latest_commit_at,
+             latest_activity_at: max_iso8601([latest_record_at, latest_commit_at]),
              referenced_blob_count: length(referenced_cids),
              referenced_blob_cids: referenced_cids
            }}
@@ -815,6 +822,20 @@ defmodule Tempest.RepoStorage do
       {:ok, _rows} -> {:error, :unexpected_count_result}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp scalar_value(conn, sql, params) do
+    case fetch_all(conn, sql, params) do
+      {:ok, [[value]]} -> {:ok, value}
+      {:ok, _rows} -> {:error, :unexpected_scalar_result}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp max_iso8601(values) do
+    values
+    |> Enum.reject(&is_nil/1)
+    |> Enum.max(fn -> nil end)
   end
 
   defp referenced_blob_cids(record_json) do

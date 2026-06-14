@@ -25,6 +25,7 @@ defmodule Tempest.Sequencer do
   @last_insert_sql "SELECT last_insert_rowid()"
   @current_seq_sql "SELECT COALESCE(MAX(seq), 0) FROM repo_seq"
   @torn_write_count_sql "SELECT COUNT(*) FROM repo_seq WHERE event_cbor = ''"
+  @latest_created_at_sql "SELECT MAX(created_at) FROM repo_seq WHERE event_cbor != ''"
 
   defmodule Event do
     @moduledoc """
@@ -112,6 +113,22 @@ defmodule Tempest.Sequencer do
          :ok <- Sqlite3.release(conn, statement),
          :ok <- Sqlite3.close(conn) do
       {:ok, count}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def latest_created_at do
+    path =
+      Tempest.Config.load!()
+      |> Tempest.Config.sequencer_db_path()
+
+    with {:ok, conn} <- Sqlite3.open(path),
+         {:ok, statement} <- Sqlite3.prepare(conn, @latest_created_at_sql),
+         {:ok, [[created_at]]} <- Sqlite3.fetch_all(conn, statement),
+         :ok <- Sqlite3.release(conn, statement),
+         :ok <- Sqlite3.close(conn) do
+      {:ok, created_at}
     else
       {:error, reason} -> {:error, reason}
     end

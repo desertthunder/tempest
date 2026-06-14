@@ -12,15 +12,15 @@ references:
 Goal: expose safe public aggregate stats for the experimental Tempest PDS while
 keeping admin-only operations and sensitive internals private.
 
-- [ ] T16-01: Add a public stats context or sanitized stats function.
+- [x] T16-01: Add a public stats context or sanitized stats function.
       It should not reuse the full private admin status response directly.
-- [ ] T16-02: Extend repo stats to include per-repo `commit_count`,
+- [x] T16-02: Extend repo stats to include per-repo `commit_count`,
       `collection_count`, and latest repo activity timestamps.
-- [ ] T16-03: Add aggregate counts for hosted accounts, total accounts, commits,
+- [x] T16-03: Add aggregate counts for hosted accounts, total accounts, commits,
       collections, records, and `lastIndexedAt`.
-- [ ] T16-04: Add application uptime tracking based on monotonic time recorded at
+- [x] T16-04: Add application uptime tracking based on monotonic time recorded at
       application start.
-- [ ] T16-05: Add a public health summary with `ok`, `degraded`, and `unhealthy`
+- [x] T16-05: Add a public health summary with `ok`, `degraded`, and `unhealthy`
       states.
 - [ ] T16-06: Add `GET /xrpc/_stats` returning sanitized public JSON.
 - [ ] T16-07: Add `GET /stats` public HTML dashboard.

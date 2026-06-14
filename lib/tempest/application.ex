@@ -10,6 +10,8 @@ defmodule Tempest.Application do
 
   @impl true
   def start(_type, _args) do
+    :persistent_term.put({__MODULE__, :started_at_monotonic}, System.monotonic_time(:second))
+
     config = Tempest.Config.load!()
     Tempest.Storage.bootstrap!(config)
     Tempest.Lexicon.Registry.validate_startup!()
@@ -65,5 +67,9 @@ defmodule Tempest.Application do
         Logger.warning("startup requestCrawl will retry after relay failures: #{inspect(result)}")
         request_crawl_with_retries(remaining_delays)
     end
+  end
+
+  def started_at_monotonic do
+    :persistent_term.get({__MODULE__, :started_at_monotonic}, System.monotonic_time(:second))
   end
 end

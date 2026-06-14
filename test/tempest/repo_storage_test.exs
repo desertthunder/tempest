@@ -103,6 +103,48 @@ defmodule Tempest.RepoStorageTest do
     assert Enum.map(car.blocks, &Cid.to_string(&1.cid)) == stored_cids
   end
 
+  test "status counts include public stats fields and latest activity" do
+    assert {:ok, created} =
+             Accounts.create_account(%{
+               "handle" => "repo-public-stats.test",
+               "email" => "repo-public-stats@example.com",
+               "password" => @password
+             })
+
+    path =
+      Config.load!()
+      |> Config.repo_db_path(created["did"])
+
+    on_exit(fn -> File.rm(path) end)
+
+    account = Repo.get_by!(Account, did: created["did"])
+    signing_key = KeyStore.active_key_for_account(account)
+
+    assert {:ok, _record} =
+             RepoStorage.create_record(account, signing_key, %{
+               collection: "app.bsky.actor.profile",
+               rkey: "self",
+               swap_commit: nil,
+               record: %{"$type" => "app.bsky.actor.profile", "displayName" => "Alice"}
+             })
+
+    assert {:ok, _record} =
+             RepoStorage.create_record(account, signing_key, %{
+               collection: "app.bsky.feed.post",
+               rkey: "one",
+               swap_commit: nil,
+               record: %{"$type" => "app.bsky.feed.post", "text" => "hello"}
+             })
+
+    assert {:ok, counts} = RepoStorage.status_counts(created["did"])
+    assert counts.commit_count == 3
+    assert counts.collection_count == 2
+    assert counts.record_count == 2
+    assert is_binary(counts.latest_commit_at)
+    assert is_binary(counts.latest_record_at)
+    assert counts.latest_activity_at == max(counts.latest_commit_at, counts.latest_record_at)
+  end
+
   test "imported records normalize DRISL CID links before storing JSON" do
     assert {:ok, source_created} =
              Accounts.create_account(%{
