@@ -18,7 +18,12 @@ defmodule Tempest.Blobs.S3Storage do
          {:ok, request} <- request_options(config, temp_key(did, cid), method: :put, body: bytes) do
       case Req.request(request) do
         {:ok, %{status: status}} when status in 200..299 ->
-          {:ok, %{cid: cid, path: temp_key(did, cid), size: byte_size(bytes)}}
+          key = temp_key(did, cid)
+
+          case verify_temp_blob(config, key, bytes) do
+            :ok -> {:ok, %{cid: cid, path: key, size: byte_size(bytes)}}
+            {:error, reason} -> {:error, reason}
+          end
 
         {:ok, %{status: status}} ->
           {:error, {:s3_status, status}}
@@ -137,6 +142,14 @@ defmodule Tempest.Blobs.S3Storage do
          :ok <- write_key(config, destination, bytes),
          :ok <- delete_temp_blob(config, did, cid) do
       {:ok, destination}
+    end
+  end
+
+  defp verify_temp_blob(config, key, expected_bytes) do
+    case read_key(config, key) do
+      {:ok, ^expected_bytes} -> :ok
+      {:ok, _other_bytes} -> {:error, :blob_content_mismatch}
+      {:error, reason} -> {:error, reason}
     end
   end
 

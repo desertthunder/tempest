@@ -178,6 +178,7 @@ defmodule Tempest.Xrpc.Repo do
   defp repo_error(:missing_mime_type), do: {:error, 400, "InvalidRequest", "Content-Type is required"}
   defp repo_error(:invalid_mime_type), do: {:error, 400, "InvalidRequest", "Content-Type is invalid"}
   defp repo_error(:mime_type_mismatch), do: {:error, 400, "InvalidRequest", "Content-Type does not match blob bytes"}
+  defp repo_error(:blob_content_mismatch), do: {:error, 502, "UpstreamFailure", "blob storage changed uploaded bytes"}
   defp repo_error(:missing_blob), do: {:error, 400, "InvalidRequest", "record references a missing blob"}
   defp repo_error(:blob_not_found), do: {:error, 500, "InternalServerError", "uploaded blob bytes could not be found"}
   defp repo_error(:missing_record_type), do: {:error, 400, "InvalidRequest", "record must include a $type field"}

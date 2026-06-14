@@ -28,8 +28,46 @@ defmodule Tempest.Blobs.S3StorageTest do
       Plug.Conn.send_resp(conn, 200, "")
     end)
 
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 bytes")
+    end)
+
     assert {:ok, stored} = S3Storage.put_temp_blob(config, did, cid, "s3 bytes")
     assert stored == %{cid: cid, path: "temp/blobs/#{did}/#{cid}", size: 8}
+  end
+
+  test "put_temp_blob fails when the written temp object cannot be read back", %{config: config, did: did, cid: cid} do
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 404, "")
+    end)
+
+    assert {:error, :blob_not_found} = S3Storage.put_temp_blob(config, did, cid, "s3 bytes")
+  end
+
+  test "put_temp_blob fails when the read-back temp object bytes do not match", %{config: config, did: did, cid: cid} do
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "PUT"
+      assert conn.request_path == "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/did%3Aplc%3As3storage/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "wrong bytes")
+    end)
+
+    assert {:error, :blob_content_mismatch} = S3Storage.put_temp_blob(config, did, cid, "s3 bytes")
   end
 
   test "promote_blob copies temp object into the public blob key and deletes temp", %{

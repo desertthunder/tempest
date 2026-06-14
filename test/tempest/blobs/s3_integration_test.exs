@@ -44,6 +44,12 @@ defmodule Tempest.Blobs.S3IntegrationTest do
       Plug.Conn.send_resp(conn, 200, "")
     end)
 
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 integration bytes")
+    end)
+
     blob = upload_blob!(conn, account, "s3 integration bytes")["blob"]
     assert blob["ref"]["$link"] == cid
 
@@ -99,6 +105,12 @@ defmodule Tempest.Blobs.S3IntegrationTest do
       Plug.Conn.send_resp(conn, 200, "")
     end)
 
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 promotion failure")
+    end)
+
     blob = upload_blob!(conn, account, "s3 promotion failure")["blob"]
 
     Req.Test.expect(__MODULE__, fn conn ->
@@ -151,6 +163,12 @@ defmodule Tempest.Blobs.S3IntegrationTest do
       assert conn.method == "PUT"
       assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
       Plug.Conn.send_resp(conn, 200, "")
+    end)
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      assert conn.method == "GET"
+      assert conn.request_path == "/tempest-test/temp/blobs/#{encoded_did(account["did"])}/#{cid}"
+      Plug.Conn.send_resp(conn, 200, "s3 missing temp")
     end)
 
     blob = upload_blob!(conn, account, "s3 missing temp")["blob"]
