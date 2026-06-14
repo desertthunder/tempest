@@ -11,15 +11,15 @@ references:
 Goal: publish `docs/reference/` as a public Phoenix documentation site with a
 Netscape Navigator-inspired shell and a web 1.0 design (with a sidebar & search)
 
-- [ ] T17-01: Add a `Tempest.Docs` context with a fixed manifest for files under
+- [x] T17-01: Add a `Tempest.Docs` context with a fixed manifest for files under
       `docs/reference/`.
-- [ ] T17-02: Add safe document lookup by slug. Reject unknown slugs and any path
+- [x] T17-02: Add safe document lookup by slug. Reject unknown slugs and any path
       traversal attempt.
-- [ ] T17-03: Add frontmatter parsing for `title` and `updated`, falling back to
+- [x] T17-03: Add frontmatter parsing for `title` and `updated`, falling back to
       manifest values when frontmatter is missing.
-- [ ] T17-04: Add server-side Markdown rendering for trusted local reference docs
+- [x] T17-04: Add server-side Markdown rendering for trusted local reference docs
       with `MDEx`
-- [ ] T17-05: Add relative-link rewriting for links between known reference docs.
+- [x] T17-05: Add relative-link rewriting for links between known reference docs.
 - [ ] T17-06: Add `TempestWeb.DocController` with `index` and `show` actions.
 - [ ] T17-07: Add public routes `GET /docs` and `GET /docs/:slug` under the
       browser pipeline.
@@ -28,7 +28,7 @@ Netscape Navigator-inspired shell and a web 1.0 design (with a sidebar & search)
       location bar, bookmarks pane, document pane, and footer.
 - [ ] T17-10: Add responsive CSS through the existing vanilla CSS structure
       (`assets/css/app.css` plus component files such as
-      `assets/css/components/doc-viewer.css`).
+      `assets/css/components/docs.css`).
 - [ ] T17-11: Add accessible focus, contrast, heading, and navigation behavior.
 - [ ] T17-12: Add previous/next document links based on manifest order.
 - [ ] T17-13: Link the docs viewer from the home page and any relevant public
@@ -38,8 +38,7 @@ Netscape Navigator-inspired shell and a web 1.0 design (with a sidebar & search)
 - [ ] T17-15: Add regression tests proving files outside `docs/reference/` cannot
       be rendered.
 - [ ] T17-16: Add Hurl smoke test `test/smoke/doc-viewer.hurl`.
-- [ ] T17-17: Add production caching or explicitly document request-time rendering
-      if the first implementation skips caching.
+- [ ] T17-17: Add production caching
 
 ## Integration Tests
 

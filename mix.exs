@@ -52,6 +52,7 @@ defmodule Tempest.MixProject do
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:jose, "~> 1.11"},
+      {:mdex, "~> 0.13.0"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"}
     ]
