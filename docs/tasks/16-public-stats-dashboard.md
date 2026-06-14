@@ -36,6 +36,32 @@ keeping admin-only operations and sensitive internals private.
 - [x] T16-13: Add Hurl smoke test `test/smoke/public-stats.hurl`.
 - [x] T16-14: Document cache behavior if stats are cached. Include `generatedAt`
       in the JSON response either way.
+- [ ] T16-15: Rename the public account detail concept to "users".
+- [ ] T16-16: Add the public `users` group described in the stats spec.
+- [ ] T16-17: Add public avatar and banner support for user cards.
+- [ ] T16-18: Render user cards on `/stats`.
+- [ ] T16-19: Add the public `latestRecord` group described in the stats spec.
+- [ ] T16-20: Render a "Latest Indexed Record" section on `/stats`.
+- [ ] T16-21: Add repo storage support for weekly commit counts.
+- [ ] T16-22: Add the public `commitWeeks` group described in the stats spec.
+- [ ] T16-23: Render a compact weekly commit histogram on `/stats`.
+- [ ] T16-24: Add repo storage support for collection summaries.
+- [ ] T16-25: Add the public `collections` group described in the stats spec.
+- [ ] T16-26: Render collection summary rows on `/stats` with count bars.
+- [ ] T16-27: Extend public stats tests for `users`, avatar/banner URLs,
+      `latestRecord`, `commitWeeks`, and collection summaries.
+- [ ] T16-28: Extend leak regression tests for the expanded public stats shape.
+- [ ] T16-29: Extend `test/smoke/public-stats.hurl` to cover the new JSON fields
+      and `/stats` sections.
+- [ ] T16-30: Add the public changelog document route described in the stats
+      spec.
+- [ ] T16-31: Keep changelog source lookup constrained to a fixed manifest entry.
+- [ ] T16-32: Style `/changelog` as a word processor document window.
+- [ ] T16-33: Link `/changelog` from the desktop shortcuts.
+- [ ] T16-34: Add ConnCase coverage for `/changelog`, its desktop shortcut, and
+      rejection of arbitrary file/path rendering.
+- [ ] T16-35: Add a changelog smoke check to the public stats or docs smoke
+      suite, depending on where the route is implemented.
 
 ## Integration Tests
 
@@ -45,12 +71,16 @@ keeping admin-only operations and sensitive internals private.
 - Counts reflect created accounts and repo writes in an isolated test database.
 - Health reports degraded or unhealthy when a required check is forced to fail.
 - Public responses omit sensitive fields.
+- Expanded public stats match the data contract in
+  `docs/specs/public-stats-dashboard.md`.
+- `/changelog` renders `CHANGELOG.md` publicly and is linked from the desktop.
 
 ## HTTP Verification
 
 ```bash
 curl -fsS http://localhost:4000/xrpc/_stats
 curl -fsS http://localhost:4000/stats
+curl -fsS http://localhost:4000/changelog
 hurl --test --jobs 1 \
   --variable base_url=http://localhost:4000 \
   test/smoke/public-stats.hurl
@@ -66,33 +96,5 @@ Every JSON response includes `generatedAt`, the UTC timestamp for that response'
 request-time snapshot. If a short TTL cache is added later, `generatedAt` must
 remain the timestamp for the cached snapshot, not the time a client receives it.
 
-Suggested JSON shape:
-
-```json
-{
-  "status": "ok",
-  "version": "0.1.0",
-  "generatedAt": "2026-06-12T19:00:00Z",
-  "uptimeSeconds": 86400,
-  "metrics": {
-    "hostedAccountCount": 3,
-    "totalAccountCount": 4,
-    "commitCount": 128,
-    "collectionCount": 12,
-    "recordCount": 2048,
-    "lastIndexedAt": "2026-06-12T18:57:11Z"
-  },
-  "health": {
-    "status": "ok",
-    "checks": {
-      "storageWritable": true,
-      "accountDatabase": "ok",
-      "sequencerDatabase": "ok",
-      "repoDirectory": "ok",
-      "blobDirectory": "ok",
-      "sequencerReadable": true,
-      "tornWriteCount": 0
-    }
-  }
-}
-```
+Detailed data contracts, UI behavior, and privacy rules live in
+`docs/specs/public-stats-dashboard.md`.
