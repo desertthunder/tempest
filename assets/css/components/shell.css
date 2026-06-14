@@ -260,6 +260,13 @@
   transform: translate(-1px, -1px);
 }
 
+.status-card__value {
+  margin-block-end: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .status-card__label {
   margin-block-end: var(--space-2);
   font-size: 0.75rem;
