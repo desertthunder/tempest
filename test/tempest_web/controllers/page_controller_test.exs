@@ -8,9 +8,9 @@ defmodule TempestWeb.PageControllerTest do
     assert html =~ ~s(id="tempest-home")
     assert html =~ "Personal Data Server"
     assert html =~ "Live Status"
-    assert html =~ "Public Metrics"
-    assert html =~ ~s(id="api-endpoints")
-    assert html =~ "Endpoint Surface"
+    assert html =~ "Protocol Surface"
+    refute html =~ "Public Stats"
+    refute html =~ "Endpoint Surface"
   end
 
   test "GET /stats renders a public aggregate dashboard", %{conn: conn} do
@@ -19,10 +19,15 @@ defmodule TempestWeb.PageControllerTest do
 
     assert html =~ ~s(id="tempest-home")
     assert html =~ "Tempest Public Stats"
+    assert html =~ "Public Stats"
     assert html =~ "Hosted Accounts"
-    assert html =~ "Total Accounts"
     assert html =~ "Commits"
+    assert html =~ "Collections"
+    assert html =~ "Records"
+    assert html =~ "Last Indexed"
+    assert html =~ "Uptime"
     assert html =~ "Health"
     assert html =~ "Stats scan errors"
+    refute html =~ "Endpoint Surface"
   end
 end

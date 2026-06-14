@@ -3,7 +3,7 @@ defmodule Tempest.PublicStatsTest do
 
   alias Tempest.Accounts
   alias Tempest.Accounts.{Account, AuthContext}
-  alias Tempest.{Config, PublicStats, Records, Repo}
+  alias Tempest.{Config, PublicStats, Records, Repo, RepoStorage}
 
   @password "correct horse battery staple"
 
@@ -62,13 +62,16 @@ defmodule Tempest.PublicStatsTest do
     path = Config.load!() |> Config.repo_db_path(account.did)
     File.rm!(path)
     File.mkdir_p!(path)
-    on_exit(fn -> File.rm_rf(path) end)
 
     summary = PublicStats.summary()
 
     assert summary["status"] == "degraded"
     assert summary["health"]["status"] == "degraded"
     assert summary["health"]["checks"]["statsScanErrorCount"] == 1
+
+    File.rm_rf!(path)
+    RepoStorage.create_repo_database!(Config.load!(), account.did)
+    Repo.update_all(from(a in Account, where: a.did == ^account.did), set: [active: false, status: "deactivated"])
   end
 
   test "health is unhealthy when required storage paths are missing" do

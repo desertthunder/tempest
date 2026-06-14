@@ -22,12 +22,12 @@ keeping admin-only operations and sensitive internals private.
       application start.
 - [x] T16-05: Add a public health summary with `ok`, `degraded`, and `unhealthy`
       states.
-- [ ] T16-06: Add `GET /xrpc/_stats` returning sanitized public JSON.
-- [ ] T16-07: Add `GET /stats` public HTML dashboard.
-- [ ] T16-08: Link the public stats dashboard from the home page.
-- [ ] T16-09: Add dashboard cards for hosted accounts, commits, collections,
+- [x] T16-06: Add `GET /xrpc/_stats` returning sanitized public JSON.
+- [x] T16-07: Add `GET /stats` public HTML dashboard.
+- [x] T16-08: Link the public stats dashboard from the home page.
+- [x] T16-09: Add dashboard cards for hosted accounts, commits, collections,
       records, last indexed, uptime, and health.
-- [ ] T16-10: Add helper copy explaining that `lastIndexedAt` is local repo,
+- [x] T16-10: Add helper copy explaining that `lastIndexedAt` is local repo,
       commit, or sequencer activity observed by this PDS.
 - [ ] T16-11: Add ConnCase tests for `/stats` and `/xrpc/_stats` without admin
       authorization.

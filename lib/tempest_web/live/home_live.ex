@@ -2,44 +2,9 @@ defmodule TempestWeb.HomeLive do
   use TempestWeb, :live_view
 
   alias Tempest.{Config, PublicStats}
-  alias Tempest.Xrpc.{Method, Registry}
+  alias Tempest.Xrpc.Registry
 
   @refresh_interval :timer.seconds(15)
-
-  @service_routes [
-    %{
-      verb: "GET",
-      name: "/.well-known/atproto-did",
-      href: "/.well-known/atproto-did",
-      badge: "public",
-      badge_class: "badge-success"
-    },
-    %{
-      verb: "GET",
-      name: "/.well-known/did.json",
-      href: "/.well-known/did.json",
-      badge: "public",
-      badge_class: "badge-success"
-    },
-    %{
-      verb: "GET",
-      name: "/.well-known/oauth-protected-resource",
-      href: "/.well-known/oauth-protected-resource",
-      badge: "meta",
-      badge_class: "badge-info"
-    },
-    %{
-      verb: "GET",
-      name: "/.well-known/oauth-authorization-server",
-      href: "/.well-known/oauth-authorization-server",
-      badge: "meta",
-      badge_class: "badge-info"
-    },
-    %{verb: "GET", name: "/oauth/jwks", href: "/oauth/jwks", badge: "meta", badge_class: "badge-info"},
-    %{verb: "GET", name: "/xrpc/_health", href: "/xrpc/_health", badge: "ops", badge_class: "badge-info"},
-    %{verb: "GET", name: "/xrpc/_stats", href: "/xrpc/_stats", badge: "public", badge_class: "badge-success"},
-    %{verb: "GET", name: "/xrpc/_admin/status", href: "/xrpc/_admin/status", badge: "ops", badge_class: "badge-ghost"}
-  ]
 
   @impl true
   def mount(_params, _session, socket) do
@@ -123,13 +88,13 @@ defmodule TempestWeb.HomeLive do
                 </div>
               </section>
 
-              <section class="win-window" aria-labelledby="status-title">
+              <section class="win-window" aria-labelledby="center-cards-title">
                 <header class="win-window__titlebar">
-                  <span id="status-title" class="win-window__title">Live Status</span>
+                  <span id="center-cards-title" class="win-window__title">{@center_title}</span>
                 </header>
                 <div class="win-window__body">
                   <div class="status-grid">
-                    <article :for={card <- @status_cards} id={card.id} class="status-card">
+                    <article :for={card <- @center_cards} id={card.id} class="status-card">
                       <h2 class="status-card__label">{card.label}</h2>
                       <p class="status-card__state">
                         <span class={["status-light", card.light_class]}></span>
@@ -143,24 +108,7 @@ defmodule TempestWeb.HomeLive do
               </section>
             </div>
 
-            <div class="tempest-home__grid">
-              <section class="win-window" aria-labelledby="metrics-title">
-                <header class="win-window__titlebar">
-                  <span id="metrics-title" class="win-window__title">Public Metrics</span>
-                </header>
-                <div class="win-window__body">
-                  <div class="stats-dashboard__metrics-grid">
-                    <article :for={metric <- @metric_cards} class="stats-dashboard__metric" id={metric.id}>
-                      <h2 class="stats-dashboard__metric-title">{metric.label}</h2>
-                      <p class={["stats-dashboard__metric-value", metric.mono? && "stats-dashboard__metric-value--mono"]}>
-                        {metric.value}
-                      </p>
-                      <p class="stats-dashboard__metric-note">{metric.note}</p>
-                    </article>
-                  </div>
-                </div>
-              </section>
-
+            <div :if={@live_action == :stats} class="tempest-home__grid">
               <section class="win-window" aria-labelledby="health-title">
                 <header class="win-window__titlebar">
                   <span id="health-title" class="win-window__title">Health Checks</span>
@@ -192,36 +140,6 @@ defmodule TempestWeb.HomeLive do
                 </div>
               </section>
             </div>
-
-            <section class="win-window" aria-labelledby="api-title">
-              <header class="win-window__titlebar">
-                <span id="api-title" class="win-window__title">Endpoint Surface</span>
-              </header>
-              <div id="api-endpoints" class="win-window__body endpoint-list">
-                <%= for endpoint <- @endpoint_rows do %>
-                  <a
-                    :if={endpoint.href}
-                    href={endpoint.href}
-                    class="endpoint-list__row"
-                  >
-                    <span class="endpoint-list__method">{endpoint.verb}</span>
-                    <span>
-                      <span class="endpoint-list__namespace">{endpoint.family}</span>
-                      {endpoint.name}
-                    </span>
-                    <span class={["badge", endpoint.badge_class, "endpoint-list__badge"]}>{endpoint.badge}</span>
-                  </a>
-                  <div :if={!endpoint.href} class={["endpoint-list__row", endpoint.muted? && "endpoint-list__row--muted"]}>
-                    <span class="endpoint-list__method">{endpoint.verb}</span>
-                    <span>
-                      <span class="endpoint-list__namespace">{endpoint.family}</span>
-                      {endpoint.name}
-                    </span>
-                    <span class={["badge", endpoint.badge_class, "endpoint-list__badge"]}>{endpoint.badge}</span>
-                  </div>
-                <% end %>
-              </div>
-            </section>
 
             <section class="resource-strip" aria-labelledby="resources-title">
               <h2 id="resources-title" class="resource-strip__title">Internet Shortcuts</h2>
@@ -283,7 +201,7 @@ defmodule TempestWeb.HomeLive do
     checks = health["checks"] || %{}
     metrics = summary["metrics"] || %{}
     methods = Registry.all()
-    endpoint_rows = build_endpoint_rows(methods, config.hostname)
+    center_cards = build_center_cards(socket.assigns.live_action, metrics, health, methods, summary)
 
     socket
     |> assign(:host, config.hostname)
@@ -294,14 +212,79 @@ defmodule TempestWeb.HomeLive do
     |> assign(:metrics, metrics)
     |> assign(:health_status, health["status"] || "unknown")
     |> assign(:rendered_at, summary["generatedAt"] || rendered_at())
-    |> assign(:status_cards, build_status_cards(metrics, health, methods))
-    |> assign(:metric_cards, build_metric_cards(metrics))
-    |> assign(:endpoint_rows, endpoint_rows)
-    |> assign(:endpoint_count, length(endpoint_rows))
-    |> assign(:public_endpoint_count, Enum.count(endpoint_rows, &(&1.badge == "public")))
+    |> assign(:center_title, center_title(socket.assigns.live_action))
+    |> assign(:center_cards, center_cards)
+    |> assign(:endpoint_count, length(methods))
+    |> assign(:public_endpoint_count, Enum.count(methods, &(&1.auth == :none)))
   end
 
-  defp build_status_cards(metrics, health, methods) do
+  defp center_title(:stats), do: "Public Stats"
+  defp center_title(_live_action), do: "Live Status"
+
+  defp build_center_cards(:stats, metrics, health, _methods, summary) do
+    health_status = health["status"] || "unknown"
+
+    [
+      %{
+        id: "hosted-account-count",
+        label: "Hosted Accounts",
+        state: "#{metrics["hostedAccountCount"] || 0}",
+        value: "active accounts",
+        note: "Accounts currently active and hosted on this node.",
+        light_class: "status-light--ok"
+      },
+      %{
+        id: "commit-count",
+        label: "Commits",
+        state: "#{metrics["commitCount"] || 0}",
+        value: "repo commits",
+        note: "Repository commit rows accumulated across hosted repos.",
+        light_class: "status-light--ready"
+      },
+      %{
+        id: "collection-count",
+        label: "Collections",
+        state: "#{metrics["collectionCount"] || 0}",
+        value: "current collections",
+        note: "Collections present in currently hosted repos.",
+        light_class: "status-light--ready"
+      },
+      %{
+        id: "record-count",
+        label: "Records",
+        state: "#{metrics["recordCount"] || 0}",
+        value: "visible records",
+        note: "Current records counted by the public stats scanner.",
+        light_class: "status-light--ready"
+      },
+      %{
+        id: "last-indexed-at",
+        label: "Last Indexed",
+        state: metrics["lastIndexedAt"] || "n/a",
+        value: "local activity",
+        note: "Local repo, commit, or sequencer activity observed by this PDS.",
+        light_class: "status-light--ready"
+      },
+      %{
+        id: "uptime-seconds",
+        label: "Uptime",
+        state: "#{summary["uptimeSeconds"] || 0}s",
+        value: "since app start",
+        note: "Based on monotonic time recorded when the application booted.",
+        light_class: "status-light--ok"
+      },
+      %{
+        id: "health-status",
+        label: "Health",
+        state: health_status,
+        value: "#{health["checks"]["statsScanErrorCount"] || 0} scan errors",
+        note: "Derived from storage, database, directory, and sequencer checks.",
+        light_class: health_light_class(health_status)
+      }
+    ]
+  end
+
+  defp build_center_cards(_live_action, metrics, health, methods, _summary) do
     hosted = metrics["hostedAccountCount"] || 0
     total = metrics["totalAccountCount"] || 0
     record_count = metrics["recordCount"] || 0
@@ -348,108 +331,6 @@ defmodule TempestWeb.HomeLive do
       }
     ]
   end
-
-  defp build_metric_cards(metrics) do
-    [
-      %{
-        id: "hosted-account-count",
-        label: "Hosted Accounts",
-        value: metrics["hostedAccountCount"] || 0,
-        note: "Active accounts currently hosted on this node.",
-        mono?: false
-      },
-      %{
-        id: "total-account-count",
-        label: "Total Accounts",
-        value: metrics["totalAccountCount"] || 0,
-        note: "All account rows, including inactive records.",
-        mono?: false
-      },
-      %{
-        id: "commit-count",
-        label: "Commits",
-        value: metrics["commitCount"] || 0,
-        note: "Repository commit rows accumulated across hosted repos.",
-        mono?: false
-      },
-      %{
-        id: "collection-count",
-        label: "Collections",
-        value: metrics["collectionCount"] || 0,
-        note: "Collections present in currently hosted repos.",
-        mono?: false
-      },
-      %{
-        id: "record-count",
-        label: "Records",
-        value: metrics["recordCount"] || 0,
-        note: "Visible records counted by the public stats scanner.",
-        mono?: false
-      },
-      %{
-        id: "last-indexed-at",
-        label: "Last Indexed",
-        value: metrics["lastIndexedAt"] || "n/a",
-        note: "Latest local repo or sequencer activity observed by this node.",
-        mono?: true
-      }
-    ]
-  end
-
-  defp build_endpoint_rows(methods, host) do
-    @service_routes
-    |> Enum.map(&Map.merge(&1, %{family: "service/", muted?: &1.badge != "public"}))
-    |> Kernel.++(
-      methods
-      |> Enum.sort_by(& &1.nsid)
-      |> Enum.map(&method_row(&1, host))
-    )
-  end
-
-  defp method_row(%Method{} = method, host) do
-    %{
-      verb: verb_for(method.kind),
-      family: family_for(method.nsid),
-      name: method.nsid,
-      href: public_href(method, host),
-      badge: badge_for(method),
-      badge_class: badge_class_for(method),
-      muted?: method.auth != :none
-    }
-  end
-
-  defp family_for(nsid) do
-    case String.split(nsid, ".") do
-      [_, _, family | _] -> family <> "/"
-      _ -> ""
-    end
-  end
-
-  defp verb_for(:query), do: "GET"
-  defp verb_for(:procedure), do: "POST"
-  defp verb_for(:subscription), do: "STREAM"
-
-  defp badge_for(%Method{kind: :subscription}), do: "stream"
-  defp badge_for(%Method{auth: :none}), do: "public"
-  defp badge_for(%Method{auth: :bearer}), do: "token"
-  defp badge_for(%Method{auth: :admin}), do: "admin"
-
-  defp badge_class_for(%Method{kind: :subscription}), do: "badge-ghost"
-  defp badge_class_for(%Method{auth: :none}), do: "badge-success"
-  defp badge_class_for(%Method{auth: :bearer}), do: "badge-info"
-  defp badge_class_for(%Method{auth: :admin}), do: "badge-ghost"
-
-  defp public_href(%Method{auth: :none, nsid: "com.atproto.server.describeServer"}, _host),
-    do: "/xrpc/com.atproto.server.describeServer"
-
-  defp public_href(%Method{auth: :none, nsid: "com.atproto.identity.resolveHandle"}, host) do
-    "/xrpc/com.atproto.identity.resolveHandle?handle=#{host}"
-  end
-
-  defp public_href(%Method{auth: :none, nsid: "com.atproto.sync.listRepos"}, _host),
-    do: "/xrpc/com.atproto.sync.listRepos"
-
-  defp public_href(%Method{}, _host), do: nil
 
   defp health_light_class("ok"), do: "status-light--ok"
   defp health_light_class("degraded"), do: "status-light--ready"

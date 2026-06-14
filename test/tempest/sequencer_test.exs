@@ -89,6 +89,8 @@ defmodule Tempest.SequencerTest do
 
     assert {:ok, events} = Sequencer.list_after(before_seq, did: did)
     assert Enum.map(events, & &1.seq) == [event.seq]
+
+    delete_torn_rows!(did)
   end
 
   defp insert_torn_row!(did) do
@@ -105,6 +107,22 @@ defmodule Tempest.SequencerTest do
       )
 
     :ok = Exqlite.Sqlite3.bind(statement, [did, "#identity", "", Timestamp.iso8601_utc()])
+    :done = Exqlite.Sqlite3.step(conn, statement)
+    :ok = Exqlite.Sqlite3.release(conn, statement)
+    :ok = Exqlite.Sqlite3.close(conn)
+  end
+
+  defp delete_torn_rows!(did) do
+    path =
+      Tempest.Config.load!()
+      |> Tempest.Config.sequencer_db_path()
+
+    {:ok, conn} = Exqlite.Sqlite3.open(path)
+
+    {:ok, statement} =
+      Exqlite.Sqlite3.prepare(conn, "DELETE FROM repo_seq WHERE did = ?1 AND event_cbor = ''")
+
+    :ok = Exqlite.Sqlite3.bind(statement, [did])
     :done = Exqlite.Sqlite3.step(conn, statement)
     :ok = Exqlite.Sqlite3.release(conn, statement)
     :ok = Exqlite.Sqlite3.close(conn)
