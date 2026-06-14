@@ -68,211 +68,211 @@ defmodule TempestWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={%{}}>
-      <main id="tempest-home" class="tempest-home">
-        <div class="tempest-home__desktop" aria-label="Tempest desktop">
-          <div class="tempest-home__workarea">
-            <nav class="desktop-icons" aria-label="Desktop shortcuts">
-              <a class="desktop-icon" href="https://github.com/desertthunder/tempest" target="_blank">
-                <img src={~p"/images/icons/github.svg"} alt="" width="40" height="40" />
-                <span>GitHub</span>
-              </a>
-              <a class="desktop-icon" href={~p"/stats"}>
-                <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
-                <span>Stats</span>
-              </a>
-              <a class="desktop-icon" href="#about-computer">
-                <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
-                <span>My Computer</span>
-              </a>
-            </nav>
+    <main id="tempest-home" class="tempest-home">
+      <div class="tempest-home__desktop" aria-label="Tempest desktop">
+        <div class="tempest-home__workarea">
+          <nav class="desktop-icons" aria-label="Desktop shortcuts">
+            <a class="desktop-icon" href="https://github.com/desertthunder/tempest" target="_blank">
+              <img src={~p"/images/icons/github.svg"} alt="" width="40" height="40" />
+              <span>GitHub</span>
+            </a>
+            <a class="desktop-icon" href={~p"/stats"}>
+              <img src={~p"/images/icons/db.svg"} alt="" width="40" height="40" />
+              <span>Stats</span>
+            </a>
+            <a class="desktop-icon" href="#about-computer">
+              <img src={~p"/images/icons/computer.svg"} alt="" width="40" height="40" />
+              <span>My Computer</span>
+            </a>
+          </nav>
 
-            <div class="tempest-home__windows">
-              <div class="tempest-home__top-grid">
-                <section class="win-window win-window--hero" aria-labelledby="tempest-title">
-                  <header class="win-window__titlebar">
-                    <span class="win-window__title">LIVE_STATS.EXE</span>
-                    <span class="win-window__controls" aria-hidden="true">
-                      <span></span><span></span><span></span>
-                    </span>
-                  </header>
-
-                  <div class="win-window__body tempest-home__hero">
-                    <div class="tempest-home__intro">
-                      <p class="tempest-home__brand" aria-hidden="true">Tempest PDS</p>
-                      <h1 id="tempest-title" class="tempest-home__title">Personal Data Server</h1>
-                      <p class="tempest-home__subtitle">Live node snapshot for <strong>{@host}</strong></p>
-                      <p class="stats-dashboard__muted">Refreshed {@rendered_at} · every 15s while connected</p>
-                    </div>
-
-                    <aside id="server-facts" class="tempest-home__server-card" aria-label="Server configuration">
-                      <dl class="facts-list facts-list--compact">
-                        <dt>status</dt>
-                        <dd>{@health_status}</dd>
-                        <dt>host</dt>
-                        <dd>{@host}</dd>
-                        <dt>version</dt>
-                        <dd>v{@app_version}</dd>
-                        <dt>uptime</dt>
-                        <dd>{@summary["uptimeSeconds"]}s</dd>
-                        <dt>surface</dt>
-                        <dd>{@public_endpoint_count} public / {@endpoint_count} total</dd>
-                        <dt>updated</dt>
-                        <dd>{@summary["generatedAt"]}</dd>
-                      </dl>
-                    </aside>
-                  </div>
-                </section>
-
-                <section class="win-window" aria-labelledby="status-title">
-                  <header class="win-window__titlebar">
-                    <span id="status-title" class="win-window__title">Live Status</span>
-                  </header>
-                  <div class="win-window__body">
-                    <div class="status-grid">
-                      <article :for={card <- @status_cards} id={card.id} class="status-card">
-                        <h2 class="status-card__label">{card.label}</h2>
-                        <p class="status-card__state">
-                          <span class={["status-light", card.light_class]}></span>
-                          {card.state}
-                        </p>
-                        <p class="status-card__value">{card.value}</p>
-                        <p>{card.note}</p>
-                      </article>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <div class="tempest-home__grid">
-                <section class="win-window" aria-labelledby="metrics-title">
-                  <header class="win-window__titlebar">
-                    <span id="metrics-title" class="win-window__title">Public Metrics</span>
-                  </header>
-                  <div class="win-window__body">
-                    <div class="stats-dashboard__metrics-grid">
-                      <article :for={metric <- @metric_cards} class="stats-dashboard__metric" id={metric.id}>
-                        <h2 class="stats-dashboard__metric-title">{metric.label}</h2>
-                        <p class={["stats-dashboard__metric-value", metric.mono? && "stats-dashboard__metric-value--mono"]}>
-                          {metric.value}
-                        </p>
-                        <p class="stats-dashboard__metric-note">{metric.note}</p>
-                      </article>
-                    </div>
-                  </div>
-                </section>
-
-                <section class="win-window" aria-labelledby="health-title">
-                  <header class="win-window__titlebar">
-                    <span id="health-title" class="win-window__title">Health Checks</span>
-                    <span class={["stats-dashboard__status-chip", "stats-dashboard__status-chip--#{@health_status}"]}>
-                      {@health_status}
-                    </span>
-                  </header>
-                  <div class="win-window__body stats-dashboard__health">
-                    <p class="stats-dashboard__subtitle">
-                      Public checks cover storage, databases, directories, and scan consistency.
-                    </p>
-                    <div class="stats-dashboard__checks">
-                      <p :for={
-                        {label, value} <- [
-                          {"Storage writable", @checks["storageWritable"]},
-                          {"Account DB", @checks["accountDatabase"]},
-                          {"Sequencer DB", @checks["sequencerDatabase"]},
-                          {"Repo dir", @checks["repoDirectory"]},
-                          {"Blob dir", @checks["blobDirectory"]},
-                          {"Sequencer readable", @checks["sequencerReadable"]},
-                          {"Torn write count", @checks["tornWriteCount"]},
-                          {"Stats scan errors", @checks["statsScanErrorCount"]}
-                        ]
-                      }>
-                        <span class="stats-dashboard__check-label">{label}</span>
-                        <span class="stats-dashboard__check-value">{inspect(value)}</span>
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              </div>
-
-              <section class="win-window" aria-labelledby="api-title">
+          <div class="tempest-home__windows">
+            <div class="tempest-home__top-grid">
+              <section class="win-window win-window--hero" aria-labelledby="tempest-title">
                 <header class="win-window__titlebar">
-                  <span id="api-title" class="win-window__title">Endpoint Surface</span>
+                  <span class="win-window__title">LIVE_STATS.EXE</span>
+                  <span class="win-window__controls" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                  </span>
                 </header>
-                <div id="api-endpoints" class="win-window__body endpoint-list">
-                  <%= for endpoint <- @endpoint_rows do %>
-                    <a
-                      :if={endpoint.href}
-                      href={endpoint.href}
-                      class="endpoint-list__row"
-                    >
-                      <span class="endpoint-list__method">{endpoint.verb}</span>
-                      <span>
-                        <span class="endpoint-list__namespace">{endpoint.family}</span>
-                        {endpoint.name}
-                      </span>
-                      <span class={["badge", endpoint.badge_class, "endpoint-list__badge"]}>{endpoint.badge}</span>
-                    </a>
-                    <div :if={!endpoint.href} class={["endpoint-list__row", endpoint.muted? && "endpoint-list__row--muted"]}>
-                      <span class="endpoint-list__method">{endpoint.verb}</span>
-                      <span>
-                        <span class="endpoint-list__namespace">{endpoint.family}</span>
-                        {endpoint.name}
-                      </span>
-                      <span class={["badge", endpoint.badge_class, "endpoint-list__badge"]}>{endpoint.badge}</span>
-                    </div>
-                  <% end %>
+
+                <div class="win-window__body tempest-home__hero">
+                  <div class="tempest-home__intro">
+                    <p class="tempest-home__brand" aria-hidden="true">Tempest PDS</p>
+                    <h1 id="tempest-title" class="tempest-home__title">Personal Data Server</h1>
+                    <p class="tempest-home__subtitle">Live node snapshot for <strong>{@host}</strong></p>
+                    <p class="stats-dashboard__muted">Refreshed {@rendered_at} · every 15s while connected</p>
+                  </div>
+
+                  <aside id="server-facts" class="tempest-home__server-card" aria-label="Server configuration">
+                    <dl class="facts-list facts-list--compact">
+                      <dt>status</dt>
+                      <dd>{@health_status}</dd>
+                      <dt>host</dt>
+                      <dd>{@host}</dd>
+                      <dt>version</dt>
+                      <dd>v{@app_version}</dd>
+                      <dt>uptime</dt>
+                      <dd>{@summary["uptimeSeconds"]}s</dd>
+                      <dt>surface</dt>
+                      <dd>{@public_endpoint_count} public / {@endpoint_count} total</dd>
+                      <dt>updated</dt>
+                      <dd>{@summary["generatedAt"]}</dd>
+                    </dl>
+                  </aside>
                 </div>
               </section>
 
-              <section class="resource-strip" aria-labelledby="resources-title">
-                <h2 id="resources-title" class="resource-strip__title">Internet Shortcuts</h2>
-                <nav id="resource-links" class="resource-strip__links" aria-label="AT Protocol resources">
-                  <a href="https://atproto.com">AT Protocol</a>
-                  <a href="https://atproto.com/guides/self-hosting">Self-hosting Guide</a>
-                  <a href="https://github.com/bluesky-social/atproto">ATProto Source</a>
-                  <a href="https://bsky.app">Bluesky</a>
-                </nav>
+              <section class="win-window" aria-labelledby="status-title">
+                <header class="win-window__titlebar">
+                  <span id="status-title" class="win-window__title">Live Status</span>
+                </header>
+                <div class="win-window__body">
+                  <div class="status-grid">
+                    <article :for={card <- @status_cards} id={card.id} class="status-card">
+                      <h2 class="status-card__label">{card.label}</h2>
+                      <p class="status-card__state">
+                        <span class={["status-light", card.light_class]}></span>
+                        {card.state}
+                      </p>
+                      <p class="status-card__value">{card.value}</p>
+                      <p>{card.note}</p>
+                    </article>
+                  </div>
+                </div>
               </section>
+            </div>
+
+            <div class="tempest-home__grid">
+              <section class="win-window" aria-labelledby="metrics-title">
+                <header class="win-window__titlebar">
+                  <span id="metrics-title" class="win-window__title">Public Metrics</span>
+                </header>
+                <div class="win-window__body">
+                  <div class="stats-dashboard__metrics-grid">
+                    <article :for={metric <- @metric_cards} class="stats-dashboard__metric" id={metric.id}>
+                      <h2 class="stats-dashboard__metric-title">{metric.label}</h2>
+                      <p class={["stats-dashboard__metric-value", metric.mono? && "stats-dashboard__metric-value--mono"]}>
+                        {metric.value}
+                      </p>
+                      <p class="stats-dashboard__metric-note">{metric.note}</p>
+                    </article>
+                  </div>
+                </div>
+              </section>
+
+              <section class="win-window" aria-labelledby="health-title">
+                <header class="win-window__titlebar">
+                  <span id="health-title" class="win-window__title">Health Checks</span>
+                  <span class={["stats-dashboard__status-chip", "stats-dashboard__status-chip--#{@health_status}"]}>
+                    {@health_status}
+                  </span>
+                </header>
+                <div class="win-window__body stats-dashboard__health">
+                  <p class="stats-dashboard__subtitle">
+                    Public checks cover storage, databases, directories, and scan consistency.
+                  </p>
+                  <div class="stats-dashboard__checks">
+                    <p :for={
+                      {label, value} <- [
+                        {"Storage writable", @checks["storageWritable"]},
+                        {"Account DB", @checks["accountDatabase"]},
+                        {"Sequencer DB", @checks["sequencerDatabase"]},
+                        {"Repo dir", @checks["repoDirectory"]},
+                        {"Blob dir", @checks["blobDirectory"]},
+                        {"Sequencer readable", @checks["sequencerReadable"]},
+                        {"Torn write count", @checks["tornWriteCount"]},
+                        {"Stats scan errors", @checks["statsScanErrorCount"]}
+                      ]
+                    }>
+                      <span class="stats-dashboard__check-label">{label}</span>
+                      <span class="stats-dashboard__check-value">{inspect(value)}</span>
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <section class="win-window" aria-labelledby="api-title">
+              <header class="win-window__titlebar">
+                <span id="api-title" class="win-window__title">Endpoint Surface</span>
+              </header>
+              <div id="api-endpoints" class="win-window__body endpoint-list">
+                <%= for endpoint <- @endpoint_rows do %>
+                  <a
+                    :if={endpoint.href}
+                    href={endpoint.href}
+                    class="endpoint-list__row"
+                  >
+                    <span class="endpoint-list__method">{endpoint.verb}</span>
+                    <span>
+                      <span class="endpoint-list__namespace">{endpoint.family}</span>
+                      {endpoint.name}
+                    </span>
+                    <span class={["badge", endpoint.badge_class, "endpoint-list__badge"]}>{endpoint.badge}</span>
+                  </a>
+                  <div :if={!endpoint.href} class={["endpoint-list__row", endpoint.muted? && "endpoint-list__row--muted"]}>
+                    <span class="endpoint-list__method">{endpoint.verb}</span>
+                    <span>
+                      <span class="endpoint-list__namespace">{endpoint.family}</span>
+                      {endpoint.name}
+                    </span>
+                    <span class={["badge", endpoint.badge_class, "endpoint-list__badge"]}>{endpoint.badge}</span>
+                  </div>
+                <% end %>
+              </div>
+            </section>
+
+            <section class="resource-strip" aria-labelledby="resources-title">
+              <h2 id="resources-title" class="resource-strip__title">Internet Shortcuts</h2>
+              <nav id="resource-links" class="resource-strip__links" aria-label="AT Protocol resources">
+                <a href="https://atproto.com">AT Protocol</a>
+                <a href="https://atproto.com/guides/self-hosting">Self-hosting Guide</a>
+                <a href="https://github.com/bluesky-social/atproto">ATProto Source</a>
+                <a href="https://bsky.app">Bluesky</a>
+              </nav>
+            </section>
+          </div>
+        </div>
+
+        <section id="about-computer" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-computer-title">
+          <a href="#" class="modal__backdrop" aria-label="Close About this Computer"></a>
+          <div class="win-window modal__window">
+            <header class="win-window__titlebar">
+              <span id="about-computer-title" class="win-window__title">About this Computer</span>
+              <a href="#" class="win-window__close" aria-label="Close">×</a>
+            </header>
+            <div class="win-window__body about-computer">
+              <img src={~p"/images/icons/computer.svg"} alt="" width="56" height="56" />
+              <div>
+                <h2>Tempest PDS</h2>
+                <p>A Personal Data Server on the BEAM.</p>
+                <dl class="facts-list about-computer__facts">
+                  <dt>version</dt>
+                  <dd>v{@app_version}</dd>
+                  <dt>host</dt>
+                  <dd>{@host}</dd>
+                  <dt>rendered</dt>
+                  <dd>{@rendered_at}</dd>
+                  <dt>source</dt>
+                  <dd><a href="https://github.com/desertthunder/tempest">github.com/desertthunder/tempest</a></dd>
+                </dl>
+              </div>
             </div>
           </div>
+        </section>
 
-          <section id="about-computer" class="modal" role="dialog" aria-modal="true" aria-labelledby="about-computer-title">
-            <a href="#" class="modal__backdrop" aria-label="Close About this Computer"></a>
-            <div class="win-window modal__window">
-              <header class="win-window__titlebar">
-                <span id="about-computer-title" class="win-window__title">About this Computer</span>
-                <a href="#" class="win-window__close" aria-label="Close">×</a>
-              </header>
-              <div class="win-window__body about-computer">
-                <img src={~p"/images/icons/computer.svg"} alt="" width="56" height="56" />
-                <div>
-                  <h2>Tempest PDS</h2>
-                  <p>A Personal Data Server on the BEAM.</p>
-                  <dl class="facts-list about-computer__facts">
-                    <dt>version</dt>
-                    <dd>v{@app_version}</dd>
-                    <dt>host</dt>
-                    <dd>{@host}</dd>
-                    <dt>rendered</dt>
-                    <dd>{@rendered_at}</dd>
-                    <dt>source</dt>
-                    <dd><a href="https://github.com/desertthunder/tempest">github.com/desertthunder/tempest</a></dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </section>
+        <footer class="taskbar">
+          <span class="taskbar__start">
+            <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
+          </span>
+          <span class="taskbar__app">tempest pds / {@host}</span>
+          <span class="taskbar__tray" aria-label="Current UTC time">{@rendered_at}</span>
+        </footer>
+      </div>
+    </main>
 
-          <footer class="taskbar">
-            <span class="taskbar__start">
-              <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
-            </span>
-            <span class="taskbar__app">tempest pds / {@host}</span>
-            <span class="taskbar__tray" aria-label="Current UTC time">{@rendered_at}</span>
-          </footer>
-        </div>
-      </main>
-    </Layouts.app>
+    <Layouts.flash_group flash={@flash} />
     """
   end
 
