@@ -6,16 +6,35 @@ defmodule Tempest.Interop.LocalServerSdkTest do
   alias Tempest.AtprotoSdkClient
   alias Tempest.OAuth.Dpop
   alias Tempest.RepoCore.{Car, Cid, Drisl}
+  alias Tempest.Security.ExternalMetadataFetcher
 
   @base_url "http://localhost:4002"
   @password "correct horse battery staple"
-  @client_id "did:web:local-sdk-client.example.com"
+  @client_id "https://local-sdk-client.example.com/oauth/client-metadata.json"
   @redirect_uri "https://local-sdk-client.example.com/cb"
 
-  setup do
+  setup context do
+    Req.Test.set_req_test_from_context(context)
+    Req.Test.verify_on_exit!(context)
+
     Tempest.DataCase.setup_sandbox(%{async: false})
 
+    original_fetcher_config = Application.get_env(:tempest, ExternalMetadataFetcher, [])
+
+    Application.put_env(:tempest, ExternalMetadataFetcher,
+      dns_lookup: fn "local-sdk-client.example.com" -> {:ok, [{93, 184, 216, 34}]} end,
+      req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.json(conn, client_metadata())
+    end)
+
     start_supervised!({Bandit, plug: TempestWeb.Endpoint, scheme: :http, ip: {127, 0, 0, 1}, port: 4002})
+
+    on_exit(fn ->
+      Application.put_env(:tempest, ExternalMetadataFetcher, original_fetcher_config)
+    end)
 
     {:ok, client: AtprotoSdkClient.new(@base_url)}
   end
@@ -309,6 +328,20 @@ defmodule Tempest.Interop.LocalServerSdkTest do
   defp dpop(method, url, nonce), do: Tempest.DpopProof.proof(method, url, nonce)
 
   defp code_challenge(verifier), do: :crypto.hash(:sha256, verifier) |> Base.url_encode64(padding: false)
+
+  defp client_metadata do
+    %{
+      "client_id" => @client_id,
+      "client_name" => "Local SDK Test Client",
+      "redirect_uris" => [@redirect_uri],
+      "grant_types" => ["authorization_code", "refresh_token"],
+      "response_types" => ["code"],
+      "scope" => "atproto",
+      "token_endpoint_auth_method" => "none",
+      "application_type" => "web",
+      "dpop_bound_access_tokens" => true
+    }
+  end
 
   defp get_header(headers, name) do
     headers

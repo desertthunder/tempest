@@ -6,7 +6,7 @@ defmodule Tempest.OAuth do
   import Ecto.Query
 
   alias Tempest.Accounts.{Account, Password}
-  alias Tempest.OAuth.{AuthorizationCode, Dpop, ParRequest, Token}
+  alias Tempest.OAuth.{AuthorizationCode, ClientMetadata, Dpop, ParRequest, Token}
   alias Tempest.Repo
   alias TempestWeb.Endpoint
 
@@ -24,9 +24,11 @@ defmodule Tempest.OAuth do
          :ok <- require_param(params, "redirect_uri"),
          :ok <- require_param(params, "scope"),
          :ok <- require_param(params, "code_challenge"),
+         "code" <- Map.get(params, "response_type"),
          "S256" <- Map.get(params, "code_challenge_method"),
          :ok <- validate_scope_string(params["scope"]),
-         {:ok, proof} <- Dpop.verify_proof(dpop_proof, "POST", public_url <> "/oauth/par") do
+         {:ok, proof} <- Dpop.verify_proof(dpop_proof, "POST", public_url <> "/oauth/par"),
+         {:ok, _client} <- ClientMetadata.fetch_for_par(params) do
       request_uri = "urn:ietf:params:oauth:request_uri:" <> random_token(32)
       now = now()
 
@@ -108,9 +110,12 @@ defmodule Tempest.OAuth do
 
   def exchange_authorization_code(params, dpop_proof, public_url) do
     with :ok <- require_param(params, "code"),
+         :ok <- require_param(params, "client_id"),
+         :ok <- require_param(params, "redirect_uri"),
          :ok <- require_param(params, "code_verifier"),
          {:ok, code} <- fetch_code(params["code"]),
-         :ok <- verify_redirect_uri(code, Map.get(params, "redirect_uri")),
+         :ok <- verify_client_id(code, params["client_id"]),
+         :ok <- verify_redirect_uri(code, params["redirect_uri"]),
          :ok <- verify_pkce(code.code_challenge, params["code_verifier"]),
          {:ok, proof} <- Dpop.verify_proof(dpop_proof, "POST", public_url <> "/oauth/token", bound_jkt: code.dpop_jkt) do
       issue_tokens_from_code(code, proof)
@@ -119,7 +124,9 @@ defmodule Tempest.OAuth do
 
   def refresh(params, dpop_proof, public_url) do
     with :ok <- require_param(params, "refresh_token"),
+         :ok <- require_param(params, "client_id"),
          {:ok, token} <- fetch_refresh_token(params["refresh_token"]),
+         :ok <- verify_client_id(token, params["client_id"]),
          {:ok, proof} <- Dpop.verify_proof(dpop_proof, "POST", public_url <> "/oauth/token", bound_jkt: token.dpop_jkt) do
       rotate_refresh_token(token, proof)
     end
@@ -330,7 +337,9 @@ defmodule Tempest.OAuth do
 
   defp authenticate_account(_identifier, _password), do: {:error, :invalid_credentials}
 
-  defp verify_redirect_uri(_code, nil), do: :ok
+  defp verify_client_id(%{client_id: client_id}, client_id), do: :ok
+  defp verify_client_id(_credential, _client_id), do: {:error, :invalid_grant}
+
   defp verify_redirect_uri(%AuthorizationCode{redirect_uri: redirect_uri}, redirect_uri), do: :ok
   defp verify_redirect_uri(_code, _redirect_uri), do: {:error, :invalid_grant}
 

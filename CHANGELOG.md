@@ -2,6 +2,10 @@
 
 ## v0.1.0
 
+### 2026-06-15
+
+- Added OAuth client metadata validation for the public-client path
+
 ### 2026-06-13
 
 - Added deployment verification support for post-deployment checks, including release

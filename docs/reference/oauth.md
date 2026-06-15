@@ -34,8 +34,10 @@ the client retries with that nonce.
 
 ### Client Registration
 
-Cocoon, Tranquil, and ZDS fetch and validate the `client_id` document. Tempest
-does not. That is the largest behavioral difference.
+Cocoon, Tranquil, ZDS, and Tempest fetch and validate the `client_id` document.
+The difference is coverage. Tempest validates the public-client path; the other
+implementations also cover more redirect forms, scope families, and private-key
+client authentication.
 
 Cocoon validates the broadest metadata shape. It rejects unsupported metadata
 fields, unsafe redirect URI forms, local hostnames for ordinary web clients,
@@ -50,14 +52,15 @@ loopback development clients. Non-local clients must use HTTPS.
 
 ZDS fetches client metadata during PAR. It checks the submitted redirect URI
 against `redirect_uris` and checks requested scopes against the scope list in
-client metadata. Tempest records the submitted `client_id` and `redirect_uri`,
-but it does not fetch the metadata document or verify redirect URI registration.
+client metadata. Tempest now does the same for HTTPS public clients using
+`token_endpoint_auth_method: "none"` and `dpop_bound_access_tokens: true`.
 
 ### Client Authentication
 
 Cocoon, Tranquil, and ZDS support public clients with
 `token_endpoint_auth_method: "none"` and private-key clients with
-`private_key_jwt`. Tempest only advertises and implements public clients.
+`private_key_jwt`. Tempest validates public clients and rejects private-key
+clients for now.
 
 ZDS spells out the private-key JWT checks in a small code path. The assertion's
 issuer and subject must equal the client ID. The audience must equal the server
@@ -95,8 +98,8 @@ against client metadata, and reject requests that mix transition scopes with
 granular scopes.
 
 Tempest uses a smaller allow-list: `atproto`, transition scopes, `blob:*/*`,
-`rpc:*`, and `rpc:<nsid>` forms. It does not compare requested scopes to client
-metadata because it does not fetch client metadata.
+`rpc:*`, and `rpc:<nsid>` forms. It now also compares requested scopes to the
+client metadata scope registration when the metadata declares one.
 
 ### Authorization UI
 
@@ -233,31 +236,28 @@ are concrete:
 Tempest requires `client_id`, `redirect_uri`, `scope`, `code_challenge`, and
 `code_challenge_method=S256` at PAR. It requires a DPoP proof whose `htu`
 matches `/oauth/par`, consumes a Tempest-issued DPoP nonce, stores the proof
-thumbprint as `dpop_jkt`, and stores the PAR row for ten minutes. It validates
-the requested scope against a small allow-list: `atproto`,
-`transition:generic`, `transition:chat.bsky`, `transition:email`, `blob:*/*`,
-`rpc:*`, and `rpc:<nsid>` forms.
+thumbprint as `dpop_jkt`, and then fetches the client metadata document from
+`client_id`. The metadata must match the `client_id`, register the submitted
+redirect URI, include `code` and `authorization_code`, use public client
+authentication, and opt into DPoP-bound access tokens. Tempest validates the
+requested scope against its local allow-list and, when metadata declares a
+scope string, against the client's registered scopes. PAR rows expire after ten
+minutes.
 
 The authorization page authenticates a local account by handle, email, or DID,
 marks the PAR row used, creates a short-lived authorization code, and redirects
 back with `code` and optional `state`. Token exchange requires `code`,
-`code_verifier`, matching redirect URI when supplied, S256 PKCE verification,
-and a DPoP proof bound to the same `dpop_jkt`. Refresh rotates refresh tokens
-and rejects already rotated or revoked rows. Access tokens are Phoenix tokens
-backed by database token rows, with hashed access and refresh token storage.
+`client_id`, `redirect_uri`, `code_verifier`, matching client and redirect URI,
+S256 PKCE verification, and a DPoP proof bound to the same `dpop_jkt`. Refresh
+requires the same client ID, rotates refresh tokens, and rejects already rotated
+or revoked rows. Access tokens are Phoenix tokens backed by database token rows,
+with hashed access and refresh token storage.
 
-The largest missing piece is client metadata validation. Tempest advertises
-`client_id_metadata_document_supported: true`, but it does not yet fetch the
-`client_id` document, verify that the redirect URI was registered, enforce
-metadata-declared scopes, validate `dpop_bound_access_tokens`, or support
-`private_key_jwt`. It also does not expose token introspection. One smaller
-interop mismatch is that Tempest accepts an omitted `redirect_uri` during token
-exchange, while the stricter references require the exchange to repeat and
-match the stored redirect URI.
+Tempest does not support `private_key_jwt`, loopback development client metadata, 
+private-use redirect schemes, or token introspection.
 
 Tempest can issue DPoP-bound OAuth tokens through PAR and PKCE, but it still
-trusts the caller's `client_id` and redirect URI more than Cocoon, Tranquil, or
-ZDS.
+implements a smaller client model than Cocoon, Tranquil, or ZDS.
 
 ## Client Compatibility
 

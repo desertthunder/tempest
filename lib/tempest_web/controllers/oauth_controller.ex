@@ -31,6 +31,9 @@ defmodule TempestWeb.OAuthController do
       {:error, :invalid_scope} ->
         conn |> put_status(400) |> json(%{"error" => "invalid_scope"})
 
+      {:error, :invalid_client} ->
+        conn |> put_status(400) |> json(%{"error" => "invalid_client"})
+
       {:error, :rate_limited} ->
         conn |> put_status(429) |> json(%{"error" => "RateLimitExceeded"})
 

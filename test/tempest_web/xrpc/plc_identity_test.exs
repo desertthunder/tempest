@@ -12,11 +12,12 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
   alias Tempest.Repo
   alias Tempest.Security
   alias Tempest.OAuth.Dpop
+  alias Tempest.Security.ExternalMetadataFetcher
   alias Tempest.Security.SecurityEvent
   alias Tempest.Sequencer
 
   @password "correct horse battery staple"
-  @client_id "did:web:plc-identity-client.example.com"
+  @client_id "https://plc-identity-client.example.com/oauth/client-metadata.json"
   @redirect_uri "https://plc-identity-client.example.com/cb"
 
   setup context do
@@ -25,9 +26,20 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
 
     old_identity_config = Application.get_env(:tempest, Tempest.Identity, [])
     old_admin_hash = Application.get_env(:tempest, :admin_token_hash)
+    original_fetcher_config = Application.get_env(:tempest, ExternalMetadataFetcher, [])
+
+    Application.put_env(:tempest, ExternalMetadataFetcher,
+      dns_lookup: fn "plc-identity-client.example.com" -> {:ok, [{93, 184, 216, 34}]} end,
+      req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.json(conn, client_metadata())
+    end)
 
     on_exit(fn ->
       Application.put_env(:tempest, Tempest.Identity, old_identity_config)
+      Application.put_env(:tempest, ExternalMetadataFetcher, original_fetcher_config)
 
       if old_admin_hash do
         Application.put_env(:tempest, :admin_token_hash, old_admin_hash)
@@ -654,6 +666,20 @@ defmodule TempestWeb.Xrpc.PlcIdentityTest do
 
   defp code_challenge(verifier) do
     :crypto.hash(:sha256, verifier) |> Base.url_encode64(padding: false)
+  end
+
+  defp client_metadata do
+    %{
+      "client_id" => @client_id,
+      "client_name" => "PLC Identity Test Client",
+      "redirect_uris" => [@redirect_uri],
+      "grant_types" => ["authorization_code", "refresh_token"],
+      "response_types" => ["code"],
+      "scope" => "atproto",
+      "token_endpoint_auth_method" => "none",
+      "application_type" => "web",
+      "dpop_bound_access_tokens" => true
+    }
   end
 
   defp assert_error(conn, status, error, message) do
