@@ -23,6 +23,7 @@ title: Milestone Tasks
 17. [Public Stats Dashboard](./16-public-stats-dashboard.md)
 18. [Doc Viewer](./17-doc-viewer.md)
 19. [Account Management Control Panel](./18-account-management.md)
+20. [Password Resets and Resend Email Delivery](./19-password-resets-resend-email.md)
 
 Each file in this directory is a milestone. Each task is intended to be the
 smallest useful unit of work: one focused implementation change, test, or
