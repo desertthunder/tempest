@@ -94,26 +94,17 @@ defmodule Tempest.Docs do
   @doc "Fetches and renders a known reference document by slug."
   @spec fetch_document(String.t()) :: {:ok, document()} | {:error, :not_found}
   def fetch_document(slug) when is_binary(slug) do
-    with {:ok, entry} <- lookup_manifest(slug),
-         {:ok, markdown} <- read_manifest_file(entry) do
-      {frontmatter, body} = split_frontmatter(markdown)
-      title = Map.get(frontmatter, "title") || entry.title
-      updated = Map.get(frontmatter, "updated")
-      rewritten_body = rewrite_reference_links(body, entry)
-      html = MDEx.to_html!(rewritten_body, @markdown_options)
-
-      {:ok,
-       %__MODULE__{
-         slug: entry.slug,
-         path: entry.path,
-         title: title,
-         updated: updated,
-         markdown: rewritten_body,
-         html: html
-       }}
+    with {:ok, entry} <- lookup_manifest(slug) do
+      cached_document({:reference_document, entry.slug}, fn -> render_reference_document(entry) end)
     else
       _ -> {:error, :not_found}
     end
+  end
+
+  @doc "Returns true when a slug is present in the fixed reference manifest."
+  @spec known_document_slug?(String.t()) :: boolean()
+  def known_document_slug?(slug) when is_binary(slug) do
+    match?({:ok, _entry}, lookup_manifest(slug))
   end
 
   @doc "Fetches and renders a known desktop document by fixed manifest slug."
@@ -243,6 +234,53 @@ defmodule Tempest.Docs do
       markdown when is_binary(markdown) -> {:ok, markdown}
       _missing -> {:error, :not_found}
     end
+  end
+
+  defp render_reference_document(entry) do
+    with {:ok, markdown} <- read_manifest_file(entry) do
+      {frontmatter, body} = split_frontmatter(markdown)
+      title = Map.get(frontmatter, "title") || entry.title
+      updated = Map.get(frontmatter, "updated")
+      rewritten_body = rewrite_reference_links(body, entry)
+      html = MDEx.to_html!(rewritten_body, @markdown_options)
+
+      {:ok,
+       %__MODULE__{
+         slug: entry.slug,
+         path: entry.path,
+         title: title,
+         updated: updated,
+         markdown: rewritten_body,
+         html: html
+       }}
+    end
+  end
+
+  defp cached_document(cache_key, render_fun) do
+    if cache_rendered_docs?() do
+      persistent_key = {__MODULE__, cache_key}
+
+      case :persistent_term.get(persistent_key, :missing) do
+        :missing ->
+          case render_fun.() do
+            {:ok, document} ->
+              :persistent_term.put(persistent_key, document)
+              {:ok, document}
+
+            error ->
+              error
+          end
+
+        document ->
+          {:ok, document}
+      end
+    else
+      render_fun.()
+    end
+  end
+
+  defp cache_rendered_docs? do
+    Application.get_env(:tempest, :env, :prod) == :prod
   end
 
   defp reference_root do

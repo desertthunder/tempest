@@ -5,6 +5,7 @@ defmodule TempestWeb.Router do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
+    plug :reject_unknown_doc_slug
     plug :put_root_layout, html: {TempestWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
@@ -131,4 +132,17 @@ defmodule TempestWeb.Router do
     |> Plug.Conn.put_resp_header("access-control-expose-headers", "dpop-nonce")
     |> Plug.Conn.put_resp_header("access-control-max-age", "100000000")
   end
+
+  defp reject_unknown_doc_slug(%Plug.Conn{method: "GET", path_info: ["docs", slug]} = conn, _opts) do
+    if Tempest.Docs.known_document_slug?(slug) do
+      conn
+    else
+      conn
+      |> Plug.Conn.put_resp_content_type("text/html")
+      |> Plug.Conn.send_resp(:not_found, "Not Found")
+      |> Plug.Conn.halt()
+    end
+  end
+
+  defp reject_unknown_doc_slug(conn, _opts), do: conn
 end

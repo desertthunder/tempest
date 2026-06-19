@@ -33,12 +33,12 @@ Netscape Navigator-inspired shell and a web 1.0 design (with a sidebar & search)
 - [x] T17-12: Add previous/next document links based on manifest order.
 - [x] T17-13: Link the docs viewer from the home page and any relevant public
       navigation.
-- [ ] T17-14: Add ConnCase tests for `/docs`, `/docs/architecture`, unknown slugs,
+- [x] T17-14: Add ConnCase tests for `/docs`, `/docs/architecture`, unknown slugs,
       sidebar navigation, relative-link rewriting, and path traversal rejection.
-- [ ] T17-15: Add regression tests proving files outside `docs/reference/` cannot
+- [x] T17-15: Add regression tests proving files outside `docs/reference/` cannot
       be rendered.
-- [ ] T17-16: Add Hurl smoke test `test/smoke/doc-viewer.hurl`.
-- [ ] T17-17: Add production caching
+- [x] T17-16: Add Hurl smoke test `test/smoke/doc-viewer.hurl`.
+- [x] T17-17: Add production caching
 
 ## Integration Tests
 

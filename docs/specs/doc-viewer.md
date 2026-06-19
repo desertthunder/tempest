@@ -1,7 +1,7 @@
 ---
 title: Documentation Viewer
-updated: 2026-06-12
-status: planned
+updated: 2026-06-19
+status: implemented
 ---
 
 Tempest should expose the project reference documentation as a public, browsable
@@ -175,25 +175,24 @@ stylesheet, for example `assets/css/components/doc-viewer.css`, and import it fr
 
 ## Phoenix implementation notes
 
-Recommended modules:
+Implemented modules:
 
 - `Tempest.Docs` context for manifest lookup, file loading, frontmatter parsing,
   Markdown rendering, and link rewriting.
-- `TempestWeb.DocController` for `index` and `show` actions.
-- `TempestWeb.DocHTML` with `index.html.heex` or `show.html.heex`.
+- `TempestWeb.DocLive` for the public `/docs` and `/docs/:slug` viewer.
 
-Recommended route placement:
+Route placement:
 
 ```elixir
 scope "/", TempestWeb do
   pipe_through :browser
 
-  get "/docs", DocController, :index
-  get "/docs/:slug", DocController, :show
+  live "/docs", DocLive, :show
+  live "/docs/:slug", DocLive, :show
 end
 ```
 
-The controller should pass assigns such as:
+The LiveView assigns:
 
 - `:documents`
 - `:document`
@@ -206,15 +205,11 @@ clear boundary function so reviewers can see where HTML safety is decided.
 
 ## Caching
 
-Docs are static project files. Initial implementation can read at request time in
-`dev` and cache in memory in `prod`. A later version can add ETags or a manifest
-checksum.
-
-A simple first-pass policy:
+Docs are static project files. The current policy is:
 
 - `dev`: read every request for fast documentation iteration
 - `test`: read every request
-- `prod`: cache rendered docs in `:persistent_term` or a supervised GenServer
+- `prod`: cache successfully rendered manifest documents in `:persistent_term`
 
 Do not cache route params that are not in the manifest.
 
