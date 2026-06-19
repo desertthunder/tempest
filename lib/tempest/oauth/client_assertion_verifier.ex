@@ -11,6 +11,13 @@ defmodule Tempest.OAuth.ClientAssertionVerifier do
   @max_lifetime_seconds 5 * 60
   @max_iat_skew_seconds 60
 
+  @doc """
+  Verifies the client authentication required by a client metadata document.
+
+  Public clients using `token_endpoint_auth_method: "none"` return `{:ok, nil}`.
+  Confidential clients must present a non-replayed ES256 `private_key_jwt`
+  assertion signed by a key from the client's JWKS.
+  """
   def verify(%ClientMetadata{token_endpoint_auth_method: "none"}, _params, _issuer), do: {:ok, nil}
 
   def verify(%ClientMetadata{token_endpoint_auth_method: "private_key_jwt"} = client, params, issuer)

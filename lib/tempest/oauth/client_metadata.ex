@@ -10,6 +10,7 @@ defmodule Tempest.OAuth.ClientMetadata do
   alias Tempest.Security.ExternalMetadataFetcher
 
   @max_body_bytes 64 * 1024
+  @default_loopback_redirect_uris ["http://127.0.0.1/", "http://[::1]/"]
 
   @type t :: %__MODULE__{
           client_id: String.t(),
@@ -40,9 +41,9 @@ defmodule Tempest.OAuth.ClientMetadata do
     with {:ok, client_id} <- fetch_param(params, "client_id"),
          {:ok, redirect_uri} <- fetch_param(params, "redirect_uri"),
          {:ok, requested_scope} <- fetch_param(params, "scope"),
-         :ok <- validate_client_id_url(client_id),
-         {:ok, metadata} <- fetch_metadata(client_id),
-         {:ok, client} <- parse_metadata(metadata, client_id),
+         {:ok, client_type} <- validate_client_id_url(client_id),
+         {:ok, metadata} <- fetch_metadata(client_id, client_type),
+         {:ok, client} <- parse_metadata(metadata, client_id, client_type),
          :ok <- validate_redirect_uri(client, redirect_uri),
          :ok <- validate_requested_scope(client, requested_scope) do
       {:ok, client}
@@ -56,16 +57,16 @@ defmodule Tempest.OAuth.ClientMetadata do
   """
   @spec fetch(String.t()) :: {:ok, t()} | {:error, atom()}
   def fetch(client_id) when is_binary(client_id) do
-    with :ok <- validate_client_id_url(client_id),
-         {:ok, metadata} <- fetch_metadata(client_id),
-         {:ok, client} <- parse_metadata(metadata, client_id) do
+    with {:ok, client_type} <- validate_client_id_url(client_id),
+         {:ok, metadata} <- fetch_metadata(client_id, client_type),
+         {:ok, client} <- parse_metadata(metadata, client_id, client_type) do
       {:ok, client}
     end
   end
 
   def fetch(_client_id), do: {:error, :invalid_client}
 
-  defp fetch_metadata(client_id) do
+  defp fetch_metadata(client_id, :https_metadata) do
     case ExternalMetadataFetcher.fetch_json(client_id, max_body_bytes: @max_body_bytes) do
       {:ok, metadata} when is_map(metadata) -> {:ok, metadata}
       {:ok, _metadata} -> {:error, :invalid_client}
@@ -73,10 +74,14 @@ defmodule Tempest.OAuth.ClientMetadata do
     end
   end
 
-  defp parse_metadata(metadata, client_id) do
+  defp fetch_metadata(client_id, :localhost_development) do
+    synthesize_loopback_metadata(client_id)
+  end
+
+  defp parse_metadata(metadata, client_id, client_type) do
     with ^client_id <- Map.get(metadata, "client_id"),
          redirect_uris when is_list(redirect_uris) <- Map.get(metadata, "redirect_uris"),
-         true <- Enum.all?(redirect_uris, &valid_redirect_uri?/1),
+         true <- Enum.all?(redirect_uris, &valid_redirect_uri?(&1, client_type)),
          true <- contains_string?(Map.get(metadata, "response_types"), "code"),
          true <- contains_string?(Map.get(metadata, "grant_types"), "authorization_code"),
          auth_method when auth_method in ["none", "private_key_jwt"] <-
@@ -101,17 +106,32 @@ defmodule Tempest.OAuth.ClientMetadata do
 
   defp validate_client_id_url(client_id) do
     case URI.parse(client_id) do
-      %URI{scheme: "https", host: host, userinfo: nil, fragment: nil} when is_binary(host) -> :ok
-      _uri -> {:error, :invalid_client}
+      %URI{scheme: "https", host: host, userinfo: nil, fragment: nil} when is_binary(host) ->
+        {:ok, :https_metadata}
+
+      %URI{scheme: "http", authority: "localhost", host: "localhost", path: path, userinfo: nil, fragment: nil}
+      when path in [nil, "", "/"] ->
+        {:ok, :localhost_development}
+
+      _uri ->
+        {:error, :invalid_client}
     end
   end
 
-  defp validate_redirect_uri(%__MODULE__{redirect_uris: redirect_uris}, redirect_uri) do
-    if redirect_uri in redirect_uris do
+  defp validate_redirect_uri(
+         %__MODULE__{client_id: "http://localhost" <> _rest, redirect_uris: redirect_uris},
+         redirect_uri
+       ) do
+    if valid_loopback_redirect_uri?(redirect_uri) and
+         Enum.any?(redirect_uris, &same_loopback_redirect?(&1, redirect_uri)) do
       :ok
     else
       {:error, :invalid_request}
     end
+  end
+
+  defp validate_redirect_uri(%__MODULE__{redirect_uris: redirect_uris}, redirect_uri) do
+    if redirect_uri in redirect_uris, do: :ok, else: {:error, :invalid_request}
   end
 
   defp validate_requested_scope(%__MODULE__{scope: nil}, _requested_scope), do: :ok
@@ -153,7 +173,7 @@ defmodule Tempest.OAuth.ClientMetadata do
 
       {nil, jwks_uri} when is_binary(jwks_uri) ->
         with :ok <- validate_jwks_uri(jwks_uri),
-             {:ok, jwks} <- fetch_metadata(jwks_uri) do
+             {:ok, jwks} <- fetch_metadata(jwks_uri, :https_metadata) do
           validate_jwks_object(jwks)
         end
 
@@ -210,12 +230,73 @@ defmodule Tempest.OAuth.ClientMetadata do
   defp contains_string?(values, value) when is_list(values), do: value in values
   defp contains_string?(_values, _value), do: false
 
-  defp valid_redirect_uri?(uri) when is_binary(uri) do
+  defp synthesize_loopback_metadata(client_id) do
+    uri = URI.parse(client_id)
+    query_params = URI.query_decoder(uri.query || "") |> Enum.to_list()
+    redirect_uris = query_values(query_params, "redirect_uri")
+    scopes = query_values(query_params, "scope")
+
+    with true <- length(scopes) <= 1,
+         scope <- List.first(scopes) || "atproto",
+         true <- scope != "" do
+      {:ok,
+       %{
+         "client_id" => client_id,
+         "client_name" => "Development client",
+         "redirect_uris" => default_if_empty(redirect_uris, @default_loopback_redirect_uris),
+         "grant_types" => ["authorization_code", "refresh_token"],
+         "response_types" => ["code"],
+         "scope" => scope,
+         "token_endpoint_auth_method" => "none",
+         "application_type" => "native",
+         "dpop_bound_access_tokens" => true
+       }}
+    else
+      _reason -> {:error, :invalid_client}
+    end
+  end
+
+  defp query_values(query_params, key) do
+    query_params
+    |> Enum.filter(fn {param_key, _value} -> param_key == key end)
+    |> Enum.map(fn {_param_key, value} -> value end)
+  end
+
+  defp default_if_empty([], default), do: default
+  defp default_if_empty(values, _default), do: values
+
+  defp valid_redirect_uri?(uri, :https_metadata), do: valid_https_redirect_uri?(uri)
+  defp valid_redirect_uri?(uri, :localhost_development), do: valid_loopback_redirect_uri?(uri)
+
+  defp valid_https_redirect_uri?(uri) when is_binary(uri) do
     case URI.parse(uri) do
       %URI{scheme: "https", host: host, fragment: nil} when is_binary(host) -> true
       _uri -> false
     end
   end
 
-  defp valid_redirect_uri?(_uri), do: false
+  defp valid_https_redirect_uri?(_uri), do: false
+
+  defp valid_loopback_redirect_uri?(uri) when is_binary(uri) do
+    case URI.parse(uri) do
+      %URI{scheme: "http", host: host, userinfo: nil, fragment: nil} when host in ["localhost", "127.0.0.1", "::1"] ->
+        true
+
+      _uri ->
+        false
+    end
+  end
+
+  defp valid_loopback_redirect_uri?(_uri), do: false
+
+  defp same_loopback_redirect?(registered_uri, requested_uri) do
+    registered = URI.parse(registered_uri)
+    requested = URI.parse(requested_uri)
+
+    registered.scheme == requested.scheme and registered.host == requested.host and
+      normalize_path(registered.path) == normalize_path(requested.path) and registered.query == requested.query
+  end
+
+  defp normalize_path(path) when path in [nil, ""], do: "/"
+  defp normalize_path(path), do: path
 end

@@ -12,6 +12,9 @@ defmodule Tempest.OAuth.Metadata do
     "rpc:*"
   ]
 
+  @doc """
+  Builds the OAuth protected resource metadata document.
+  """
   def protected_resource do
     base_url = base_url()
 
@@ -24,6 +27,9 @@ defmodule Tempest.OAuth.Metadata do
     }
   end
 
+  @doc """
+  Builds the OAuth authorization server metadata document.
+  """
   def authorization_server do
     base_url = base_url()
 

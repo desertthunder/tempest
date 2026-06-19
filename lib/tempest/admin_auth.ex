@@ -48,6 +48,9 @@ defmodule Tempest.AdminAuth do
     end
   end
 
+  @doc """
+  Returns true when an admin token hash is configured.
+  """
   def configured?, do: is_binary(configured_hash()) and configured_hash() != ""
 
   defp configured_hash do

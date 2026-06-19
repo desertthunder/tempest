@@ -24,6 +24,7 @@ title: Milestone Tasks
 18. [Doc Viewer](./17-doc-viewer.md)
 19. [Account Management Control Panel](./18-account-management.md)
 20. [Password Resets and Resend Email Delivery](./19-password-resets-resend-email.md)
+21. [Admin XRPC Methods](./20-admin-xrpc.md)
 
 Each file in this directory is a milestone. Each task is intended to be the
 smallest useful unit of work: one focused implementation change, test, or

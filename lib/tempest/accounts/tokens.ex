@@ -15,6 +15,9 @@ defmodule Tempest.Accounts.Tokens do
   @refresh_lifetime_seconds 60 * 60 * 24 * 30
   @refresh_prefix "tempest-refresh-v1."
 
+  @doc """
+  Signs the AT Protocol session access JWT for a local account session.
+  """
   def sign_access_token(%Account{} = account, %Session{} = session) do
     sign_session_jwt!(account, %{
       "typ" => "access",
@@ -27,6 +30,9 @@ defmodule Tempest.Accounts.Tokens do
     })
   end
 
+  @doc """
+  Signs a long-lived refresh JWT for a refresh-token family.
+  """
   def sign_refresh_token(%Account{} = account, family_id) when is_binary(family_id) do
     sign_session_jwt!(account, %{
       "typ" => "refresh",
@@ -37,6 +43,9 @@ defmodule Tempest.Accounts.Tokens do
     })
   end
 
+  @doc """
+  Signs the legacy Phoenix-token access format kept for compatibility.
+  """
   def sign_legacy_access_token(%Account{} = account, %Session{} = session) do
     Phoenix.Token.sign(Endpoint, @access_salt, %{
       "typ" => "access",
@@ -46,6 +55,9 @@ defmodule Tempest.Accounts.Tokens do
     })
   end
 
+  @doc """
+  Verifies either the current session access JWT or the legacy Phoenix-token format.
+  """
   def verify_access_token(token) when is_binary(token) do
     case verify_access_session_jwt(token) do
       {:ok, claims} -> {:ok, claims}
@@ -55,6 +67,12 @@ defmodule Tempest.Accounts.Tokens do
 
   def verify_access_token(_token), do: {:error, :invalid}
 
+  @doc """
+  Signs an inter-service auth JWT scoped to one XRPC method.
+
+  The token uses the account repo signing key and includes `lxm` for the target
+  method NSID plus `aud` for the target service DID.
+  """
   def sign_service_auth(%Account{} = account, audience, method_nsid)
       when is_binary(audience) and is_binary(method_nsid) do
     now = DateTime.utc_now() |> DateTime.to_unix()
@@ -76,6 +94,9 @@ defmodule Tempest.Accounts.Tokens do
     compact
   end
 
+  @doc """
+  Verifies an inter-service auth JWT against the issuer's current DID document.
+  """
   def verify_service_auth(token) when is_binary(token) do
     with {:ok, header} <- peek_service_auth_header(token),
          :ok <- validate_service_auth_header(header),
@@ -208,15 +229,24 @@ defmodule Tempest.Accounts.Tokens do
 
   defp public_jwk_from_raw_secp256k1(_public_key), do: {:error, :invalid}
 
+  @doc """
+  Generates an opaque refresh token suitable for database hashing.
+  """
   def new_refresh_token do
     @refresh_prefix <> random_url_token(48)
   end
 
+  @doc """
+  Hashes a refresh token for storage and lookup.
+  """
   def refresh_token_hash(token) when is_binary(token) do
     :crypto.hash(:sha256, token)
     |> Base.encode16(case: :lower)
   end
 
+  @doc """
+  Returns the refresh token expiry timestamp for a given issue time.
+  """
   def refresh_expires_at(now \\ DateTime.utc_now()) do
     now
     |> DateTime.add(@refresh_lifetime_seconds, :second)

@@ -17,8 +17,18 @@ defmodule Tempest.OAuth do
 
   @supported_scopes ~w(atproto transition:generic transition:chat.bsky transition:email blob:*/* rpc:*)
 
+  @doc """
+  Returns the OAuth scopes this authorization server accepts in PAR requests.
+  """
   def supported_scopes, do: @supported_scopes
 
+  @doc """
+  Creates a pushed authorization request after validating client metadata, PKCE,
+  requested scopes, DPoP, and any required client authentication.
+
+  The returned `%ParRequest{}` stores the DPoP key thumbprint and client-auth
+  binding that later token requests must prove again.
+  """
   def create_par(params, dpop_proof, public_url) do
     with :ok <- require_param(params, "client_id"),
          :ok <- require_param(params, "redirect_uri"),
@@ -60,6 +70,9 @@ defmodule Tempest.OAuth do
     end
   end
 
+  @doc """
+  Fetches an unused, unexpired pushed authorization request by `request_uri`.
+  """
   def get_valid_par(request_uri) when is_binary(request_uri) do
     now = now()
 
@@ -76,6 +89,12 @@ defmodule Tempest.OAuth do
 
   def get_valid_par(_request_uri), do: {:error, :invalid_request_uri}
 
+  @doc """
+  Authenticates the resource owner for a PAR request and issues an authorization code.
+
+  This marks the PAR as used in the same transaction that creates the code, so a
+  request URI cannot be replayed into multiple codes.
+  """
   def authorize(params) do
     with {:ok, par} <- get_valid_par(Map.get(params, "request_uri")),
          {:ok, account} <- authenticate_account(Map.get(params, "identifier"), Map.get(params, "password")) do
@@ -117,6 +136,12 @@ defmodule Tempest.OAuth do
     end
   end
 
+  @doc """
+  Exchanges an authorization code for DPoP-bound access and refresh tokens.
+
+  The function verifies client identity, client authentication, redirect URI,
+  PKCE, and the original DPoP key binding before issuing tokens.
+  """
   def exchange_authorization_code(params, dpop_proof, public_url) do
     with :ok <- require_param(params, "code"),
          :ok <- require_param(params, "client_id"),
@@ -132,6 +157,9 @@ defmodule Tempest.OAuth do
     end
   end
 
+  @doc """
+  Rotates an OAuth refresh token and returns a fresh DPoP-bound token pair.
+  """
   def refresh(params, dpop_proof, public_url) do
     with :ok <- require_param(params, "refresh_token"),
          :ok <- require_param(params, "client_id"),
@@ -143,6 +171,9 @@ defmodule Tempest.OAuth do
     end
   end
 
+  @doc """
+  Revokes any OAuth access or refresh token matching the provided token string.
+  """
   def revoke(token_string) when is_binary(token_string) do
     now = now()
     access_hash = hash(token_string)
@@ -155,6 +186,9 @@ defmodule Tempest.OAuth do
     :ok
   end
 
+  @doc """
+  Signs a short-lived OAuth access token for an issued OAuth token row.
+  """
   def sign_access_token(%Account{} = account, %Token{} = token) do
     Phoenix.Token.sign(Endpoint, @access_salt, %{
       "typ" => "oauth_access",
@@ -167,6 +201,12 @@ defmodule Tempest.OAuth do
     })
   end
 
+  @doc """
+  Verifies an OAuth access token and returns the account, token row, and claims.
+
+  Validation checks the Phoenix signature, backing token row, token hash,
+  expiration, revocation state, and local account correctness.
+  """
   def verify_access_token(token) when is_binary(token) do
     with {:ok, %{"typ" => "oauth_access", "account_id" => account_id, "token_id" => token_id} = claims} <-
            Phoenix.Token.verify(Endpoint, @access_salt, token, max_age: @access_lifetime_seconds),

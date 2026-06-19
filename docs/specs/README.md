@@ -34,6 +34,7 @@ Subsystem specifications live in this directory.
 18. [Documentation Viewer](./doc-viewer.md)
 19. [Account Management Control Panel](./account-management.md)
 20. [Password Resets and Resend Email Delivery](./password-resets-resend-email.md)
+21. [Admin XRPC Methods](./admin-xrpc.md)
 
 ## Source Baseline
 

@@ -10,8 +10,15 @@ defmodule TempestWeb.Plugs.XrpcAuth do
   alias Tempest.Xrpc.Registry
   alias TempestWeb.XrpcErrorJSON
 
+  @doc false
   def init(opts), do: opts
 
+  @doc """
+  Authenticates registered bearer-protected XRPC methods and assigns `:auth_context`.
+
+  Public methods and preflight requests pass through unchanged. OAuth access
+  tokens must include a valid DPoP proof for the current request URL.
+  """
   def call(%{method: "OPTIONS"} = conn, _opts), do: conn
 
   def call(%{path_params: %{"method" => method_nsid}} = conn, _opts) do

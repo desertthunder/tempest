@@ -149,6 +149,59 @@ defmodule Tempest.OAuth.ClientMetadataTest do
              })
   end
 
+  test "synthesizes metadata for localhost development clients" do
+    client_id =
+      "http://localhost?redirect_uri=http%3A%2F%2F127.0.0.1%2Fcallback&scope=atproto%20rpc%3A*"
+
+    assert {:ok, %ClientMetadata{} = client} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => client_id,
+               "redirect_uri" => "http://127.0.0.1:49152/callback",
+               "scope" => "rpc:com.atproto.server.getSession"
+             })
+
+    assert client.client_id == client_id
+    assert client.redirect_uris == ["http://127.0.0.1/callback"]
+    assert client.scope == "atproto rpc:*"
+    assert client.token_endpoint_auth_method == "none"
+  end
+
+  test "localhost development clients default to loopback callbacks and atproto scope" do
+    assert {:ok, %ClientMetadata{} = client} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => "http://localhost",
+               "redirect_uri" => "http://[::1]:38291/",
+               "scope" => "atproto"
+             })
+
+    assert client.redirect_uris == ["http://127.0.0.1/", "http://[::1]/"]
+    assert client.scope == "atproto"
+  end
+
+  test "rejects localhost development client ids with a port or path" do
+    for client_id <- ["http://localhost:8080", "http://localhost/oauth/client-metadata.json"] do
+      assert {:error, :invalid_client} =
+               ClientMetadata.fetch_for_par(%{
+                 "client_id" => client_id,
+                 "redirect_uri" => "http://127.0.0.1:49152/",
+                 "scope" => "atproto"
+               })
+    end
+  end
+
+  test "rejects localhost development redirect uris that are not HTTP loopback hosts" do
+    for redirect_uri <- ["https://127.0.0.1/callback", "http://example.com/callback"] do
+      client_id = "http://localhost?redirect_uri=#{URI.encode_www_form(redirect_uri)}"
+
+      assert {:error, :invalid_client} =
+               ClientMetadata.fetch_for_par(%{
+                 "client_id" => client_id,
+                 "redirect_uri" => redirect_uri,
+                 "scope" => "atproto"
+               })
+    end
+  end
+
   defp metadata do
     %{
       "client_id" => @client_id,

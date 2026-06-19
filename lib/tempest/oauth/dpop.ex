@@ -17,6 +17,9 @@ defmodule Tempest.OAuth.Dpop do
   @max_iat_skew_seconds 60
   @supported_algs ["ES256", "ES384", "ES512", "RS256", "PS256"]
 
+  @doc """
+  Creates and stores a single-use DPoP nonce.
+  """
   def issue_nonce do
     nonce = random_token(32)
     now = now()
@@ -32,6 +35,12 @@ defmodule Tempest.OAuth.Dpop do
     end
   end
 
+  @doc """
+  Verifies a DPoP proof JWT for the expected HTTP method and URL.
+
+  Pass `bound_jkt: thumbprint` when the proof must use the same key as an
+  already-issued DPoP-bound credential.
+  """
   def verify_proof(proof, method, url, opts \\ [])
 
   def verify_proof(nil, _method, _url, _opts), do: {:error, :missing_dpop}
@@ -110,6 +119,9 @@ defmodule Tempest.OAuth.Dpop do
 
   defp consume_nonce(_nonce), do: {:error, :invalid_dpop_nonce}
 
+  @doc """
+  Computes the RFC 7638 JWK thumbprint used for DPoP token binding.
+  """
   def jwk_thumbprint(%{"kty" => "EC", "crv" => crv, "x" => x, "y" => y}) do
     thumbprint(%{"crv" => crv, "kty" => "EC", "x" => x, "y" => y})
   end

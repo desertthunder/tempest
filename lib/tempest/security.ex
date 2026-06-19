@@ -24,6 +24,9 @@ defmodule Tempest.Security do
   @email_token_ttl_seconds 30 * 60
   @plc_operation_token_ttl_seconds 10 * 60
 
+  @doc """
+  Records a security audit event for an account.
+  """
   def log_event(%Account{} = account, event_type, metadata \\ %{}) do
     attrs = %{
       account_id: account.id,
@@ -34,6 +37,9 @@ defmodule Tempest.Security do
     %SecurityEvent{} |> SecurityEvent.changeset(attrs) |> Repo.insert()
   end
 
+  @doc """
+  Issues a short-lived email token for confirmation, email update, or password reset flows.
+  """
   def issue_email_token(%Account{} = account, purpose, email \\ nil) do
     raw = random_token(32)
     email = email || account.email
@@ -53,6 +59,13 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Consumes a valid email token for the expected purpose.
+
+  Some purposes have side effects: `update_email` updates the account email and
+  `reset_password` revokes existing sessions before the caller stores the new
+  password hash.
+  """
   def consume_email_token(raw, purpose) when is_binary(raw) do
     now = now()
 
@@ -90,6 +103,9 @@ defmodule Tempest.Security do
 
   def consume_email_token(_raw, _purpose), do: {:error, :invalid_token}
 
+  @doc """
+  Starts TOTP enrollment and returns the plaintext secret plus an otpauth URI.
+  """
   def start_totp_enrollment(%Account{} = account, label \\ nil) do
     secret = Totp.new_secret()
     label = label || account.handle
@@ -112,6 +128,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Confirms a pending TOTP credential and rotates backup codes.
+  """
   def confirm_totp(%Account{} = account, credential_id, code) do
     with %MfaCredential{} = credential <- Repo.get_by(MfaCredential, id: credential_id, account_id: account.id),
          true <- is_nil(credential.disabled_at),
@@ -125,6 +144,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Verifies a confirmed TOTP code for an account with rate limiting.
+  """
   def verify_totp(%Account{} = account, code) do
     if RateLimiter.check(:totp, account.did) == :ok and valid_totp_for_account?(account, code) do
       log_event(account, "mfa.totp.verified", %{})
@@ -134,6 +156,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Marks one backup code as used if it matches an unused stored hash.
+  """
   def use_backup_code(%Account{} = account, code) do
     now = now()
 
@@ -150,6 +175,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Lists account sessions newest first.
+  """
   def list_sessions(%Account{} = account) do
     Session
     |> where([s], s.account_id == ^account.id)
@@ -157,6 +185,9 @@ defmodule Tempest.Security do
     |> Repo.all()
   end
 
+  @doc """
+  Revokes one active account session.
+  """
   def revoke_session(%Account{} = account, session_id) do
     now = now()
 
@@ -173,6 +204,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Creates a delegated-access grant from an owner account to another DID.
+  """
   def create_delegation(%Account{} = owner, delegate_did, scope, opts \\ []) do
     attrs = %{
       owner_account_id: owner.id,
@@ -187,6 +221,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Revokes an active delegated-access grant owned by the account.
+  """
   def revoke_delegation(%Account{} = owner, grant_id) do
     now = now()
 
@@ -203,6 +240,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Returns all security-control records shown by the operator account security UI.
+  """
   def account_security_inventory(%Account{} = account) do
     %{
       sessions: list_sessions(account),
@@ -215,6 +255,9 @@ defmodule Tempest.Security do
     }
   end
 
+  @doc """
+  Lists OAuth grants issued to the account.
+  """
   def list_oauth_grants(%Account{} = account) do
     Token
     |> where([t], t.account_id == ^account.id)
@@ -222,6 +265,9 @@ defmodule Tempest.Security do
     |> Repo.all()
   end
 
+  @doc """
+  Lists app-password records for the account.
+  """
   def list_app_password_records(%Account{} = account) do
     AppPassword
     |> where([p], p.account_id == ^account.id)
@@ -229,6 +275,9 @@ defmodule Tempest.Security do
     |> Repo.all()
   end
 
+  @doc """
+  Lists delegated-access grants owned by the account.
+  """
   def list_delegations(%Account{} = account) do
     DelegatedAccessGrant
     |> where([g], g.owner_account_id == ^account.id)
@@ -236,6 +285,9 @@ defmodule Tempest.Security do
     |> Repo.all()
   end
 
+  @doc """
+  Lists MFA credentials for the account.
+  """
   def list_mfa_credentials(%Account{} = account) do
     MfaCredential
     |> where([c], c.account_id == ^account.id)
@@ -243,6 +295,9 @@ defmodule Tempest.Security do
     |> Repo.all()
   end
 
+  @doc """
+  Lists backup-code metadata without exposing backup-code plaintext.
+  """
   def list_backup_code_summaries(%Account{} = account) do
     BackupCode
     |> where([c], c.account_id == ^account.id)
@@ -258,6 +313,9 @@ defmodule Tempest.Security do
     end)
   end
 
+  @doc """
+  Lists recent security events for the account.
+  """
   def list_security_events(%Account{} = account, opts \\ []) do
     limit = Keyword.get(opts, :limit, 50)
 
@@ -268,6 +326,9 @@ defmodule Tempest.Security do
     |> Repo.all()
   end
 
+  @doc """
+  Verifies an account password using the same constant-time fallback behavior as login.
+  """
   def verify_account_password(%Account{} = account, password) when is_binary(password) do
     if Password.verify(password, account.password_hash), do: :ok, else: {:error, :invalid_password}
   end
@@ -277,6 +338,9 @@ defmodule Tempest.Security do
     {:error, :invalid_password}
   end
 
+  @doc """
+  Issues a short-lived token that authorizes one PLC operation signature.
+  """
   def issue_plc_operation_token(%Account{} = account) do
     raw = random_token(32)
 
@@ -292,6 +356,9 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Consumes a valid PLC operation token for the account.
+  """
   def consume_plc_operation_token(%Account{} = account, raw) when is_binary(raw) do
     now = now()
 
@@ -316,6 +383,9 @@ defmodule Tempest.Security do
 
   def consume_plc_operation_token(%Account{} = _account, _raw), do: {:error, :invalid_token}
 
+  @doc """
+  Starts a password reset email flow without revealing whether the identifier exists.
+  """
   def request_password_reset(identifier) do
     identifier = identifier |> to_string() |> String.trim() |> String.downcase()
 
@@ -326,16 +396,31 @@ defmodule Tempest.Security do
     end
   end
 
+  @doc """
+  Sends an email-confirmation token to the account's current email address.
+  """
   def request_email_confirmation(%Account{} = account), do: Tempest.Security.Email.deliver_confirmation(account)
 
+  @doc """
+  Confirms the account email associated with an email-confirmation token.
+  """
   def confirm_email(raw_token), do: consume_email_token(raw_token, "confirm_email")
 
+  @doc """
+  Sends an email-update token to a new email address.
+  """
   def request_email_update(%Account{} = account, new_email) when is_binary(new_email) do
     Tempest.Security.Email.deliver_update(account, new_email)
   end
 
+  @doc """
+  Applies a pending email update token.
+  """
   def update_email(raw_token), do: consume_email_token(raw_token, "update_email")
 
+  @doc """
+  Resets an account password through a valid reset token.
+  """
   def reset_password(raw_token, new_password) do
     with :ok <- Password.validate(new_password),
          {:ok, account} <- consume_email_token(raw_token, "reset_password") do
