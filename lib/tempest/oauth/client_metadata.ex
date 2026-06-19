@@ -11,6 +11,7 @@ defmodule Tempest.OAuth.ClientMetadata do
 
   @max_body_bytes 64 * 1024
   @default_loopback_redirect_uris ["http://127.0.0.1/", "http://[::1]/"]
+  @reserved_private_scheme_roots ~w(arpa example invalid local localhost onion test)
 
   @type t :: %__MODULE__{
           client_id: String.t(),
@@ -80,8 +81,9 @@ defmodule Tempest.OAuth.ClientMetadata do
 
   defp parse_metadata(metadata, client_id, client_type) do
     with ^client_id <- Map.get(metadata, "client_id"),
+         application_type when application_type in ["web", "native"] <- Map.get(metadata, "application_type", "web"),
          redirect_uris when is_list(redirect_uris) <- Map.get(metadata, "redirect_uris"),
-         true <- Enum.all?(redirect_uris, &valid_redirect_uri?(&1, client_type)),
+         true <- Enum.all?(redirect_uris, &valid_redirect_uri?(&1, client_type, application_type, client_id)),
          true <- contains_string?(Map.get(metadata, "response_types"), "code"),
          true <- contains_string?(Map.get(metadata, "grant_types"), "authorization_code"),
          auth_method when auth_method in ["none", "private_key_jwt"] <-
@@ -265,8 +267,16 @@ defmodule Tempest.OAuth.ClientMetadata do
   defp default_if_empty([], default), do: default
   defp default_if_empty(values, _default), do: values
 
-  defp valid_redirect_uri?(uri, :https_metadata), do: valid_https_redirect_uri?(uri)
-  defp valid_redirect_uri?(uri, :localhost_development), do: valid_loopback_redirect_uri?(uri)
+  defp valid_redirect_uri?(uri, :localhost_development, _application_type, _client_id),
+    do: valid_loopback_redirect_uri?(uri)
+
+  defp valid_redirect_uri?(uri, :https_metadata, "web", _client_id), do: valid_https_redirect_uri?(uri)
+
+  defp valid_redirect_uri?(uri, :https_metadata, "native", client_id) do
+    valid_native_https_redirect_uri?(uri, client_id) or valid_private_use_redirect_uri?(uri, client_id)
+  end
+
+  defp valid_redirect_uri?(_uri, _client_type, _application_type, _client_id), do: false
 
   defp valid_https_redirect_uri?(uri) when is_binary(uri) do
     case URI.parse(uri) do
@@ -276,6 +286,52 @@ defmodule Tempest.OAuth.ClientMetadata do
   end
 
   defp valid_https_redirect_uri?(_uri), do: false
+
+  defp valid_native_https_redirect_uri?(uri, client_id) when is_binary(uri) and is_binary(client_id) do
+    with %URI{scheme: "https", host: host, fragment: nil} = redirect_uri when is_binary(host) <- URI.parse(uri),
+         %URI{} = client_uri <- URI.parse(client_id) do
+      origin(redirect_uri) == origin(client_uri)
+    else
+      _reason -> false
+    end
+  end
+
+  defp valid_native_https_redirect_uri?(_uri, _client_id), do: false
+
+  defp valid_private_use_redirect_uri?(uri, client_id) when is_binary(uri) and is_binary(client_id) do
+    with %URI{scheme: scheme, userinfo: nil, host: nil, port: nil, path: "/" <> path, fragment: nil} <- URI.parse(uri),
+         true <- path != "",
+         true <- String.downcase(scheme) == expected_private_use_scheme(client_id),
+         true <- private_scheme_root_allowed?(scheme) do
+      true
+    else
+      _reason -> false
+    end
+  end
+
+  defp valid_private_use_redirect_uri?(_uri, _client_id), do: false
+
+  defp expected_private_use_scheme(client_id) do
+    client_id
+    |> URI.parse()
+    |> Map.get(:host, "")
+    |> String.downcase()
+    |> String.split(".", trim: true)
+    |> Enum.reverse()
+    |> Enum.join(".")
+  end
+
+  defp private_scheme_root_allowed?(scheme) do
+    scheme
+    |> String.downcase()
+    |> String.split(".", parts: 2)
+    |> List.first()
+    |> then(&(&1 not in @reserved_private_scheme_roots))
+  end
+
+  defp origin(%URI{scheme: scheme, host: host, port: port}) do
+    {scheme, String.downcase(host), port}
+  end
 
   defp valid_loopback_redirect_uri?(uri) when is_binary(uri) do
     case URI.parse(uri) do

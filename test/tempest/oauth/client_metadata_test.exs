@@ -5,6 +5,7 @@ defmodule Tempest.OAuth.ClientMetadataTest do
   alias Tempest.Security.ExternalMetadataFetcher
 
   @client_id "https://client.example.com/oauth/client-metadata.json"
+  @reserved_root_client_id "https://client.example/oauth/client-metadata.json"
   @redirect_uri "https://client.example.com/callback"
 
   setup context do
@@ -14,7 +15,10 @@ defmodule Tempest.OAuth.ClientMetadataTest do
     original_fetcher_config = Application.get_env(:tempest, ExternalMetadataFetcher, [])
 
     Application.put_env(:tempest, ExternalMetadataFetcher,
-      dns_lookup: fn "client.example.com" -> {:ok, [{93, 184, 216, 34}]} end,
+      dns_lookup: fn
+        "client.example.com" -> {:ok, [{93, 184, 216, 34}]}
+        "client.example" -> {:ok, [{93, 184, 216, 34}]}
+      end,
       req_options: [plug: {Req.Test, __MODULE__}]
     )
 
@@ -149,6 +153,103 @@ defmodule Tempest.OAuth.ClientMetadataTest do
              })
   end
 
+  test "accepts reverse-domain private-use redirects for native clients" do
+    Req.Test.expect(__MODULE__, fn conn ->
+      Req.Test.json(conn, native_metadata(%{"redirect_uris" => ["com.example.client:/callback"]}))
+    end)
+
+    assert {:ok, %ClientMetadata{} = client} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => @client_id,
+               "redirect_uri" => "com.example.client:/callback",
+               "scope" => "atproto"
+             })
+
+    assert client.redirect_uris == ["com.example.client:/callback"]
+  end
+
+  test "accepts same-origin https redirects for native clients" do
+    Req.Test.expect(__MODULE__, fn conn ->
+      Req.Test.json(conn, native_metadata(%{"redirect_uris" => ["https://client.example.com/native/callback"]}))
+    end)
+
+    assert {:ok, %ClientMetadata{}} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => @client_id,
+               "redirect_uri" => "https://client.example.com/native/callback",
+               "scope" => "atproto"
+             })
+  end
+
+  test "rejects private-use redirects for web clients" do
+    Req.Test.expect(__MODULE__, fn conn ->
+      Req.Test.json(conn, metadata(%{"redirect_uris" => ["com.example.client:/callback"]}))
+    end)
+
+    assert {:error, :invalid_client} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => @client_id,
+               "redirect_uri" => "com.example.client:/callback",
+               "scope" => "atproto"
+             })
+  end
+
+  test "rejects malformed or reserved private-use redirect schemes for native clients" do
+    invalid_redirects = [
+      "com.example.client://callback",
+      "com.example.client:callback",
+      "com.example.client:/callback#fragment",
+      "com.example.other:/callback"
+    ]
+
+    for redirect_uri <- invalid_redirects do
+      Req.Test.expect(__MODULE__, fn conn ->
+        Req.Test.json(conn, native_metadata(%{"redirect_uris" => [redirect_uri]}))
+      end)
+
+      assert {:error, :invalid_client} =
+               ClientMetadata.fetch_for_par(%{
+                 "client_id" => @client_id,
+                 "redirect_uri" => redirect_uri,
+                 "scope" => "atproto"
+               })
+    end
+  end
+
+  test "rejects reserved private-use redirect scheme roots even when reverse-domain matched" do
+    redirect_uri = "example.client:/callback"
+
+    Req.Test.expect(__MODULE__, fn conn ->
+      Req.Test.json(
+        conn,
+        native_metadata(%{
+          "client_id" => @reserved_root_client_id,
+          "redirect_uris" => [redirect_uri]
+        })
+      )
+    end)
+
+    assert {:error, :invalid_client} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => @reserved_root_client_id,
+               "redirect_uri" => redirect_uri,
+               "scope" => "atproto"
+             })
+  end
+
+  test "rejects native https redirects on a different origin" do
+    Req.Test.expect(__MODULE__, fn conn ->
+      Req.Test.json(conn, native_metadata(%{"redirect_uris" => ["https://other.example.com/callback"]}))
+    end)
+
+    assert {:error, :invalid_client} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => @client_id,
+               "redirect_uri" => "https://other.example.com/callback",
+               "scope" => "atproto"
+             })
+  end
+
   test "synthesizes metadata for localhost development clients" do
     client_id =
       "http://localhost?redirect_uri=http%3A%2F%2F127.0.0.1%2Fcallback&scope=atproto%20rpc%3A*"
@@ -202,18 +303,32 @@ defmodule Tempest.OAuth.ClientMetadataTest do
     end
   end
 
-  defp metadata do
-    %{
-      "client_id" => @client_id,
-      "client_name" => "Client Metadata Test",
-      "redirect_uris" => [@redirect_uri],
-      "grant_types" => ["authorization_code", "refresh_token"],
-      "response_types" => ["code"],
-      "scope" => "atproto rpc:*",
-      "token_endpoint_auth_method" => "none",
-      "application_type" => "web",
-      "dpop_bound_access_tokens" => true
-    }
+  defp metadata(overrides \\ %{}) do
+    Map.merge(
+      %{
+        "client_id" => @client_id,
+        "client_name" => "Client Metadata Test",
+        "redirect_uris" => [@redirect_uri],
+        "grant_types" => ["authorization_code", "refresh_token"],
+        "response_types" => ["code"],
+        "scope" => "atproto rpc:*",
+        "token_endpoint_auth_method" => "none",
+        "application_type" => "web",
+        "dpop_bound_access_tokens" => true
+      },
+      overrides
+    )
+  end
+
+  defp native_metadata(overrides) do
+    metadata(
+      Map.merge(
+        %{
+          "application_type" => "native"
+        },
+        overrides
+      )
+    )
   end
 
   defp private_key_jwt_metadata do
