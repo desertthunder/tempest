@@ -20,10 +20,6 @@ defmodule TempestWeb.OAuthFlowTest do
       req_options: [plug: {Req.Test, __MODULE__}]
     )
 
-    Req.Test.stub(__MODULE__, fn conn ->
-      Req.Test.json(conn, client_metadata())
-    end)
-
     {:ok, account} =
       Accounts.create_account(%{
         "handle" => "oauth-flow-#{System.unique_integer([:positive])}.test",
@@ -39,6 +35,10 @@ defmodule TempestWeb.OAuthFlowTest do
   end
 
   test "authorization-code flow issues scoped DPoP token and revokes it", %{conn: conn, account: account} do
+    Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.json(conn, client_metadata())
+    end)
+
     par_conn =
       conn
       |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/par", Dpop.issue_nonce()))
@@ -113,13 +113,134 @@ defmodule TempestWeb.OAuthFlowTest do
     assert response(revoke_conn, 200) == ""
   end
 
+  test "private_key_jwt client auth works for PAR, token exchange, and refresh", %{conn: conn, account: account} do
+    client_key = JOSE.JWK.generate_key({:ec, "P-256"})
+    client_jwks = %{"keys" => [public_client_jwk(client_key)]}
+
+    Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.json(conn, client_metadata("private_key_jwt", client_jwks))
+    end)
+
+    par_assertion = client_assertion(client_key, "par-jti")
+
+    par_conn =
+      conn
+      |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/par", Dpop.issue_nonce()))
+      |> post(~p"/oauth/par", %{
+        "client_id" => @client_id,
+        "redirect_uri" => @redirect_uri,
+        "scope" => "atproto",
+        "response_type" => "code",
+        "code_challenge" => code_challenge("verifier"),
+        "code_challenge_method" => "S256",
+        "client_assertion_type" => client_assertion_type(),
+        "client_assertion" => par_assertion
+      })
+
+    %{"request_uri" => request_uri} = json_response(par_conn, 200)
+
+    replay_par_conn =
+      conn
+      |> recycle()
+      |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/par", Dpop.issue_nonce()))
+      |> post(~p"/oauth/par", %{
+        "client_id" => @client_id,
+        "redirect_uri" => @redirect_uri,
+        "scope" => "atproto",
+        "response_type" => "code",
+        "code_challenge" => code_challenge("verifier"),
+        "code_challenge_method" => "S256",
+        "client_assertion_type" => client_assertion_type(),
+        "client_assertion" => par_assertion
+      })
+
+    assert %{"error" => "invalid_client"} = json_response(replay_par_conn, 400)
+
+    authorize_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/authorize", %{
+        "request_uri" => request_uri,
+        "identifier" => account["handle"],
+        "password" => @password
+      })
+
+    [location] = get_resp_header(authorize_conn, "location")
+    code = location |> URI.parse() |> Map.fetch!(:query) |> URI.decode_query() |> Map.fetch!("code")
+
+    missing_assertion_conn =
+      conn
+      |> recycle()
+      |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/token", Dpop.issue_nonce()))
+      |> post(~p"/oauth/token", %{
+        "grant_type" => "authorization_code",
+        "client_id" => @client_id,
+        "redirect_uri" => @redirect_uri,
+        "code" => code,
+        "code_verifier" => "verifier"
+      })
+
+    assert %{"error" => "invalid_client"} = json_response(missing_assertion_conn, 400)
+
+    token_assertion = client_assertion(client_key, "token-jti")
+
+    token_conn =
+      conn
+      |> recycle()
+      |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/token", Dpop.issue_nonce()))
+      |> post(~p"/oauth/token", %{
+        "grant_type" => "authorization_code",
+        "client_id" => @client_id,
+        "redirect_uri" => @redirect_uri,
+        "code" => code,
+        "code_verifier" => "verifier",
+        "client_assertion_type" => client_assertion_type(),
+        "client_assertion" => token_assertion
+      })
+
+    token_response = json_response(token_conn, 200)
+    assert token_response["token_type"] == "DPoP"
+    assert is_binary(token_response["refresh_token"])
+
+    refresh_assertion = client_assertion(client_key, "refresh-jti")
+
+    refresh_conn =
+      conn
+      |> recycle()
+      |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/token", Dpop.issue_nonce()))
+      |> post(~p"/oauth/token", %{
+        "grant_type" => "refresh_token",
+        "client_id" => @client_id,
+        "refresh_token" => token_response["refresh_token"],
+        "client_assertion_type" => client_assertion_type(),
+        "client_assertion" => refresh_assertion
+      })
+
+    refreshed_response = json_response(refresh_conn, 200)
+    assert refreshed_response["token_type"] == "DPoP"
+
+    replay_refresh_conn =
+      conn
+      |> recycle()
+      |> put_req_header("dpop", dpop("POST", "http://localhost:4002/oauth/token", Dpop.issue_nonce()))
+      |> post(~p"/oauth/token", %{
+        "grant_type" => "refresh_token",
+        "client_id" => @client_id,
+        "refresh_token" => refreshed_response["refresh_token"],
+        "client_assertion_type" => client_assertion_type(),
+        "client_assertion" => refresh_assertion
+      })
+
+    assert %{"error" => "invalid_client"} = json_response(replay_refresh_conn, 400)
+  end
+
   defp dpop(method, url, nonce), do: Tempest.DpopProof.proof(method, url, nonce)
 
   defp code_challenge(verifier) do
     :crypto.hash(:sha256, verifier) |> Base.url_encode64(padding: false)
   end
 
-  defp client_metadata do
+  defp client_metadata(auth_method \\ "none", jwks \\ nil) do
     %{
       "client_id" => @client_id,
       "client_name" => "OAuth Flow Test Client",
@@ -131,5 +252,50 @@ defmodule TempestWeb.OAuthFlowTest do
       "application_type" => "web",
       "dpop_bound_access_tokens" => true
     }
+    |> put_private_key_jwt_metadata(auth_method, jwks)
+  end
+
+  defp put_private_key_jwt_metadata(metadata, "none", _jwks), do: metadata
+
+  defp put_private_key_jwt_metadata(metadata, "private_key_jwt", jwks) do
+    metadata
+    |> Map.put("token_endpoint_auth_method", "private_key_jwt")
+    |> Map.put("token_endpoint_auth_signing_alg", "ES256")
+    |> Map.put("jwks", jwks)
+  end
+
+  defp public_client_jwk(key) do
+    key
+    |> JOSE.JWK.to_public()
+    |> JOSE.JWK.to_map()
+    |> elem(1)
+    |> Map.put("kid", "client-key-1")
+    |> Map.put("alg", "ES256")
+  end
+
+  defp client_assertion(key, jti) do
+    now = DateTime.utc_now() |> DateTime.to_unix()
+
+    headers = %{
+      "typ" => "JWT",
+      "alg" => "ES256",
+      "kid" => "client-key-1"
+    }
+
+    claims = %{
+      "iss" => @client_id,
+      "sub" => @client_id,
+      "aud" => "http://localhost:4002",
+      "iat" => now,
+      "exp" => now + 60,
+      "jti" => jti
+    }
+
+    {_modules, compact} = JOSE.JWT.sign(key, headers, claims) |> JOSE.JWS.compact()
+    compact
+  end
+
+  defp client_assertion_type do
+    "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
   end
 end

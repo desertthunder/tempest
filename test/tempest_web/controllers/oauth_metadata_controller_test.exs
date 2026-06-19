@@ -39,9 +39,13 @@ defmodule TempestWeb.OAuthMetadataControllerTest do
              "pushed_authorization_request_endpoint" => "http://localhost:4002/oauth/par",
              "require_pushed_authorization_requests" => true,
              "code_challenge_methods_supported" => ["S256"],
+             "token_endpoint_auth_methods_supported" => auth_methods,
+             "token_endpoint_auth_signing_alg_values_supported" => auth_algs,
              "dpop_signing_alg_values_supported" => dpop_algs
            } = json_response(conn, 200)
 
+    assert "private_key_jwt" in auth_methods
+    assert auth_algs == ["ES256"]
     assert "ES256" in dpop_algs
   end
 

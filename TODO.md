@@ -1,13 +1,5 @@
 # Parking Lot (TODO)
 
-- Add OAuth `private_key_jwt` client authentication:
-  - accept client metadata with `token_endpoint_auth_method: "private_key_jwt"`
-  - fetch and validate inline `jwks` or remote `jwks_uri`
-  - verify client assertions for `iss`, `sub`, `aud`, `exp`/`iat`, `jti`, `kid`,
-    algorithm, and signature
-  - reject assertion replay
-  - cover PAR, token exchange, refresh, and failure cases
-
 - Add OAuth loopback development client metadata:
   - support the `http://localhost` client ID profile used by AT Protocol OAuth
     development clients

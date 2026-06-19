@@ -19,6 +19,7 @@ Graduated reference docs:
 - [Account Migration](./account-migration.md)
 - [Migration and Account Lifecycle](./migration-lifecycle.md)
 - [Security, OAuth, and Delegated Access](./security-oauth.md)
+- [OAuth private_key_jwt Concepts](./oauth-private-key-jwt.md)
 - [Admin and Operator Operations](./admin-operations.md)
 - [Deployment Guide](./deployment.md)
 - [Deployment and Observability](./deployment-observability.md)

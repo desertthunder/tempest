@@ -16,11 +16,21 @@ defmodule Tempest.OAuth.ClientMetadata do
           redirect_uris: [String.t()],
           scope: String.t() | nil,
           token_endpoint_auth_method: String.t(),
-          dpop_bound_access_tokens: boolean()
+          token_endpoint_auth_signing_alg: String.t() | nil,
+          dpop_bound_access_tokens: boolean(),
+          jwks: map() | nil
         }
 
   @enforce_keys [:client_id, :redirect_uris, :token_endpoint_auth_method, :dpop_bound_access_tokens]
-  defstruct [:client_id, :redirect_uris, :scope, :token_endpoint_auth_method, :dpop_bound_access_tokens]
+  defstruct [
+    :client_id,
+    :redirect_uris,
+    :scope,
+    :token_endpoint_auth_method,
+    :token_endpoint_auth_signing_alg,
+    :dpop_bound_access_tokens,
+    :jwks
+  ]
 
   @doc """
   Fetches and validates client metadata for a PAR request.
@@ -41,6 +51,20 @@ defmodule Tempest.OAuth.ClientMetadata do
 
   def fetch_for_par(_params), do: {:error, :invalid_client}
 
+  @doc """
+  Fetches and validates a client metadata document by client id.
+  """
+  @spec fetch(String.t()) :: {:ok, t()} | {:error, atom()}
+  def fetch(client_id) when is_binary(client_id) do
+    with :ok <- validate_client_id_url(client_id),
+         {:ok, metadata} <- fetch_metadata(client_id),
+         {:ok, client} <- parse_metadata(metadata, client_id) do
+      {:ok, client}
+    end
+  end
+
+  def fetch(_client_id), do: {:error, :invalid_client}
+
   defp fetch_metadata(client_id) do
     case ExternalMetadataFetcher.fetch_json(client_id, max_body_bytes: @max_body_bytes) do
       {:ok, metadata} when is_map(metadata) -> {:ok, metadata}
@@ -55,15 +79,20 @@ defmodule Tempest.OAuth.ClientMetadata do
          true <- Enum.all?(redirect_uris, &valid_redirect_uri?/1),
          true <- contains_string?(Map.get(metadata, "response_types"), "code"),
          true <- contains_string?(Map.get(metadata, "grant_types"), "authorization_code"),
-         "none" <- Map.get(metadata, "token_endpoint_auth_method", "none"),
-         true <- Map.get(metadata, "dpop_bound_access_tokens") do
+         auth_method when auth_method in ["none", "private_key_jwt"] <-
+           Map.get(metadata, "token_endpoint_auth_method", "none"),
+         true <- Map.get(metadata, "dpop_bound_access_tokens"),
+         {:ok, signing_alg} <- validate_signing_alg(metadata, auth_method),
+         {:ok, jwks} <- validate_jwks(metadata, auth_method) do
       {:ok,
        %__MODULE__{
          client_id: client_id,
          redirect_uris: redirect_uris,
          scope: metadata["scope"],
-         token_endpoint_auth_method: "none",
-         dpop_bound_access_tokens: true
+         token_endpoint_auth_method: auth_method,
+         token_endpoint_auth_signing_alg: signing_alg,
+         dpop_bound_access_tokens: true,
+         jwks: jwks
        }}
     else
       _reason -> {:error, :invalid_client}
@@ -99,6 +128,62 @@ defmodule Tempest.OAuth.ClientMetadata do
   end
 
   defp validate_requested_scope(_client, _requested_scope), do: {:error, :invalid_client}
+
+  defp validate_signing_alg(_metadata, "none"), do: {:ok, nil}
+
+  defp validate_signing_alg(metadata, "private_key_jwt") do
+    case Map.get(metadata, "token_endpoint_auth_signing_alg", "ES256") do
+      "ES256" -> {:ok, "ES256"}
+      _other -> {:error, :invalid_client}
+    end
+  end
+
+  defp validate_jwks(metadata, "none") do
+    if Map.has_key?(metadata, "jwks") or Map.has_key?(metadata, "jwks_uri") do
+      {:error, :invalid_client}
+    else
+      {:ok, nil}
+    end
+  end
+
+  defp validate_jwks(metadata, "private_key_jwt") do
+    case {Map.get(metadata, "jwks"), Map.get(metadata, "jwks_uri")} do
+      {%{} = jwks, nil} ->
+        validate_jwks_object(jwks)
+
+      {nil, jwks_uri} when is_binary(jwks_uri) ->
+        with :ok <- validate_jwks_uri(jwks_uri),
+             {:ok, jwks} <- fetch_metadata(jwks_uri) do
+          validate_jwks_object(jwks)
+        end
+
+      _other ->
+        {:error, :invalid_client}
+    end
+  end
+
+  defp validate_jwks_uri(jwks_uri) do
+    case URI.parse(jwks_uri) do
+      %URI{scheme: "https", host: host, userinfo: nil, fragment: nil} when is_binary(host) ->
+        :ok
+
+      _uri ->
+        {:error, :invalid_client}
+    end
+  end
+
+  defp validate_jwks_object(%{"keys" => keys} = jwks) when is_list(keys) and keys != [] do
+    if Enum.all?(keys, &valid_client_key?/1), do: {:ok, jwks}, else: {:error, :invalid_client}
+  end
+
+  defp validate_jwks_object(_jwks), do: {:error, :invalid_client}
+
+  defp valid_client_key?(%{"kid" => kid, "kty" => "EC", "crv" => "P-256", "x" => x, "y" => y} = jwk) do
+    is_binary(kid) and kid != "" and is_binary(x) and is_binary(y) and not Map.has_key?(jwk, "d") and
+      Map.get(jwk, "alg", "ES256") == "ES256"
+  end
+
+  defp valid_client_key?(_jwk), do: false
 
   defp scope_registered?(client_scopes, requested_scope) do
     Enum.any?(client_scopes, fn client_scope ->

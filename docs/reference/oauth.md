@@ -1,6 +1,6 @@
 ---
 title: OAuth Support
-updated: 2026-06-15
+updated: 2026-06-19
 ---
 
 This page compares OAuth behavior across the reference PDS implementations and
@@ -57,16 +57,20 @@ client metadata. Tempest now does the same for HTTPS public clients using
 
 ### Client Authentication
 
-Cocoon, Tranquil, and ZDS support public clients with
+Cocoon, Tranquil, ZDS, and Tempest support public clients with
 `token_endpoint_auth_method: "none"` and private-key clients with
-`private_key_jwt`. Tempest validates public clients and rejects private-key
-clients for now.
+`private_key_jwt`. Tempest's private-key path follows the AT Protocol OAuth
+profile: ES256 assertions, inline `jwks` or HTTPS `jwks_uri`, replay-resistant
+`jti` values, and key binding across PAR, token exchange, and refresh.
 
 ZDS spells out the private-key JWT checks in a small code path. The assertion's
 issuer and subject must equal the client ID. The audience must equal the server
 public URL. Timing claims must be fresh, a `jti` must be present, and the
 signature must verify against the client JWKS. Cocoon and Tranquil also fetch or
 use client JWKS for private-key clients.
+
+See [`oauth-private-key-jwt`](./oauth-private-key-jwt.md) for Tempest's exact
+metadata, assertion, replay, and key-binding rules.
 
 ### PAR and PKCE
 
@@ -253,8 +257,8 @@ requires the same client ID, rotates refresh tokens, and rejects already rotated
 or revoked rows. Access tokens are Phoenix tokens backed by database token rows,
 with hashed access and refresh token storage.
 
-Tempest does not support `private_key_jwt`, loopback development client metadata, 
-private-use redirect schemes, or token introspection.
+Tempest does not support loopback development client metadata, private-use
+redirect schemes, or token introspection.
 
 Tempest can issue DPoP-bound OAuth tokens through PAR and PKCE, but it still
 implements a smaller client model than Cocoon, Tranquil, or ZDS.

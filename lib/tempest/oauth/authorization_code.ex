@@ -9,6 +9,10 @@ defmodule Tempest.OAuth.AuthorizationCode do
     field :scope, :string
     field :code_challenge, :string
     field :dpop_jkt, :string
+    field :client_auth_method, :string, default: "none"
+    field :client_auth_kid, :string
+    field :client_auth_alg, :string
+    field :client_auth_jkt, :string
     field :expires_at, :utc_datetime
     field :used_at, :utc_datetime
     field :revoked_at, :utc_datetime
@@ -30,6 +34,10 @@ defmodule Tempest.OAuth.AuthorizationCode do
       :scope,
       :code_challenge,
       :dpop_jkt,
+      :client_auth_method,
+      :client_auth_kid,
+      :client_auth_alg,
+      :client_auth_jkt,
       :expires_at,
       :used_at,
       :revoked_at
@@ -43,8 +51,10 @@ defmodule Tempest.OAuth.AuthorizationCode do
       :scope,
       :code_challenge,
       :dpop_jkt,
+      :client_auth_method,
       :expires_at
     ])
+    |> validate_inclusion(:client_auth_method, ["none", "private_key_jwt"])
     |> unique_constraint(:code_hash)
   end
 end

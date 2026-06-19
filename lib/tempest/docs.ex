@@ -35,6 +35,11 @@ defmodule Tempest.Docs do
     %{slug: "lexicon-schemas", path: "lexicon-schemas.md", title: "Lexicon Schemas"},
     %{slug: "migration-lifecycle", path: "migration-lifecycle.md", title: "Migration and Account Lifecycle"},
     %{slug: "oauth", path: "oauth.md", title: "OAuth Support"},
+    %{
+      slug: "oauth-private-key-jwt",
+      path: "oauth-private-key-jwt.md",
+      title: "OAuth private_key_jwt Concepts"
+    },
     %{slug: "pds-compatibility", path: "pds-compatibility.md", title: "PDS Compatibility Matrix"},
     %{slug: "record-apis", path: "record-apis.md", title: "Record APIs"},
     %{slug: "release", path: "release.md", title: "Initial Release Readiness"},

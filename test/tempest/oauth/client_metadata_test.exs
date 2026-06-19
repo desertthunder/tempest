@@ -81,9 +81,55 @@ defmodule Tempest.OAuth.ClientMetadataTest do
              })
   end
 
-  test "rejects unsupported client auth methods for now" do
+  test "accepts private_key_jwt metadata with inline jwks" do
     Req.Test.expect(__MODULE__, fn conn ->
-      Req.Test.json(conn, Map.put(metadata(), "token_endpoint_auth_method", "private_key_jwt"))
+      Req.Test.json(conn, private_key_jwt_metadata())
+    end)
+
+    assert {:ok, %ClientMetadata{} = client} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => @client_id,
+               "redirect_uri" => @redirect_uri,
+               "scope" => "atproto"
+             })
+
+    assert client.token_endpoint_auth_method == "private_key_jwt"
+    assert client.token_endpoint_auth_signing_alg == "ES256"
+    assert %{"keys" => [%{"kid" => "client-key-1"}]} = client.jwks
+  end
+
+  test "accepts private_key_jwt metadata with remote jwks_uri" do
+    Req.Test.expect(__MODULE__, 2, fn %{request_path: request_path} = conn ->
+      case request_path do
+        "/oauth/client-metadata.json" ->
+          Req.Test.json(
+            conn,
+            private_key_jwt_metadata()
+            |> Map.delete("jwks")
+            |> Map.put("jwks_uri", "https://client.example.com/oauth/jwks.json")
+          )
+
+        "/oauth/jwks.json" ->
+          Req.Test.json(conn, jwks())
+      end
+    end)
+
+    assert {:ok, %ClientMetadata{jwks: %{"keys" => [%{"kid" => "client-key-1"}]}}} =
+             ClientMetadata.fetch_for_par(%{
+               "client_id" => @client_id,
+               "redirect_uri" => @redirect_uri,
+               "scope" => "atproto"
+             })
+  end
+
+  test "rejects private_key_jwt metadata without a keyset" do
+    Req.Test.expect(__MODULE__, fn conn ->
+      Req.Test.json(
+        conn,
+        metadata()
+        |> Map.put("token_endpoint_auth_method", "private_key_jwt")
+        |> Map.put("token_endpoint_auth_signing_alg", "ES256")
+      )
     end)
 
     assert {:error, :invalid_client} =
@@ -114,6 +160,28 @@ defmodule Tempest.OAuth.ClientMetadataTest do
       "token_endpoint_auth_method" => "none",
       "application_type" => "web",
       "dpop_bound_access_tokens" => true
+    }
+  end
+
+  defp private_key_jwt_metadata do
+    metadata()
+    |> Map.put("token_endpoint_auth_method", "private_key_jwt")
+    |> Map.put("token_endpoint_auth_signing_alg", "ES256")
+    |> Map.put("jwks", jwks())
+  end
+
+  defp jwks do
+    %{
+      "keys" => [
+        %{
+          "kid" => "client-key-1",
+          "kty" => "EC",
+          "crv" => "P-256",
+          "x" => "f83OJ3D2xF4N5t0vY8FfB7PRY1hUu1b8kG0xQ2K9u1Y",
+          "y" => "x_FEzRu9dNwmDc3jcpQK7fG1P0MxEf_0wM9xV8k6KJs",
+          "alg" => "ES256"
+        }
+      ]
     }
   end
 end

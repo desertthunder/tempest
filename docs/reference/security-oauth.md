@@ -1,6 +1,6 @@
 ---
 title: Security, OAuth, and Delegated Access
-updated: 2026-06-03
+updated: 2026-06-19
 ---
 
 Tempest has three account credential families today:
@@ -32,12 +32,38 @@ Current OAuth behavior:
 - PAR is required before authorization.
 - PKCE with `S256` is required.
 - DPoP proofs bind issued tokens.
+- Confidential OAuth clients can authenticate with `private_key_jwt`.
 - Token responses preserve the approved scope string.
 - Access tokens include the account DID as the subject boundary.
 - Revocation marks matching OAuth token rows revoked.
 
 Client metadata and remote identity fetches go through hardened HTTP boundaries
 with SSRF checks, body limits, timeouts, and redirect restrictions.
+
+## OAuth confidential clients
+
+Tempest supports `private_key_jwt` for AT Protocol OAuth confidential clients.
+The implementation follows the stricter AT Protocol profile on top of RFC 7523
+and OpenID Connect Core:
+
+- client metadata must set `token_endpoint_auth_method: "private_key_jwt"`
+- client keys must be public ES256 keys in inline `jwks` or HTTPS `jwks_uri`
+- assertions must be sent as `client_assertion` with JWT bearer
+  `client_assertion_type`
+- `iss` and `sub` must equal the `client_id`
+- `aud` must equal Tempest's authorization-server issuer
+- `exp`, `iat`, and `jti` are required
+- the `kid`, algorithm, JWK thumbprint, and signature must match the current
+  client keyset
+
+Tempest stores accepted assertion JTIs by client to reject replay. For
+confidential clients, the key used at PAR is also bound to the authorization
+code and refresh-token family. Token exchange and refresh re-fetch client
+metadata/JWKS and require the same `kid`, `alg`, and JWK thumbprint, so a client
+key removed from metadata can no longer refresh that session.
+
+Detailed interoperability notes are in
+[`oauth-private-key-jwt`](./oauth-private-key-jwt.md).
 
 ## App passwords
 
@@ -82,13 +108,14 @@ when rotated. The UI shows backup-code availability, not code values.
 
 ```bash
 mix test test/tempest/security_test.exs \
-  test/tempest_web/controllers/oauth_flow_test.exs
+  test/tempest_web/controllers/oauth_flow_test.exs \
+  test/tempest/oauth/client_metadata_test.exs
 
 hurl --test --jobs 1 \
   --variable base_url=http://localhost:4000 \
   test/smoke/oauth-security.hurl
 ```
 
-The tests cover OAuth metadata, PAR/token/revoke paths, DPoP binding, email
-tokens, security events, TOTP, backup codes, delegated-access grants, session
-revocation, app passwords, and rate limiting.
+The tests cover OAuth metadata, PAR/token/revoke paths, DPoP binding,
+`private_key_jwt`, email tokens, security events, TOTP, backup codes,
+delegated-access grants, session revocation, app passwords, and rate limiting.

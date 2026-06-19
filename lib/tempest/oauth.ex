@@ -6,7 +6,7 @@ defmodule Tempest.OAuth do
   import Ecto.Query
 
   alias Tempest.Accounts.{Account, Password}
-  alias Tempest.OAuth.{AuthorizationCode, ClientMetadata, Dpop, ParRequest, Token}
+  alias Tempest.OAuth.{AuthorizationCode, ClientAssertionVerifier, ClientMetadata, Dpop, ParRequest, Token}
   alias Tempest.Repo
   alias TempestWeb.Endpoint
 
@@ -28,7 +28,8 @@ defmodule Tempest.OAuth do
          "S256" <- Map.get(params, "code_challenge_method"),
          :ok <- validate_scope_string(params["scope"]),
          {:ok, proof} <- Dpop.verify_proof(dpop_proof, "POST", public_url <> "/oauth/par"),
-         {:ok, _client} <- ClientMetadata.fetch_for_par(params) do
+         {:ok, client} <- ClientMetadata.fetch_for_par(params),
+         {:ok, client_auth} <- ClientAssertionVerifier.verify(client, params, public_url) do
       request_uri = "urn:ietf:params:oauth:request_uri:" <> random_token(32)
       now = now()
 
@@ -41,6 +42,10 @@ defmodule Tempest.OAuth do
         code_challenge: params["code_challenge"],
         code_challenge_method: "S256",
         dpop_jkt: proof.jkt,
+        client_auth_method: client.token_endpoint_auth_method,
+        client_auth_kid: auth_value(client_auth, :kid),
+        client_auth_alg: auth_value(client_auth, :alg),
+        client_auth_jkt: auth_value(client_auth, :jkt),
         expires_at: DateTime.add(now, @par_lifetime_seconds, :second)
       }
 
@@ -97,6 +102,10 @@ defmodule Tempest.OAuth do
             scope: par.scope,
             code_challenge: par.code_challenge,
             dpop_jkt: par.dpop_jkt,
+            client_auth_method: par.client_auth_method,
+            client_auth_kid: par.client_auth_kid,
+            client_auth_alg: par.client_auth_alg,
+            client_auth_jkt: par.client_auth_jkt,
             expires_at: DateTime.add(now, @code_lifetime_seconds, :second)
           })
           |> Repo.insert!()
@@ -115,6 +124,7 @@ defmodule Tempest.OAuth do
          :ok <- require_param(params, "code_verifier"),
          {:ok, code} <- fetch_code(params["code"]),
          :ok <- verify_client_id(code, params["client_id"]),
+         :ok <- verify_client_auth(code, params, public_url),
          :ok <- verify_redirect_uri(code, params["redirect_uri"]),
          :ok <- verify_pkce(code.code_challenge, params["code_verifier"]),
          {:ok, proof} <- Dpop.verify_proof(dpop_proof, "POST", public_url <> "/oauth/token", bound_jkt: code.dpop_jkt) do
@@ -127,6 +137,7 @@ defmodule Tempest.OAuth do
          :ok <- require_param(params, "client_id"),
          {:ok, token} <- fetch_refresh_token(params["refresh_token"]),
          :ok <- verify_client_id(token, params["client_id"]),
+         :ok <- verify_client_auth(token, params, public_url),
          {:ok, proof} <- Dpop.verify_proof(dpop_proof, "POST", public_url <> "/oauth/token", bound_jkt: token.dpop_jkt) do
       rotate_refresh_token(token, proof)
     end
@@ -203,6 +214,10 @@ defmodule Tempest.OAuth do
               client_id: fresh_code.client_id,
               scope: fresh_code.scope,
               dpop_jkt: proof.jkt,
+              client_auth_method: fresh_code.client_auth_method,
+              client_auth_kid: fresh_code.client_auth_kid,
+              client_auth_alg: fresh_code.client_auth_alg,
+              client_auth_jkt: fresh_code.client_auth_jkt,
               expires_at: DateTime.add(now, @access_lifetime_seconds, :second)
             })
             |> Repo.insert!()
@@ -245,6 +260,10 @@ defmodule Tempest.OAuth do
               client_id: fresh_token.client_id,
               scope: fresh_token.scope,
               dpop_jkt: proof.jkt,
+              client_auth_method: fresh_token.client_auth_method,
+              client_auth_kid: fresh_token.client_auth_kid,
+              client_auth_alg: fresh_token.client_auth_alg,
+              client_auth_jkt: fresh_token.client_auth_jkt,
               expires_at: DateTime.add(now, @access_lifetime_seconds, :second)
             })
             |> Repo.insert!()
@@ -340,6 +359,35 @@ defmodule Tempest.OAuth do
   defp verify_client_id(%{client_id: client_id}, client_id), do: :ok
   defp verify_client_id(_credential, _client_id), do: {:error, :invalid_grant}
 
+  defp verify_client_auth(%{client_auth_method: "none"}, _params, _public_url), do: :ok
+
+  defp verify_client_auth(
+         %{client_id: client_id, client_auth_method: "private_key_jwt"} = credential,
+         params,
+         public_url
+       ) do
+    with {:ok, client} <- ClientMetadata.fetch(client_id),
+         "private_key_jwt" <- client.token_endpoint_auth_method,
+         {:ok, client_auth} <- ClientAssertionVerifier.verify(client, params, public_url),
+         :ok <- verify_bound_client_key(credential, client_auth) do
+      :ok
+    else
+      {:error, reason} -> {:error, reason}
+      _other -> {:error, :invalid_client}
+    end
+  end
+
+  defp verify_client_auth(_credential, _params, _public_url), do: {:error, :invalid_client}
+
+  defp verify_bound_client_key(credential, %{kid: kid, alg: alg, jkt: jkt}) do
+    cond do
+      credential.client_auth_kid != kid -> {:error, :invalid_client}
+      credential.client_auth_alg != alg -> {:error, :invalid_client}
+      credential.client_auth_jkt != jkt -> {:error, :invalid_client}
+      true -> :ok
+    end
+  end
+
   defp verify_redirect_uri(%AuthorizationCode{redirect_uri: redirect_uri}, redirect_uri), do: :ok
   defp verify_redirect_uri(_code, _redirect_uri), do: {:error, :invalid_grant}
 
@@ -388,5 +436,7 @@ defmodule Tempest.OAuth do
   defp hash(value) when is_binary(value), do: value |> sha256() |> Base.encode16(case: :lower)
   defp sha256(value) when is_binary(value), do: :crypto.hash(:sha256, value)
   defp random_token(bytes), do: bytes |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
+  defp auth_value(nil, _key), do: nil
+  defp auth_value(auth, key), do: Map.get(auth, key)
   defp now, do: DateTime.utc_now() |> DateTime.truncate(:second)
 end

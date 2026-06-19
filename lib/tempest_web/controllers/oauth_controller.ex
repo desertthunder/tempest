@@ -105,6 +105,9 @@ defmodule TempestWeb.OAuthController do
       {:error, :invalid_grant} ->
         conn |> put_status(400) |> json(%{"error" => "invalid_grant"})
 
+      {:error, :invalid_client} ->
+        conn |> put_status(400) |> json(%{"error" => "invalid_client"})
+
       {:error, _reason} ->
         conn |> put_status(400) |> json(%{"error" => "invalid_request"})
     end

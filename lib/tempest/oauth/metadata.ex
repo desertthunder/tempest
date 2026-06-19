@@ -39,7 +39,8 @@ defmodule Tempest.OAuth.Metadata do
       "response_types_supported" => ["code"],
       "grant_types_supported" => ["authorization_code", "refresh_token"],
       "code_challenge_methods_supported" => ["S256"],
-      "token_endpoint_auth_methods_supported" => ["none"],
+      "token_endpoint_auth_methods_supported" => ["none", "private_key_jwt"],
+      "token_endpoint_auth_signing_alg_values_supported" => ["ES256"],
       "dpop_signing_alg_values_supported" => ["ES256", "ES384", "ES512", "RS256", "PS256"]
     }
   end
