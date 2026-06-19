@@ -84,6 +84,34 @@ defmodule TempestWeb.OAuthFlowTest do
     assert token_response["sub"] == account["did"]
     assert is_binary(token_response["access_token"])
     assert is_binary(token_response["refresh_token"])
+    account_did = account["did"]
+
+    introspect_access_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{"client_id" => @client_id, "token" => token_response["access_token"]})
+
+    assert %{
+             "active" => true,
+             "client_id" => @client_id,
+             "scope" => "atproto",
+             "sub" => ^account_did,
+             "token_type" => "DPoP",
+             "cnf" => %{"jkt" => _jkt},
+             "exp" => exp
+           } = json_response(introspect_access_conn, 200)
+
+    assert is_integer(exp)
+
+    cross_client_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{
+        "client_id" => "http://localhost?redirect_uri=http://127.0.0.1/cb",
+        "token" => token_response["access_token"]
+      })
+
+    assert %{"active" => false} = json_response(cross_client_conn, 200)
 
     refresh_conn =
       conn
@@ -105,12 +133,47 @@ defmodule TempestWeb.OAuthFlowTest do
     refute refreshed_response["access_token"] == token_response["access_token"]
     refute refreshed_response["refresh_token"] == token_response["refresh_token"]
 
+    introspect_rotated_refresh_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{"client_id" => @client_id, "token" => token_response["refresh_token"]})
+
+    assert %{"active" => false} = json_response(introspect_rotated_refresh_conn, 200)
+
+    introspect_refresh_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{"client_id" => @client_id, "token" => refreshed_response["refresh_token"]})
+
+    assert %{
+             "active" => true,
+             "client_id" => @client_id,
+             "scope" => "atproto",
+             "sub" => ^account_did,
+             "token_type" => "DPoP",
+             "cnf" => %{"jkt" => _refresh_jkt}
+           } = json_response(introspect_refresh_conn, 200)
+
+    unknown_token_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{"client_id" => @client_id, "token" => "not-a-real-token"})
+
+    assert %{"active" => false} = json_response(unknown_token_conn, 200)
+
     revoke_conn =
       conn
       |> recycle()
       |> post(~p"/oauth/revoke", %{"token" => refreshed_response["access_token"], "client_id" => @client_id})
 
     assert response(revoke_conn, 200) == ""
+
+    introspect_revoked_access_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{"client_id" => @client_id, "token" => refreshed_response["access_token"]})
+
+    assert %{"active" => false} = json_response(introspect_revoked_access_conn, 200)
   end
 
   test "private_key_jwt client auth works for PAR, token exchange, and refresh", %{conn: conn, account: account} do
@@ -218,6 +281,34 @@ defmodule TempestWeb.OAuthFlowTest do
 
     refreshed_response = json_response(refresh_conn, 200)
     assert refreshed_response["token_type"] == "DPoP"
+    account_did = account["did"]
+
+    introspect_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{
+        "client_id" => @client_id,
+        "token" => refreshed_response["refresh_token"],
+        "client_assertion_type" => client_assertion_type(),
+        "client_assertion" => client_assertion(client_key, "introspect-jti")
+      })
+
+    assert %{
+             "active" => true,
+             "client_id" => @client_id,
+             "scope" => "atproto",
+             "sub" => ^account_did
+           } = json_response(introspect_conn, 200)
+
+    missing_introspection_auth_conn =
+      conn
+      |> recycle()
+      |> post(~p"/oauth/introspect", %{
+        "client_id" => @client_id,
+        "token" => refreshed_response["refresh_token"]
+      })
+
+    assert %{"error" => "invalid_client"} = json_response(missing_introspection_auth_conn, 400)
 
     replay_refresh_conn =
       conn

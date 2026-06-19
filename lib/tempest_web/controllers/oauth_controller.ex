@@ -122,6 +122,29 @@ defmodule TempestWeb.OAuthController do
     end
   end
 
+  def introspect(conn, params) do
+    public_url = Tempest.Config.load!().public_url
+
+    result =
+      with :ok <- RateLimiter.check(:oauth, Map.get(params, "client_id", "unknown")) do
+        OAuth.introspect(params, public_url)
+      end
+
+    case result do
+      {:ok, response} ->
+        json(conn, response)
+
+      {:error, :rate_limited} ->
+        conn |> put_status(429) |> json(%{"error" => "RateLimitExceeded"})
+
+      {:error, :invalid_client} ->
+        conn |> put_status(400) |> json(%{"error" => "invalid_client"})
+
+      {:error, _reason} ->
+        conn |> put_status(400) |> json(%{"error" => "invalid_request"})
+    end
+  end
+
   defp authorization_page(par, error) do
     escaped_client = Phoenix.HTML.html_escape(par.client_id) |> Phoenix.HTML.safe_to_string()
     escaped_scope = Phoenix.HTML.html_escape(par.scope) |> Phoenix.HTML.safe_to_string()

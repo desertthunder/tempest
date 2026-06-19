@@ -92,6 +92,7 @@ defmodule TempestWeb.Router do
     post "/par", OAuthController, :par
     post "/token", OAuthController, :token
     post "/revoke", OAuthController, :revoke
+    post "/introspect", OAuthController, :introspect
   end
 
   scope "/xrpc", TempestWeb do

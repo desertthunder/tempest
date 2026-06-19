@@ -119,7 +119,7 @@ flow, or prompt handling.
 
 Cocoon, Tranquil, ZDS, and Tempest issue access and refresh tokens and support
 refresh. ZDS and Tranquil expose introspection and revocation. Tempest exposes
-revocation but not introspection.
+both revocation and token introspection.
 
 Tempest stores token material as hashes, rotates refresh tokens, rejects reused
 or revoked refresh rows, and signs access tokens as Phoenix tokens backed by
@@ -257,8 +257,8 @@ requires the same client ID, rotates refresh tokens, and rejects already rotated
 or revoked rows. Access tokens are Phoenix tokens backed by database token rows,
 with hashed access and refresh token storage.
 
-Tempest does not support loopback development client metadata, private-use
-redirect schemes, or token introspection.
+Tempest does not support private-use redirect schemes. Loopback development
+client metadata and token introspection are supported for the local OAuth flow.
 
 Tempest can issue DPoP-bound OAuth tokens through PAR and PKCE, but it still
 implements a smaller client model than Cocoon, Tranquil, or ZDS.

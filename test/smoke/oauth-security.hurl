@@ -46,3 +46,11 @@ POST {{base_url}}/oauth/revoke
 token: not-a-real-token
 client_id: did:web:client.example.com
 HTTP 200
+
+POST {{base_url}}/oauth/introspect
+[FormParams]
+token: not-a-real-token
+client_id: http://localhost
+HTTP 200
+[Asserts]
+jsonpath "$.active" == false

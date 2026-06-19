@@ -187,6 +187,24 @@ defmodule Tempest.OAuth do
   end
 
   @doc """
+  Introspects an OAuth access or refresh token for the requesting client.
+
+  Invalid, expired, revoked, rotated, malformed, missing, or cross-client tokens
+  return an inactive response after the requesting client has authenticated using
+  its registered client authentication method.
+  """
+  def introspect(params, public_url) when is_map(params) and is_binary(public_url) do
+    with :ok <- require_param(params, "client_id") do
+      token = Map.get(params, "token")
+      client_id = params["client_id"]
+
+      introspect_token(token, client_id, params, public_url)
+    end
+  end
+
+  def introspect(_params, _public_url), do: {:error, :invalid_request}
+
+  @doc """
   Signs a short-lived OAuth access token for an issued OAuth token row.
   """
   def sign_access_token(%Account{} = account, %Token{} = token) do
@@ -223,6 +241,87 @@ defmodule Tempest.OAuth do
   end
 
   def verify_access_token(_token), do: {:error, :invalid_token}
+
+  defp introspect_token(token, client_id, params, public_url) when is_binary(token) and token != "" do
+    case active_access_token(token) || active_refresh_token(token) do
+      {:ok, account, oauth_token, token_metadata} ->
+        introspect_active_token(account, oauth_token, token_metadata, client_id, params, public_url)
+
+      nil ->
+        with :ok <- verify_introspection_client(params, public_url) do
+          {:ok, inactive_token_metadata()}
+        end
+    end
+  end
+
+  defp introspect_token(_token, _client_id, params, public_url) do
+    with :ok <- verify_introspection_client(params, public_url) do
+      {:ok, inactive_token_metadata()}
+    end
+  end
+
+  defp active_access_token(token) do
+    case verify_access_token(token) do
+      {:ok, account, oauth_token, _claims} ->
+        {:ok, account, oauth_token, %{"exp" => DateTime.to_unix(oauth_token.expires_at)}}
+
+      {:error, _reason} ->
+        nil
+    end
+  end
+
+  defp active_refresh_token(refresh_token) do
+    Token
+    |> where([t], t.refresh_token_hash == ^hash(refresh_token))
+    |> where([t], is_nil(t.revoked_at))
+    |> where([t], is_nil(t.rotated_at))
+    |> preload(:account)
+    |> Repo.one()
+    |> case do
+      %Token{account: %Account{} = account} = oauth_token ->
+        if active_account?(account) and Tempest.Identity.Correctness.check_local(account) == :ok do
+          {:ok, account, oauth_token, %{}}
+        end
+
+      _missing ->
+        nil
+    end
+  end
+
+  defp introspect_active_token(account, oauth_token, token_metadata, client_id, params, public_url) do
+    with :ok <- verify_introspection_client(oauth_token, client_id, params, public_url) do
+      {:ok,
+       token_metadata
+       |> Map.merge(%{
+         "active" => true,
+         "client_id" => oauth_token.client_id,
+         "scope" => oauth_token.scope,
+         "sub" => account.did,
+         "token_type" => "DPoP",
+         "cnf" => %{"jkt" => oauth_token.dpop_jkt}
+       })}
+    end
+  end
+
+  defp verify_introspection_client(%Token{client_id: client_id} = token, client_id, params, public_url),
+    do: verify_client_auth(token, params, public_url)
+
+  defp verify_introspection_client(%Token{}, _client_id, params, public_url) do
+    with :ok <- verify_introspection_client(params, public_url) do
+      {:ok, inactive_token_metadata()}
+    end
+  end
+
+  defp verify_introspection_client(params, public_url) do
+    with {:ok, client} <- ClientMetadata.fetch(params["client_id"]),
+         {:ok, _client_auth} <- ClientAssertionVerifier.verify(client, params, public_url) do
+      :ok
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp inactive_token_metadata, do: %{"active" => false}
 
   defp issue_tokens_from_code(%AuthorizationCode{} = code, proof) do
     now = now()
@@ -365,10 +464,12 @@ defmodule Tempest.OAuth do
       token.revoked_at -> {:error, :invalid_token}
       token.access_token_hash != hash(access_token) -> {:error, :invalid_token}
       expired?(token.expires_at, now) -> {:error, :expired_token}
-      not account.active or account.status != "active" -> {:error, :inactive_account}
+      not active_account?(account) -> {:error, :inactive_account}
       true -> :ok
     end
   end
+
+  defp active_account?(%Account{} = account), do: account.active and account.status == "active"
 
   defp authenticate_account(identifier, password) when is_binary(identifier) and is_binary(password) do
     normalized = identifier |> String.trim() |> String.downcase()

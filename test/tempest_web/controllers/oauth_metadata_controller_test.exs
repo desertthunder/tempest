@@ -35,6 +35,8 @@ defmodule TempestWeb.OAuthMetadataControllerTest do
              "issuer" => "http://localhost:4002",
              "authorization_endpoint" => "http://localhost:4002/oauth/authorize",
              "token_endpoint" => "http://localhost:4002/oauth/token",
+             "introspection_endpoint" => "http://localhost:4002/oauth/introspect",
+             "revocation_endpoint" => "http://localhost:4002/oauth/revoke",
              "jwks_uri" => "http://localhost:4002/oauth/jwks",
              "pushed_authorization_request_endpoint" => "http://localhost:4002/oauth/par",
              "require_pushed_authorization_requests" => true,

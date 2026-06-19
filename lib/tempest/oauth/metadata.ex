@@ -37,6 +37,8 @@ defmodule Tempest.OAuth.Metadata do
       "issuer" => base_url,
       "authorization_endpoint" => base_url <> "/oauth/authorize",
       "token_endpoint" => base_url <> "/oauth/token",
+      "introspection_endpoint" => base_url <> "/oauth/introspect",
+      "revocation_endpoint" => base_url <> "/oauth/revoke",
       "jwks_uri" => base_url <> "/oauth/jwks",
       "pushed_authorization_request_endpoint" => base_url <> "/oauth/par",
       "require_pushed_authorization_requests" => true,
