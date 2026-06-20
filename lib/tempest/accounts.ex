@@ -78,6 +78,15 @@ defmodule Tempest.Accounts do
 
   def create_session(_identifier, _password), do: {:error, :invalid_credentials}
 
+  def create_browser_session(identifier, password) when is_binary(identifier) and is_binary(password) do
+    with {:ok, response} <- create_session(identifier, password),
+         {:ok, auth} <- authenticate_refresh(response["refreshJwt"]) do
+      {:ok, %{account: auth.account, session: auth.session, family_id: auth.session.family_id}}
+    end
+  end
+
+  def create_browser_session(_identifier, _password), do: {:error, :invalid_credentials}
+
   defp create_session_after_rate_limit(identifier, password) do
     account =
       Account
@@ -316,6 +325,53 @@ defmodule Tempest.Accounts do
   end
 
   def authenticate_refresh(_token), do: {:error, :invalid_token}
+
+  def authenticate_browser_session(session_id, family_id) when is_integer(session_id) and is_binary(family_id) do
+    session =
+      Session
+      |> where([s], s.id == ^session_id and s.family_id == ^family_id)
+      |> preload(:account)
+      |> Repo.one()
+
+    now = now()
+
+    cond do
+      is_nil(session) ->
+        {:error, :invalid_token}
+
+      session.revoked_at ->
+        {:error, :invalid_token}
+
+      DateTime.compare(session.expires_at, now) != :gt ->
+        revoke_session_family!(session.family_id, now)
+        {:error, :expired_token}
+
+      not refresh_allowed_for_account?(session.account) ->
+        {:error, :inactive_account}
+
+      true ->
+        {:ok, %AuthContext{account: session.account, session: session, token_type: :browser_session}}
+    end
+  end
+
+  def authenticate_browser_session(session_id, family_id) when is_binary(session_id) and is_binary(family_id) do
+    case Integer.parse(session_id) do
+      {id, ""} -> authenticate_browser_session(id, family_id)
+      _other -> {:error, :invalid_token}
+    end
+  end
+
+  def authenticate_browser_session(_session_id, _family_id), do: {:error, :invalid_token}
+
+  def revoke_browser_session(session_id, family_id) do
+    with {:ok, auth} <- authenticate_browser_session(session_id, family_id) do
+      now = now()
+      revoke_session_family!(auth.session.family_id, now)
+      :ok
+    else
+      {:error, _reason} -> :ok
+    end
+  end
 
   defp refresh_allowed_for_account?(%Account{active: true, status: "active"}), do: true
   defp refresh_allowed_for_account?(%Account{active: false, status: "deactivated"}), do: true

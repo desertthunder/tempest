@@ -45,13 +45,23 @@ defmodule Tempest.Admin do
     %{
       "status" => "ok",
       "version" => Tempest.version(),
-      "admin" => %{"tokenConfigured" => Tempest.AdminAuth.configured?()},
+      "admin" => admin_status(),
       "storage" => Storage.health(config, env),
       "database" => database_status(config),
       "sequencer" => sequencer_status(),
       "blobStore" => blob_store_status(config, accounts),
       "accounts" => accounts
     }
+  end
+
+  defp admin_status do
+    {did, method} =
+      case Tempest.AdminAuth.auth_method() do
+        {:ok, %{did: did, method: method}} -> {did, Atom.to_string(method)}
+        {:error, reason} -> {nil, Atom.to_string(reason)}
+      end
+
+    %{"did" => did, "authMethod" => method, "tokenConfigured" => Tempest.AdminAuth.configured?()}
   end
 
   def compatibility_status do

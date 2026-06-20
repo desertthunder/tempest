@@ -29,6 +29,7 @@ Graduated reference docs:
 - [Interop and Integration Testing](./interop-testing.md)
 - [Identity and Handles](./identity-handles.md)
 - [Public Stats Dashboard](./public-stats-dashboard.md)
+- [Documentation Viewer](./doc-viewer.md)
 
 ---
 

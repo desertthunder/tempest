@@ -41,18 +41,24 @@ defmodule TempestWeb.AdminController do
   end
 
   defp with_admin(conn, fun) do
-    case AdminAuth.verify_authorization_header(conn.req_headers) do
-      :ok ->
+    cond do
+      conn.assigns[:admin_auth] ->
         fun.(conn)
 
-      {:error, :missing_admin_token} ->
-        reject(conn, 401, "AuthenticationRequired", "Admin bearer token is required")
+      true ->
+        case AdminAuth.verify_authorization_header(conn.req_headers) do
+          :ok ->
+            fun.(conn)
 
-      {:error, :admin_token_not_configured} ->
-        reject(conn, 503, "AdminAuthNotConfigured", "Admin token hash is not configured")
+          {:error, :missing_admin_token} ->
+            reject(conn, 401, "AuthenticationRequired", "Admin bearer token is required")
 
-      {:error, _reason} ->
-        reject(conn, 401, "InvalidToken", "Admin bearer token is invalid")
+          {:error, :admin_token_not_configured} ->
+            reject(conn, 503, "AdminAuthNotConfigured", "Admin token hash is not configured")
+
+          {:error, _reason} ->
+            reject(conn, 401, "InvalidToken", "Admin bearer token is invalid")
+        end
     end
   end
 

@@ -1,5 +1,6 @@
 .tempest-home,
-.operator-account {
+.operator-account,
+.account-login {
   min-height: 100vh;
   padding: clamp(0.75rem, 2vw, 1.35rem);
   background-color: var(--win-desktop);
@@ -33,6 +34,166 @@
 
 .operator-account__desktop {
   width: min(74rem, 100%);
+}
+
+.account-login {
+  display: grid;
+  place-items: center;
+}
+
+.account-login__dialog {
+  width: min(34rem, calc(100vw - 1.5rem));
+}
+
+.account-login__body {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  min-height: 12rem;
+}
+
+.account-login__icon {
+  width: 3rem;
+  height: 3rem;
+  image-rendering: pixelated;
+}
+
+.account-login__content,
+.account-login__form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.account-login__prompt,
+.account-login__error,
+.account-login__meta {
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: var(--leading-copy);
+}
+
+.account-login__error {
+  padding: var(--space-2);
+  color: var(--danger);
+  background: var(--surface-sunken);
+  box-shadow: var(--border-in);
+}
+
+.account-login__form .form-field {
+  margin-block-end: 0;
+}
+
+.account-login__field {
+  display: grid;
+  grid-template-columns: 1.45rem minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.account-login__field > img {
+  width: 1.15rem;
+  height: 1.15rem;
+  image-rendering: pixelated;
+}
+
+.account-login__form label {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.account-login__form .form-label {
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
+}
+
+.account-login__input {
+  min-height: 1.75rem;
+  border: 0;
+  border-radius: 0;
+  background: white;
+  box-shadow: var(--border-in);
+  font: inherit;
+}
+
+.account-login__meta {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2);
+  background: var(--surface-sunken);
+  box-shadow: var(--border-in);
+}
+
+.account-login__meta dt {
+  font-weight: 700;
+}
+
+.account-login__meta dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.account-login__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-block-start: var(--space-1);
+}
+
+.win-button,
+.win-button:visited {
+  display: inline-grid;
+  place-items: center;
+  min-width: 5rem;
+  min-height: 1.75rem;
+  padding: 0.18rem var(--space-3);
+  border: 0;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--border-out);
+  font: inherit;
+  font-size: var(--step--1);
+  line-height: 1;
+  text-decoration: none;
+  cursor: default;
+}
+
+.win-button:hover,
+.win-button:focus-visible {
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.win-button:active {
+  box-shadow: var(--border-in);
+}
+
+@media (max-width: 34rem) {
+  .account-login__body {
+    grid-template-columns: 1fr;
+  }
+
+  .account-login__form label {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .account-login__field {
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+  }
+
+  .account-login__actions {
+    justify-content: stretch;
+  }
+
+  .account-login__actions > * {
+    flex: 1;
+  }
 }
 
 .tempest-home__top-grid {

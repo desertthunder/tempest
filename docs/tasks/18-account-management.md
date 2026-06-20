@@ -18,33 +18,33 @@ External personal backups become an admin-only account-management feature.
 
 ## Auth And Routing
 
-- [ ] T18-01: Add a browser-friendly account login page at `/account/login`
+- [x] T18-01: Add a browser-friendly account login page at `/account/login`
       backed by the existing account credential/session flow.
-- [ ] T18-02: Add account logout and an account browser-session plug that
+- [x] T18-02: Add account logout and an account browser-session plug that
       authorizes `/account/*` from a session family or server-side session
       reference without requiring manual bearer headers.
-- [ ] T18-03: Preserve bearer-token access for existing account tool smoke tests
+- [x] T18-03: Preserve bearer-token access for existing account tool smoke tests
       while ensuring browser sessions never store or render access or refresh
       tokens.
-- [ ] T18-04: Add `TEMPEST_ADMIN_DID` config and validation. Admin browser auth
+- [x] T18-04: Add `TEMPEST_ADMIN_DID` config and validation. Admin browser auth
       must be anchored to this DID rather than a hardcoded PDS URL.
-- [ ] T18-05: Add an admin login page at `/admin/login` that resolves
+- [x] T18-05: Add an admin login page at `/admin/login` that resolves
       `TEMPEST_ADMIN_DID`, discovers the current auth method, and authenticates
       either through local account login or AT Protocol OAuth.
-- [ ] T18-06: Store only a server-side admin auth reference in the browser
+- [x] T18-06: Store only a server-side admin auth reference in the browser
       session. Do not store raw admin tokens, OAuth access tokens, refresh
       tokens, DPoP keys, or authorization artifacts in the browser session.
-- [ ] T18-07: Keep `TEMPEST_ADMIN_TOKEN_HASH` available only as a bootstrap or
+- [x] T18-07: Keep `TEMPEST_ADMIN_TOKEN_HASH` available only as a bootstrap or
       automation credential where still needed by JSON/status checks.
-- [ ] T18-08: Add admin logout and an admin browser-session plug that accepts a
+- [x] T18-08: Add admin logout and an admin browser-session plug that accepts a
       valid admin session and, for automation-only paths, the configured admin
       bearer token.
-- [ ] T18-09: Put user and admin LiveViews in separate authenticated
+- [x] T18-09: Put user and admin LiveViews in separate authenticated
       `live_session` groups.
-- [ ] T18-10: Replace the current controller-backed account/admin tooling in
+- [x] T18-10: Replace the current controller-backed account/admin tooling in
       place. Do not preserve old `/account/*` or `/admin/*` controller routes as
       redirects.
-- [ ] T18-11: Add tests proving account sessions cannot access `/admin/*` and
+- [x] T18-11: Add tests proving account sessions cannot access `/admin/*` and
       admin sessions cannot act as account auth for account-only XRPC methods.
 
 ## User Account Management

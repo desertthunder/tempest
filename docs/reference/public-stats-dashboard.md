@@ -1,19 +1,21 @@
 ---
 title: Public Stats Dashboard
-updated: 2026-06-13
+updated: 2026-06-14
 ---
 
 Tempest exposes aggregate operational data through public routes with no auth. The
-dashboard is intended to make a deployment inspectable without exposing sensitive
-admin or account details.
+dashboard makes a deployment inspectable without exposing sensitive admin or
+account details.
 
 ## Endpoints
 
 - `GET /stats`
 - `GET /xrpc/_stats`
+- `GET /changelog`
 
 `/stats` is a readable HTML page linked from the homepage. `/xrpc/_stats` is the
 stable machine endpoint for scripts, external checks, and deployment smoke tests.
+`/changelog` renders `CHANGELOG.md` as a separate public desktop document.
 
 ## Runtime data model
 
@@ -22,7 +24,9 @@ The HTML and JSON views share a single source of truth:
 - no auth required for read access;
 - no caching in the first implementation (fresh aggregation per request);
 - `generatedAt` is always included and always reflects the snapshot time used for the
-  response.
+  response;
+- bounded detail groups are derived from the same sanitized public stats boundary,
+  not from private admin status data in the view layer.
 
 ## `/xrpc/_stats` response contract
 
@@ -51,7 +55,28 @@ The HTML and JSON views share a single source of truth:
       "sequencerReadable": true,
       "tornWriteCount": 0
     }
-  }
+  },
+  "users": [
+    {
+      "did": "did:plc:example",
+      "handle": "alice.example.com",
+      "status": "active",
+      "recordCount": 42,
+      "lastIndexedAt": "2026-06-14T18:57:11Z",
+      "avatarUrl": "/xrpc/com.atproto.sync.getBlob?did=did%3Aplc%3Aexample&cid=baf...",
+      "bannerUrl": "/xrpc/com.atproto.sync.getBlob?did=did%3Aplc%3Aexample&cid=baf..."
+    }
+  ],
+  "latestRecord": {
+    "did": "did:plc:example",
+    "handle": "alice.example.com",
+    "collection": "app.bsky.feed.post",
+    "rkey": "3k...",
+    "cid": "baf...",
+    "indexedAt": "2026-06-14T18:57:11Z"
+  },
+  "commitWeeks": [{ "weekStart": "2026-06-08", "weekEnd": "2026-06-14", "commitCount": 31 }],
+  "collections": [{ "collection": "app.bsky.feed.post", "recordCount": 120 }]
 }
 ```
 
@@ -75,6 +100,32 @@ The HTML and JSON views share a single source of truth:
 If any repo scan fails during aggregation, the response keeps a valid snapshot for the
 rest of the data and flags the error path in `health` for transparency.
 
+## Detail groups
+
+Detail groups are intentionally bounded:
+
+- users: 12 active hosted users;
+- collections: 10 highest record counts;
+- latest record: 1 most recently updated current record;
+- commit weeks: latest 4 complete or partial Monday-Sunday ranges.
+
+User cards show handle, DID, active/hosted status, current record count, last
+indexed time, and profile imagery when available. Avatar and banner URLs use this
+node's existing public blob endpoint and are generated from current
+`app.bsky.actor.profile` blob references. The public stats response must not
+proxy remote image URLs, expose private blob storage paths, or include full
+profile record JSON.
+
+`latestRecord` identifies the most recently indexed current record across active
+hosted users with handle or DID, collection, rkey, CID, and indexed timestamp.
+The dashboard does not depend on a third-party record viewer.
+
+`commitWeeks` groups commit rows by UTC Monday-Sunday week ranges and includes
+zero-count weeks inside the returned range so the visual layout stays stable.
+
+`collections` aggregates records across repos by collection NSID. It sorts by
+record count descending, then collection name ascending.
+
 ## Security
 
 - Public output must not include:
@@ -86,15 +137,32 @@ rest of the data and flags the error path in `health` for transparency.
   - security event metadata
 - Public output may include only high-level aggregate counts and aggregate health.
 
-These constraints are enforced in the stats aggregator by reading only sanitized data
-from admin status surfaces.
+These constraints are enforced in the stats aggregator by reading only sanitized
+data from public stats functions. Leak regression tests cover the expanded JSON
+shape.
 
-## Notes
+## Changelog desktop document
 
-- `hostedAccountCount`/`totalAccountCount` are computed from account DB state.
-- Commit, collection, and record counts are computed by reading repo DBs for hosted
-  accounts.
-- Health checks include writable storage and the minimum set of DB/query checks needed for
-  confidence in the aggregate response.
-- The page is intentionally static and non-interactive; it is not a control panel and
-  does not expose admin actions.
+`/changelog` exposes `CHANGELOG.md` as a public document view with a retro word
+processor presentation. It uses a fixed `Tempest.Docs` desktop-document manifest,
+not arbitrary paths from the request.
+
+The changelog renderer:
+
+- renders trusted local Markdown with MDEx;
+- parses simple frontmatter if present, but does not require it;
+- rejects unknown desktop document slugs and path traversal attempts;
+- includes a source view for the raw Markdown body;
+- is linked from the home desktop with `priv/static/images/icons/page.svg`;
+- uses normal Phoenix/LiveView rendering and no inline scripts.
+
+## Verification
+
+```bash
+curl -fsS http://localhost:4000/xrpc/_stats
+curl -fsS http://localhost:4000/stats
+curl -fsS http://localhost:4000/changelog
+hurl --test --jobs 1 \
+  --variable base_url=http://localhost:4000 \
+  test/smoke/public-stats.hurl
+```

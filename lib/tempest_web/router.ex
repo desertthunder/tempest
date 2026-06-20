@@ -11,6 +11,14 @@ defmodule TempestWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :account_browser do
+    plug TempestWeb.Plugs.AccountBrowserAuth
+  end
+
+  pipeline :admin_browser do
+    plug TempestWeb.Plugs.AdminBrowserAuth
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -46,23 +54,47 @@ defmodule TempestWeb.Router do
     live "/changelog", ChangelogLive, :show
     live "/docs", DocLive, :show
     live "/docs/:slug", DocLive, :show
-    get "/account", OperatorAccountController, :dashboard
-    get "/account/repo", OperatorAccountController, :repo
-    get "/account/blobs", OperatorAccountController, :blobs
-    get "/account/access", OperatorAccountController, :access
-    get "/account/security", OperatorAccountController, :security
-    get "/account/migration", OperatorAccountController, :migration
-    get "/account/sequencer", OperatorAccountController, :sequencer
-    get "/account/firehose", OperatorAccountController, :firehose
+    get "/account/login", AccountSessionController, :new
+    post "/account/login", AccountSessionController, :create
+    get "/account/logout", AccountSessionController, :delete
+    get "/admin/login", AdminSessionController, :new
+    post "/admin/login", AdminSessionController, :create
+    get "/admin/logout", AdminSessionController, :delete
+  end
 
-    get "/admin", AdminController, :dashboard
-    get "/admin/invites", AdminController, :invites
-    get "/admin/repo", AdminController, :repo
-    post "/admin/repo", AdminController, :repo_action
-    get "/admin/backups", AdminController, :backups
-    post "/admin/backups", AdminController, :backup_action
-    get "/admin/storage", AdminController, :storage
-    get "/admin/compatibility", AdminController, :compatibility
+  scope "/account", TempestWeb do
+    pipe_through [:browser, :account_browser]
+
+    live_session :account_control_panel,
+      on_mount: [{TempestWeb.ControlPanelAuth, :account}],
+      session: {TempestWeb.ControlPanelAuth, :account_session, []} do
+      live "/", AccountControlLive, :dashboard
+      live "/repo", AccountControlLive, :repo
+      live "/blobs", AccountControlLive, :blobs
+      live "/access", AccountControlLive, :access
+      live "/security", AccountControlLive, :security
+      live "/migration", AccountControlLive, :migration
+      live "/sequencer", AccountControlLive, :sequencer
+      live "/firehose", AccountControlLive, :firehose
+    end
+  end
+
+  scope "/admin", TempestWeb do
+    pipe_through [:browser, :admin_browser]
+
+    live_session :admin_control_panel,
+      on_mount: [{TempestWeb.ControlPanelAuth, :admin}],
+      session: {TempestWeb.ControlPanelAuth, :admin_session, []} do
+      live "/", AdminControlLive, :dashboard
+      live "/invites", AdminControlLive, :invites
+      live "/repo", AdminControlLive, :repo
+      live "/backups", AdminControlLive, :backups
+      live "/storage", AdminControlLive, :storage
+      live "/compatibility", AdminControlLive, :compatibility
+    end
+
+    post "/repo", AdminController, :repo_action
+    post "/backups", AdminController, :backup_action
   end
 
   scope "/", TempestWeb do

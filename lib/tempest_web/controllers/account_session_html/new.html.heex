@@ -1,0 +1,53 @@
+<main id="account-login-screen" class="account-login" aria-labelledby="account-login-title">
+  <section
+    class="win-window account-login__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="account-login-title"
+  >
+    <header class="win-window__titlebar">
+      <span id="account-login-title" class="win-window__title">Enter Tempest Password</span>
+      <a id="account-login-close" href={@return_to} class="win-window__close" aria-label="Close">x</a>
+    </header>
+    <div class="win-window__body account-login__body">
+      <img class="account-login__icon" src={~p"/images/icons/at.svg"} alt="" width="48" height="48" />
+
+      <div class="account-login__content">
+        <p class="account-login__prompt">Type a user name and password to log on to Tempest.</p>
+
+        <p :if={@error} id="account-login-error" class="account-login__error">{@error}</p>
+
+        <.form for={@form} action={~p"/account/login"} method="post" id="account-login-form" class="account-login__form">
+          <.input type="hidden" name="return_to" value={@return_to} />
+          <div class="account-login__field">
+            <img src={~p"/images/icons/lock-key.svg"} alt="" width="18" height="18" />
+            <.input
+              field={@form[:identifier]}
+              type="text"
+              label="User name"
+              autocomplete="username"
+              required
+              class="account-login__input"
+            />
+          </div>
+          <div class="account-login__field">
+            <img src={~p"/images/icons/lock-key.svg"} alt="" width="18" height="18" />
+            <.input
+              field={@form[:password]}
+              type="password"
+              label="Password"
+              autocomplete="current-password"
+              required
+              class="account-login__input"
+            />
+          </div>
+
+          <div class="account-login__actions">
+            <button id="account-login-submit" type="submit" class="win-button">OK</button>
+            <a id="account-login-cancel" href={@return_to} class="win-button">Cancel</a>
+          </div>
+        </.form>
+      </div>
+    </div>
+  </section>
+</main>

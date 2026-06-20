@@ -9,45 +9,9 @@ references:
   - ../reference/budget.md
 ---
 
-Goal: make Tempest deployable, restorable, and externally verifiable as a
-SQLite-first PDS on local Docker or a managed PaaS with optional S3/R2 storage.
+Completed [June 13, 2026](../../CHANGELOG.md#2026-06-13).
 
-- [x] T15-01: Add release configuration.
-- [x] T15-02: Add Dockerfile.
-- [x] T15-03: Add docker-compose example.
-- [x] T15-04: Add Caddy reverse proxy example.
-- [x] T15-05: Add production env template.
-- [x] T15-06: Add deployment docs for local-only, S3-backed, and reverse-proxy
-      setups.
-- [x] T15-07: Add managed PaaS deployment profile for Railway-like hosts.
-- [x] T15-08: Document persistent volume requirements for SQLite, repos, keys,
-      WAL files, and backup workspaces.
-- [x] T15-09: Add Cloudflare R2 blob-store configuration docs.
-- [x] T15-10: Add Cloudflare R2 backup-store configuration docs.
-- [x] T15-11: Add deployed HTTPS/WebSocket smoke test profile.
-- [x] T15-12: Add Hurl smoke test for deployed HTTPS target.
-- [x] T15-13: Add restore drill for managed PaaS volume plus S3/R2 backups.
-- [x] T15-14: Add public DID and handle verification procedure.
-- [x] T15-15: Add public relay/AppView crawl verification procedure for a
-      deployed HTTPS node.
-- [x] T15-16: Add real-client compatibility checklist for deployed login,
-      profile writes, posts, blobs, and session refresh.
-- [x] T15-17: Add budget deployment guide for Railway Hobby plus Cloudflare R2
-      free-tier planning.
-
-## Integration Tests
-
-- Release boots with a mounted data dir.
-- Managed PaaS profile documents which paths must be durable.
-- Production boot refuses default secrets.
-- Backup docs are exercised in a local temporary directory.
-- Restore drill can rebuild from a fresh volume and S3/R2 backup.
-- Deployed HTTPS smoke test verifies health, XRPC, blob reads, and WebSocket
-  behavior.
-- Public verification proves hosted DID, handle resolution, and relay/AppView
-  crawl behavior for the deployed node.
-
-## HTTP Verification
+## Verification
 
 ```bash
 hurl --test --jobs 1 \
@@ -55,3 +19,15 @@ hurl --test --jobs 1 \
   --variable admin_token="$ADMIN_TOKEN" \
   test/smoke/deployment.hurl
 ```
+
+Deployment verification covers release/container boot, durable volume
+requirements, production secret checks, S3/R2-backed backup and blob profiles,
+restore drills, public DID/handle verification, relay/AppView crawl checks, and
+real-client smoke flows.
+
+Reference documentation:
+
+- [Deployment Guide](../reference/deployment.md)
+- [Deployment and Observability](../reference/deployment-observability.md)
+- [Budget Deployment](../reference/budget.md)
+- [PDS Compatibility Matrix](../reference/pds-compatibility.md)

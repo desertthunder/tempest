@@ -28,6 +28,7 @@ defmodule Tempest.Docs do
     %{slug: "car-drisl", path: "car-drisl.md", title: "CAR and DRISL"},
     %{slug: "deployment", path: "deployment.md", title: "Deployment Guide"},
     %{slug: "deployment-observability", path: "deployment-observability.md", title: "Deployment and Observability"},
+    %{slug: "doc-viewer", path: "doc-viewer.md", title: "Documentation Viewer"},
     %{slug: "endpoints", path: "endpoints.md", title: "Endpoints"},
     %{slug: "identity-handles", path: "identity-handles.md", title: "Identity and Handles"},
     %{slug: "identity-troubleshooting", path: "identity-troubleshooting.md", title: "Identity Troubleshooting"},

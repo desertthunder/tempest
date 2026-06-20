@@ -97,6 +97,13 @@ defmodule TempestWeb.OperatorAccountController do
   end
 
   defp authenticate(conn) do
+    case conn.assigns[:account_auth] do
+      nil -> authenticate_bearer(conn)
+      auth -> {:ok, auth}
+    end
+  end
+
+  defp authenticate_bearer(conn) do
     conn
     |> get_req_header("authorization")
     |> case do

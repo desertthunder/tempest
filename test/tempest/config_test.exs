@@ -57,4 +57,16 @@ defmodule Tempest.ConfigTest do
       )
     end
   end
+
+  test "validates optional admin DID config" do
+    assert %Tempest.Config{admin_did: "did:plc:abcdefghijklmnopqrstuvwxyz"} =
+             Tempest.Config.validate!(
+               Keyword.put(@valid_config, :admin_did, "did:plc:abcdefghijklmnopqrstuvwxyz"),
+               env: :test
+             )
+
+    assert_raise RuntimeError, ~r/admin_did must be a supported DID/, fn ->
+      Tempest.Config.validate!(Keyword.put(@valid_config, :admin_did, "not-a-did"), env: :test)
+    end
+  end
 end

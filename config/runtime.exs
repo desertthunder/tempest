@@ -42,6 +42,10 @@ if hosted_did_method = System.get_env("TEMPEST_HOSTED_DID_METHOD") do
   config :tempest, Tempest.Config, hosted_did_method: String.to_existing_atom(hosted_did_method)
 end
 
+if admin_did = System.get_env("TEMPEST_ADMIN_DID") do
+  config :tempest, Tempest.Config, admin_did: admin_did
+end
+
 identity_runtime_config = []
 
 identity_runtime_config =

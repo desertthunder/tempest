@@ -4,14 +4,15 @@ defmodule Tempest.Config do
   """
 
   @enforce_keys [:hostname, :public_url, :data_dir, :blob_max_bytes, :hosted_did_method]
-  defstruct [:hostname, :public_url, :data_dir, :blob_max_bytes, :hosted_did_method]
+  defstruct [:hostname, :public_url, :data_dir, :blob_max_bytes, :hosted_did_method, :admin_did]
 
   @type t :: %__MODULE__{
           hostname: String.t(),
           public_url: String.t(),
           data_dir: String.t(),
           blob_max_bytes: pos_integer(),
-          hosted_did_method: :plc | :web
+          hosted_did_method: :plc | :web,
+          admin_did: String.t() | nil
         }
 
   @default_secret_key_bases [
@@ -54,7 +55,8 @@ defmodule Tempest.Config do
         public_url: Keyword.get(config, :public_url),
         data_dir: Keyword.get(config, :data_dir),
         blob_max_bytes: Keyword.get(config, :blob_max_bytes),
-        hosted_did_method: Keyword.get(config, :hosted_did_method, :plc)
+        hosted_did_method: Keyword.get(config, :hosted_did_method, :plc),
+        admin_did: normalize_optional_string(Keyword.get(config, :admin_did))
       }
 
     env = Keyword.get(opts, :env, Application.get_env(:tempest, :env, :prod))
@@ -65,6 +67,7 @@ defmodule Tempest.Config do
          :ok <- validate_data_dir(config.data_dir),
          :ok <- validate_blob_max_bytes(config.blob_max_bytes),
          :ok <- validate_hosted_did_method(config.hosted_did_method),
+         :ok <- validate_admin_did(config.admin_did),
          :ok <- validate_prod_secret(env, endpoint_config) do
       config
     else
@@ -148,6 +151,15 @@ defmodule Tempest.Config do
   defp validate_hosted_did_method("web"), do: :ok
   defp validate_hosted_did_method(_method), do: {:error, "hosted_did_method must be plc or web"}
 
+  defp validate_admin_did(nil), do: :ok
+
+  defp validate_admin_did(admin_did) do
+    case Tempest.Identity.Validators.validate_did(admin_did) do
+      :ok -> :ok
+      {:error, _reason} -> {:error, "admin_did must be a supported DID"}
+    end
+  end
+
   defp validate_prod_secret(:prod, endpoint_config) do
     secret_key_base = Keyword.get(endpoint_config, :secret_key_base)
 
@@ -188,4 +200,13 @@ defmodule Tempest.Config do
     |> String.replace(~r/[^A-Za-z0-9._-]/, "_")
     |> Kernel.<>(".sqlite")
   end
+
+  defp normalize_optional_string(value) when is_binary(value) do
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp normalize_optional_string(_value), do: nil
 end

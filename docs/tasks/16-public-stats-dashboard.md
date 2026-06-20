@@ -9,73 +9,9 @@ references:
   - ../reference/admin-operations.md
 ---
 
-Goal: expose safe public aggregate stats for the experimental Tempest PDS while
-keeping admin-only operations and sensitive internals private.
+Completed [June 14, 2026](../../CHANGELOG.md#2026-06-14).
 
-- [x] T16-01: Add a public stats context or sanitized stats function.
-      It should not reuse the full private admin status response directly.
-- [x] T16-02: Extend repo stats to include per-repo `commit_count`,
-      `collection_count`, and latest repo activity timestamps.
-- [x] T16-03: Add aggregate counts for hosted accounts, total accounts, commits,
-      collections, records, and `lastIndexedAt`.
-- [x] T16-04: Add application uptime tracking based on monotonic time recorded at
-      application start.
-- [x] T16-05: Add a public health summary with `ok`, `degraded`, and `unhealthy`
-      states.
-- [x] T16-06: Add `GET /xrpc/_stats` returning sanitized public JSON.
-- [x] T16-07: Add `GET /stats` public HTML dashboard.
-- [x] T16-08: Link the public stats dashboard from the home page.
-- [x] T16-09: Add dashboard cards for hosted accounts, commits, collections,
-      records, last indexed, uptime, and health.
-- [x] T16-10: Add helper copy explaining that `lastIndexedAt` is local repo,
-      commit, or sequencer activity observed by this PDS.
-- [x] T16-11: Add ConnCase tests for `/stats` and `/xrpc/_stats` without admin
-      authorization.
-- [x] T16-12: Add regression tests proving public stats do not include email,
-      token, session, OAuth, backup path, admin token, or private filesystem data.
-- [x] T16-13: Add Hurl smoke test `test/smoke/public-stats.hurl`.
-- [x] T16-14: Document cache behavior if stats are cached. Include `generatedAt`
-      in the JSON response either way.
-- [x] T16-15: Rename the public account detail concept to "users".
-- [x] T16-16: Add the public `users` group described in the stats spec.
-- [x] T16-17: Add public avatar and banner support for user cards.
-- [x] T16-18: Render user cards on `/stats`.
-- [x] T16-19: Add the public `latestRecord` group described in the stats spec.
-- [x] T16-20: Render a "Latest Indexed Record" section on `/stats`.
-- [x] T16-21: Add repo storage support for weekly commit counts.
-- [x] T16-22: Add the public `commitWeeks` group described in the stats spec.
-- [x] T16-23: Render a compact weekly commit histogram on `/stats`.
-- [x] T16-24: Add repo storage support for collection summaries.
-- [x] T16-25: Add the public `collections` group described in the stats spec.
-- [x] T16-26: Render collection summary rows on `/stats` with count bars.
-- [x] T16-27: Extend public stats tests for `users`, avatar/banner URLs,
-      `latestRecord`, `commitWeeks`, and collection summaries.
-- [x] T16-28: Extend leak regression tests for the expanded public stats shape.
-- [x] T16-29: Extend `test/smoke/public-stats.hurl` to cover the new JSON fields
-      and `/stats` sections.
-- [x] T16-30: Add the public changelog document route described in the stats
-      spec.
-- [x] T16-31: Keep changelog source lookup constrained to a fixed manifest entry.
-- [x] T16-32: Style `/changelog` as a word processor document window.
-- [x] T16-33: Link `/changelog` from the desktop shortcuts.
-- [x] T16-34: Add ConnCase coverage for `/changelog`, its desktop shortcut, and
-      rejection of arbitrary file/path rendering.
-- [x] T16-35: Add a changelog smoke check to the public stats or docs smoke
-      suite, depending on where the route is implemented.
-
-## Integration Tests
-
-- Public stats JSON works without an admin token.
-- Public stats HTML works without an admin token.
-- Admin-only status remains protected by the existing admin auth checks.
-- Counts reflect created accounts and repo writes in an isolated test database.
-- Health reports degraded or unhealthy when a required check is forced to fail.
-- Public responses omit sensitive fields.
-- Expanded public stats match the data contract in
-  `docs/specs/public-stats-dashboard.md`.
-- `/changelog` renders `CHANGELOG.md` publicly and is linked from the desktop.
-
-## HTTP Verification
+## Verification
 
 ```bash
 curl -fsS http://localhost:4000/xrpc/_stats
@@ -86,15 +22,8 @@ hurl --test --jobs 1 \
   test/smoke/public-stats.hurl
 ```
 
-## Implementation Notes
+Public stats expose sanitized aggregate and bounded activity data without auth,
+keep admin-only status protected, omit sensitive fields, and render
+`CHANGELOG.md` through a constrained desktop document route.
 
-Prefer simple request-time aggregation first. If it becomes slow, add a short TTL
-cache and keep the response honest with `generatedAt`.
-
-Current behavior: public stats are generated on each request and are not cached.
-Every JSON response includes `generatedAt`, the UTC timestamp for that response's
-request-time snapshot. If a short TTL cache is added later, `generatedAt` must
-remain the timestamp for the cached snapshot, not the time a client receives it.
-
-Detailed data contracts, UI behavior, and privacy rules live in
-`docs/specs/public-stats-dashboard.md`.
+Reference documentation: [Public Stats Dashboard](../reference/public-stats-dashboard.md).
