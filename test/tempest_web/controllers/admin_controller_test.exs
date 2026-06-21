@@ -267,6 +267,9 @@ defmodule TempestWeb.AdminControllerTest do
       |> html_response(200)
 
     assert login_page =~ ~s(id="admin-login-form")
+    assert login_page =~ ~s(id="admin-login-close" href="/")
+    assert login_page =~ ~s(id="admin-login-cancel" href="/")
+    assert login_page =~ ~s(type="hidden" name="return_to" value="/admin/storage")
     assert login_page =~ ~s(/images/icons/lock-key.svg)
     assert login_page =~ account["did"]
     assert login_page =~ "local_account"

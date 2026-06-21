@@ -2,7 +2,7 @@
   <section class="win-window account-login__dialog" role="dialog" aria-modal="true" aria-labelledby="admin-login-title">
     <header class="win-window__titlebar">
       <span id="admin-login-title" class="win-window__title">Enter Admin Password</span>
-      <a id="admin-login-close" href={@return_to} class="win-window__close" aria-label="Close">x</a>
+      <a id="admin-login-close" href={~p"/"} class="win-window__close" aria-label="Close">x</a>
     </header>
     <div class="win-window__body account-login__body">
       <img class="account-login__icon" src={~p"/images/icons/lock-key.svg"} alt="" width="48" height="48" />
@@ -59,7 +59,7 @@
 
           <div class="account-login__actions">
             <button id="admin-login-submit" type="submit" class="win-button">OK</button>
-            <a id="admin-login-cancel" href={@return_to} class="win-button">Cancel</a>
+            <a id="admin-login-cancel" href={~p"/"} class="win-button">Cancel</a>
           </div>
         </.form>
       </div>

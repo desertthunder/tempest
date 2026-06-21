@@ -25,6 +25,7 @@ defmodule TempestWeb.AccountControlLiveTest do
       |> live(~p"/account")
 
     assert has_element?(view, "#account-dashboard")
+    assert has_element?(view, ~s(a#account-control-home[href="/"]))
 
     logout_conn =
       login_conn
@@ -61,6 +62,7 @@ defmodule TempestWeb.AccountControlLiveTest do
         |> live(path)
 
       assert has_element?(view, selector)
+      assert has_element?(view, ~s(a#account-control-home[href="/"]))
     end
   end
 

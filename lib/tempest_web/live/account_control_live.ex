@@ -799,6 +799,7 @@ defmodule TempestWeb.AccountControlLive do
       <.link navigate={~p"/account/firehose"} aria-current={if(@active == :firehose, do: "page", else: false)}>
         Firehose
       </.link>
+      <.link id="account-control-home" class="operator-account__home-link" navigate={~p"/"}>Home</.link>
     </nav>
     """
   end

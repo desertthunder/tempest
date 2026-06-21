@@ -11,6 +11,12 @@ defmodule TempestWeb.HomeLiveRouteTest do
     assert html =~ ~s(id="home-status-cards")
     assert html =~ ~s(href="/changelog")
     assert html =~ ~s(src="/images/icons/page.svg")
+    assert html =~ ~s(id="taskbar-account-link")
+    assert html =~ ~s(href="/account")
+    assert html =~ ~s(src="/images/icons/lock.svg")
+    assert html =~ ~s(id="taskbar-admin-link")
+    assert html =~ ~s(href="/admin")
+    assert html =~ ~s(src="/images/icons/shield.svg")
     assert html =~ "Changelog"
     assert html =~ "Protocol Surface"
     refute html =~ "Public Stats"

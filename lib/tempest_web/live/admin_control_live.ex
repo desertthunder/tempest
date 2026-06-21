@@ -1069,6 +1069,7 @@ defmodule TempestWeb.AdminControlLive do
       <.link navigate={~p"/admin/compatibility"} aria-current={if(@active == :compatibility, do: "page", else: false)}>
         Compatibility
       </.link>
+      <.link id="admin-control-home" class="operator-account__home-link" navigate={~p"/"}>Home</.link>
     </nav>
     """
   end

@@ -92,7 +92,15 @@ defmodule TempestWeb.CoreComponents do
         <img src={~p"/images/icons/at.svg"} alt="" width="18" height="18" /> Start
       </.link>
       <span class="taskbar__app">{@app_label} / {@host}</span>
-      <span class="taskbar__tray" aria-label="Current UTC time">{@rendered_at}</span>
+      <span class="taskbar__tray" aria-label="System tray">
+        <.link id="taskbar-account-link" class="taskbar__tray-link" navigate={~p"/account"} aria-label="Open account">
+          <img src={~p"/images/icons/lock.svg"} alt="" width="18" height="18" />
+        </.link>
+        <.link id="taskbar-admin-link" class="taskbar__tray-link" navigate={~p"/admin"} aria-label="Open admin">
+          <img src={~p"/images/icons/shield.svg"} alt="" width="18" height="18" />
+        </.link>
+        <span aria-label="Current UTC time">{@rendered_at}</span>
+      </span>
     </footer>
     """
   end

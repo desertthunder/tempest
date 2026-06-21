@@ -789,6 +789,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-5);
+  align-items: center;
 }
 
 .resource-strip__links a,
@@ -810,6 +811,12 @@
 .operator-account__nav a::before {
   content: "▶ ";
   color: var(--danger);
+}
+
+.operator-account__nav .operator-account__home-link {
+  margin-inline-start: auto;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 1px dotted var(--accent);
 }
 
 .taskbar {
@@ -864,8 +871,32 @@
 
 .taskbar__tray {
   margin-inline-start: auto;
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
   font-family: var(--font-mono);
   white-space: nowrap;
+}
+
+.taskbar__tray-link,
+.taskbar__tray-link:visited {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.taskbar__tray-link:hover,
+.taskbar__tray-link:focus-visible {
+  background: var(--surface-raised);
+  box-shadow: var(--border-out);
+}
+
+.taskbar__tray-link img {
+  width: 1rem;
+  height: 1rem;
 }
 
 .modal {
