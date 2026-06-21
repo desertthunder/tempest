@@ -80,6 +80,39 @@ defmodule TempestWeb.OperatorAccountControllerTest do
     assert html =~ account["did"]
   end
 
+  test "account login as configured admin also authorizes admin browser routes", %{conn: conn} do
+    old_config = Application.get_env(:tempest, Tempest.Config)
+    on_exit(fn -> Application.put_env(:tempest, Tempest.Config, old_config) end)
+
+    account = create_account!(conn, "account-admin-shared.test", "account-admin-shared@example.com")
+    configure_admin_did(account["did"])
+
+    login_conn =
+      conn
+      |> recycle()
+      |> post(~p"/account/login", %{
+        "account" => %{"identifier" => account["handle"], "password" => @password}
+      })
+
+    assert redirected_to(login_conn) == ~p"/account"
+    assert Plug.Conn.get_session(login_conn, :account_did) == account["did"]
+    assert Plug.Conn.get_session(login_conn, :admin_did) == account["did"]
+
+    assert Plug.Conn.get_session(login_conn, :account_session_id) ==
+             Plug.Conn.get_session(login_conn, :admin_session_id)
+
+    assert Plug.Conn.get_session(login_conn, :account_session_family_id) ==
+             Plug.Conn.get_session(login_conn, :admin_session_family_id)
+
+    html =
+      login_conn
+      |> recycle()
+      |> get(~p"/admin")
+      |> html_response(200)
+
+    assert html =~ "Admin Dashboard"
+  end
+
   test "account logout clears browser-session access", %{conn: conn} do
     account = create_account!(conn, "logout-account.test", "logout-account@example.com")
 
@@ -128,5 +161,14 @@ defmodule TempestWeb.OperatorAccountControllerTest do
       "password" => @password
     })
     |> json_response(200)
+  end
+
+  defp configure_admin_did(did) do
+    config =
+      :tempest
+      |> Application.fetch_env!(Tempest.Config)
+      |> Keyword.put(:admin_did, did)
+
+    Application.put_env(:tempest, Tempest.Config, config)
   end
 end

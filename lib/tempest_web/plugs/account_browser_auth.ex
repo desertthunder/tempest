@@ -7,6 +7,8 @@ defmodule TempestWeb.Plugs.AccountBrowserAuth do
   import Plug.Conn
 
   alias Tempest.Accounts
+  alias Tempest.Accounts.AuthContext
+  alias Tempest.AdminAuth
   alias TempestWeb.XrpcErrorJSON
 
   use TempestWeb, :verified_routes
@@ -57,6 +59,26 @@ defmodule TempestWeb.Plugs.AccountBrowserAuth do
         {:ok, auth}
 
       {:error, _reason} = error when not is_nil(session_id) or not is_nil(family_id) ->
+        error
+
+      {:error, _reason} ->
+        authenticate_admin_session(conn)
+    end
+  end
+
+  defp authenticate_admin_session(conn) do
+    session_id = get_session(conn, :admin_session_id)
+    family_id = get_session(conn, :admin_session_family_id)
+    did = get_session(conn, :admin_did)
+
+    case AdminAuth.authenticate_browser_session(session_id, family_id, did) do
+      {:ok, %{account: account, session: session}} ->
+        {:ok, %AuthContext{account: account, session: session, token_type: :browser_session}}
+
+      {:ok, _external_admin_session} ->
+        {:error, :missing_token}
+
+      {:error, _reason} = error when not is_nil(session_id) or not is_nil(family_id) or not is_nil(did) ->
         error
 
       {:error, _reason} ->

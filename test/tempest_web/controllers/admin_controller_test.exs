@@ -286,6 +286,13 @@ defmodule TempestWeb.AdminControllerTest do
     assert is_integer(Plug.Conn.get_session(login_conn, :admin_session_id))
     assert is_binary(Plug.Conn.get_session(login_conn, :admin_session_family_id))
     assert Plug.Conn.get_session(login_conn, :admin_did) == account["did"]
+    assert Plug.Conn.get_session(login_conn, :account_did) == account["did"]
+
+    assert Plug.Conn.get_session(login_conn, :account_session_id) ==
+             Plug.Conn.get_session(login_conn, :admin_session_id)
+
+    assert Plug.Conn.get_session(login_conn, :account_session_family_id) ==
+             Plug.Conn.get_session(login_conn, :admin_session_family_id)
 
     browser_session = Plug.Conn.get_session(login_conn)
     refute inspect(browser_session) =~ account["accessJwt"]
@@ -446,6 +453,23 @@ defmodule TempestWeb.AdminControllerTest do
       |> get(~p"/xrpc/com.atproto.server.getSession")
 
     assert json_response(xrpc_conn, 401)["error"] == "AuthenticationRequired"
+  end
+
+  test "local admin browser session also authorizes account UI even without account session keys", %{conn: conn} do
+    admin_conn = admin_login_conn(conn, "admin-account-ui.test", "admin-account-ui@example.com")
+
+    admin_only_conn =
+      admin_conn
+      |> recycle()
+      |> Plug.Test.init_test_session(%{
+        admin_session_id: Plug.Conn.get_session(admin_conn, :admin_session_id),
+        admin_session_family_id: Plug.Conn.get_session(admin_conn, :admin_session_family_id),
+        admin_did: Plug.Conn.get_session(admin_conn, :admin_did)
+      })
+
+    account_conn = get(admin_only_conn, ~p"/account")
+
+    assert html_response(account_conn, 200) =~ "Account Control Panel"
   end
 
   defp configure_admin_did(did) do

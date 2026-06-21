@@ -35,31 +35,37 @@ defmodule TempestWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
+  attr :chrome, :atom, default: :app, values: [:app, :desktop]
+
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
     <div class="app-shell">
-      <header class="app-header">
-        <a href="/" class="app-header__brand">
-          <img src={~p"/images/logo.svg"} width="32" height="32" alt="" />
-          <span>Tempest PDS</span>
-          <span>v{Application.spec(:tempest, :vsn)}</span>
-        </a>
-        <nav aria-label="Project links">
-          <ul class="app-header__nav">
-            <li><a href={~p"/docs"} class="button">Docs</a></li>
-            <li><a href="https://github.com/owais/tempest" class="button">GitHub</a></li>
-            <li><a href="https://atproto.com/" class="button button--primary">AT Protocol</a></li>
-          </ul>
-        </nav>
-      </header>
+      <%= if @chrome == :desktop do %>
+        {render_slot(@inner_block)}
+      <% else %>
+        <header class="app-header">
+          <a href="/" class="app-header__brand">
+            <img src={~p"/images/logo.svg"} width="32" height="32" alt="" />
+            <span>Tempest PDS</span>
+            <span>v{Application.spec(:tempest, :vsn)}</span>
+          </a>
+          <nav aria-label="Project links">
+            <ul class="app-header__nav">
+              <li><a href={~p"/docs"} class="button">Docs</a></li>
+              <li><a href="https://github.com/owais/tempest" class="button">GitHub</a></li>
+              <li><a href="https://atproto.com/" class="button button--primary">AT Protocol</a></li>
+            </ul>
+          </nav>
+        </header>
 
-      <main class="app-main">
-        <div class="app-stack">
-          {render_slot(@inner_block)}
-        </div>
-      </main>
+        <main class="app-main">
+          <div class="app-stack">
+            {render_slot(@inner_block)}
+          </div>
+        </main>
+      <% end %>
 
       <.flash_group flash={@flash} />
     </div>

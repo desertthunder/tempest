@@ -45,6 +45,9 @@ defmodule TempestWeb.AdminSessionController do
       {:ok, admin_session} ->
         conn
         |> renew_session()
+        |> put_session(:account_session_id, admin_session.session.id)
+        |> put_session(:account_session_family_id, admin_session.family_id)
+        |> put_session(:account_did, admin_session.did)
         |> put_session(:admin_session_id, admin_session.session.id)
         |> put_session(:admin_session_family_id, admin_session.family_id)
         |> put_session(:admin_did, admin_session.did)

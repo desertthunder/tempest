@@ -74,7 +74,10 @@ defmodule TempestWeb.AdminControlLiveTest do
     expect_did_document()
 
     {:ok, view, _html} = live(admin_conn, ~p"/admin/personal-backups/new")
-    assert has_element?(view, ~s(a#admin-control-home[href="/"]))
+    refute has_element?(view, ".app-header")
+    assert has_element?(view, ~s(.taskbar a[href="/"]))
+    assert has_element?(view, ~s(.taskbar a#taskbar-account-link[href="/account"]))
+    assert has_element?(view, ~s(.taskbar a#taskbar-admin-link[href="/admin"]))
 
     view
     |> form("#personal-backup-create-form",

@@ -1,12 +1,17 @@
 defmodule TempestWeb.AccountControlLive do
   use TempestWeb, :live_view
 
-  alias Tempest.{Accounts, Blobs, RepoStorage, Security, Sequencer}
+  alias Tempest.{Accounts, Blobs, Config, RepoStorage, Security, Sequencer}
 
   @page_limit 50
 
   @impl true
-  def mount(_params, _session, socket), do: {:ok, assign(socket, :page_title, "Account Control Panel")}
+  def mount(_params, _session, socket) do
+    {:ok,
+     socket
+     |> assign(:page_title, "Account Control Panel")
+     |> assign_control_shell()}
+  end
 
   @impl true
   def handle_params(params, uri, socket) do
@@ -24,8 +29,9 @@ defmodule TempestWeb.AccountControlLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} chrome={:desktop}>
       {render_account_page(assigns)}
+      <.taskbar app_label="tempest account" host={@host} rendered_at={@rendered_at} />
     </Layouts.app>
     """
   end
@@ -799,9 +805,21 @@ defmodule TempestWeb.AccountControlLive do
       <.link navigate={~p"/account/firehose"} aria-current={if(@active == :firehose, do: "page", else: false)}>
         Firehose
       </.link>
-      <.link id="account-control-home" class="operator-account__home-link" navigate={~p"/"}>Home</.link>
     </nav>
     """
+  end
+
+  defp assign_control_shell(socket) do
+    config = Config.load!()
+
+    socket
+    |> assign(:host, config.hostname)
+    |> assign(:rendered_at, rendered_at())
+  end
+
+  defp rendered_at do
+    DateTime.utc_now()
+    |> Calendar.strftime("%Y-%m-%d %H:%M:%SZ")
   end
 
   defp blob_summary(blobs) do

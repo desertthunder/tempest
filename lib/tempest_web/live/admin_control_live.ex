@@ -1,12 +1,17 @@
 defmodule TempestWeb.AdminControlLive do
   use TempestWeb, :live_view
 
-  alias Tempest.Admin
+  alias Tempest.{Admin, Config}
   alias Tempest.PersonalBackups
   alias Tempest.PersonalBackups.Account
 
   @impl true
-  def mount(_params, _session, socket), do: {:ok, assign(socket, :page_title, "Admin Control Panel")}
+  def mount(_params, _session, socket) do
+    {:ok,
+     socket
+     |> assign(:page_title, "Admin Control Panel")
+     |> assign_control_shell()}
+  end
 
   @impl true
   def handle_params(params, _uri, socket) do
@@ -178,8 +183,9 @@ defmodule TempestWeb.AdminControlLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} chrome={:desktop}>
       {render_admin_page(assigns)}
+      <.taskbar app_label="tempest admin" host={@host} rendered_at={@rendered_at} />
     </Layouts.app>
     """
   end
@@ -1069,9 +1075,21 @@ defmodule TempestWeb.AdminControlLive do
       <.link navigate={~p"/admin/compatibility"} aria-current={if(@active == :compatibility, do: "page", else: false)}>
         Compatibility
       </.link>
-      <.link id="admin-control-home" class="operator-account__home-link" navigate={~p"/"}>Home</.link>
     </nav>
     """
+  end
+
+  defp assign_control_shell(socket) do
+    config = Config.load!()
+
+    socket
+    |> assign(:host, config.hostname)
+    |> assign(:rendered_at, rendered_at())
+  end
+
+  defp rendered_at do
+    DateTime.utc_now()
+    |> Calendar.strftime("%Y-%m-%d %H:%M:%SZ")
   end
 
   defp present(nil), do: "—"

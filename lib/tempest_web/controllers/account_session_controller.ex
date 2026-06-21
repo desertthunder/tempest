@@ -2,6 +2,7 @@ defmodule TempestWeb.AccountSessionController do
   use TempestWeb, :controller
 
   alias Tempest.Accounts
+  alias Tempest.AdminAuth
 
   def new(conn, params) do
     render_login(conn, params, nil)
@@ -19,6 +20,7 @@ defmodule TempestWeb.AccountSessionController do
         |> put_session(:account_session_id, browser_session.session.id)
         |> put_session(:account_session_family_id, browser_session.family_id)
         |> put_session(:account_did, browser_session.account.did)
+        |> maybe_put_admin_session(browser_session)
         |> redirect(to: safe_return_to(return_to, ~p"/account"))
 
       {:error, reason} ->
@@ -66,6 +68,19 @@ defmodule TempestWeb.AccountSessionController do
   defp login_error(:inactive_account), do: "This account is not active."
   defp login_error(:rate_limited), do: "Too many attempts. Try again later."
   defp login_error(_reason), do: "The username or password is incorrect."
+
+  defp maybe_put_admin_session(conn, browser_session) do
+    case AdminAuth.configured_did() do
+      {:ok, did} when did == browser_session.account.did ->
+        conn
+        |> put_session(:admin_session_id, browser_session.session.id)
+        |> put_session(:admin_session_family_id, browser_session.family_id)
+        |> put_session(:admin_did, did)
+
+      _other ->
+        conn
+    end
+  end
 
   defp renew_session(conn) do
     conn

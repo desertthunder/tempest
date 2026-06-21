@@ -13,6 +13,10 @@
   padding-block-start: calc(2.7rem + clamp(0.75rem, 2vw, 1.35rem));
 }
 
+.operator-account {
+  padding-block-start: calc(2.7rem + clamp(0.75rem, 2vw, 1.35rem));
+}
+
 .tempest-home__desktop,
 .operator-account__desktop {
   display: grid;
@@ -811,12 +815,6 @@
 .operator-account__nav a::before {
   content: "▶ ";
   color: var(--danger);
-}
-
-.operator-account__nav .operator-account__home-link {
-  margin-inline-start: auto;
-  padding-inline-start: var(--space-3);
-  border-inline-start: 1px dotted var(--accent);
 }
 
 .taskbar {
