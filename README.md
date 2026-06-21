@@ -207,6 +207,15 @@ full Hurl usage.
 
 ## Documentation
 
+Browser admin access is anchored to `TEMPEST_ADMIN_DID`.
+
+When that DID belongs to a local Tempest account, `/admin/login` accepts the
+account handle or DID plus the account password and stores only a server-side
+admin session reference in the browser session.
+
+`TEMPEST_ADMIN_TOKEN_HASH` is optional and is reserved for bootstrap and
+automation paths such as `/xrpc/_admin/status`. It should be stored as an Argon2 hash.
+
 - [Development](./DEVELOPMENT.md)
 - [Deployment](./docs/reference/deployment.md)
 - [PDS compatibility](./docs/reference/pds-compatibility.md)
@@ -225,6 +234,31 @@ The changelog is available in [CHANGELOG.md](./CHANGELOG.md) and at
 <https://tempest.desertthunder.dev/changelog>.
 
 ![Tempest changelog viewer](docs/images/changelog.png)
+
+Admin UI:
+
+```text
+/admin/login
+/admin/logout
+/admin
+/admin/accounts
+/admin/accounts/:did
+/admin/invites
+/admin/repo
+/admin/backups
+/admin/personal-backups
+/admin/personal-backups/new
+/admin/personal-backups/:id
+/admin/storage
+/admin/compatibility
+/xrpc/_admin/status
+```
+
+To generate a TOTP code for a base32 secret:
+
+```bash
+mix tempest.totp.code <base32-secret>
+```
 
 ## References
 
