@@ -85,24 +85,24 @@ External personal backups become an admin-only account-management feature.
 
 ## External Account Backups
 
-- [ ] T18-24: Add a `Tempest.PersonalBackups` context and migrations for
+- [x] T18-24: Add a `Tempest.PersonalBackups` context and migrations for
       external backup accounts, backup runs, immutable snapshots, blob records,
       credentials, and retention settings.
-- [ ] T18-25: Add external account registration with DID, handle, optional
+- [x] T18-25: Add external account registration with DID, handle, optional
       pinned source PDS URL, label, credential state, and status fields. The
       default source PDS must be resolved from the DID document, not hardcoded.
-- [ ] T18-26: Add identity/source verification that resolves handle and DID
+- [x] T18-26: Add identity/source verification that resolves handle and DID
       document, verifies `#atproto_pds`, and fails closed on mismatched pinned
       source PDS values.
-- [ ] T18-27: Add credential storage for no-auth, app-password, and access-token
+- [x] T18-27: Add credential storage for no-auth, app-password, and access-token
       modes. Store secrets defensively, never render them, and allow rotation and
       deletion.
-- [ ] T18-28: Add a source PDS client using `Req` for
+- [x] T18-28: Add a source PDS client using `Req` for
       `com.atproto.sync.getRepo`, `com.atproto.sync.listBlobs`,
       `com.atproto.sync.getBlob`, and `app.bsky.actor.getPreferences`.
-- [ ] T18-29: Add CAR snapshot creation that stores `repo.car`, commit CID, rev,
+- [x] T18-29: Add CAR snapshot creation that stores `repo.car`, commit CID, rev,
       byte size, hash, source PDS, handle, and DID.
-- [ ] T18-30: Reuse repo-core verification to validate commit DID, commit
+- [x] T18-30: Reuse repo-core verification to validate commit DID, commit
       signature, MST completeness, record paths, record CIDs, and CAR integrity.
 - [ ] T18-31: Extract blob references from repo records and merge them with
       paginated `listBlobs` output.
