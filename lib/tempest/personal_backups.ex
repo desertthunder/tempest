@@ -35,6 +35,52 @@ defmodule Tempest.PersonalBackups do
   def get_account!(id), do: Repo.get!(Account, id)
   def get_account_by_did(did) when is_binary(did), do: Repo.get_by(Account, did: did)
 
+  def list_snapshots(opts \\ []) do
+    Snapshot
+    |> maybe_filter_snapshots_by_account(Keyword.get(opts, :account))
+    |> maybe_filter_snapshots_by_did(Keyword.get(opts, :did))
+    |> order_by([snapshot], desc: snapshot.completed_at, desc: snapshot.inserted_at)
+    |> Repo.all()
+  end
+
+  def get_snapshot!(id), do: Repo.get!(Snapshot, id)
+
+  def account_backup_status(%Account{} = account) do
+    latest_snapshot =
+      Snapshot
+      |> where([snapshot], snapshot.account_id == ^account.id)
+      |> order_by([snapshot], desc: snapshot.completed_at, desc: snapshot.inserted_at)
+      |> limit(1)
+      |> Repo.one()
+
+    latest_run =
+      Run
+      |> where([run], run.account_id == ^account.id)
+      |> order_by([run], desc: run.started_at, desc: run.inserted_at)
+      |> limit(1)
+      |> Repo.one()
+
+    snapshot_count =
+      Snapshot
+      |> where([snapshot], snapshot.account_id == ^account.id)
+      |> Repo.aggregate(:count)
+
+    stored_blob_count =
+      from(blob in Tempest.PersonalBackups.Blob,
+        join: snapshot in assoc(blob, :snapshot),
+        where: snapshot.account_id == ^account.id and blob.status == "stored"
+      )
+      |> Repo.aggregate(:count)
+
+    %{
+      account: account,
+      latest_snapshot: latest_snapshot,
+      latest_run: latest_run,
+      snapshot_count: snapshot_count,
+      stored_blob_count: stored_blob_count
+    }
+  end
+
   def credential_public_state(%Account{} = account) do
     account
     |> Repo.preload(:credential, force: true)
@@ -177,6 +223,18 @@ defmodule Tempest.PersonalBackups do
       {:ok, %{status: "ok", manifest: manifest, report: report}}
     end
   end
+
+  defp maybe_filter_snapshots_by_account(query, %Account{id: account_id}) do
+    where(query, [snapshot], snapshot.account_id == ^account_id)
+  end
+
+  defp maybe_filter_snapshots_by_account(query, _account), do: query
+
+  defp maybe_filter_snapshots_by_did(query, did) when is_binary(did) and did != "" do
+    where(query, [snapshot], snapshot.did == ^did)
+  end
+
+  defp maybe_filter_snapshots_by_did(query, _did), do: query
 
   def create_repo_snapshot(%Account{} = account, opts \\ []) do
     config = Keyword.get(opts, :config, Tempest.Config.load!())

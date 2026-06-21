@@ -452,6 +452,30 @@ defmodule Tempest.PersonalBackupsTest do
     assert {:error, :sha256_mismatch} = PersonalBackups.verify_snapshot_offline(snapshot, config: config)
   end
 
+  test "verify_snapshot_offline understands a snapshot from manifest and files after database rows are gone" do
+    data_dir = Path.join(System.tmp_dir!(), "tempest_personal_backup_portable_#{System.unique_integer([:positive])}")
+    config = snapshot_test_config(data_dir)
+    on_exit(fn -> File.rm_rf(data_dir) end)
+
+    {snapshot, _did_document} = create_no_blob_snapshot!(config)
+    snapshot_dir = Path.join(config.data_dir, snapshot.storage_key)
+    manifest_path = Path.join(snapshot_dir, "manifest.json")
+    repo_car_path = Path.join(snapshot_dir, "repo.car")
+
+    Repo.delete_all(from account in Account, where: account.did == ^@did)
+
+    refute Repo.exists?(from snapshot in Snapshot, where: snapshot.did == ^@did)
+    assert File.exists?(manifest_path)
+    assert File.exists?(repo_car_path)
+
+    assert {:ok, %{status: "ok", manifest: manifest, report: report}} =
+             PersonalBackups.verify_snapshot_offline(snapshot_dir, config: config)
+
+    assert get_in(manifest, ["account", "did"]) == @did
+    assert get_in(manifest, ["repo", "carPath"]) == "repo.car"
+    assert report["status"] == "ok"
+  end
+
   test "create_repo_snapshot rejects invalid commit signatures" do
     data_dir =
       Path.join(System.tmp_dir!(), "tempest_personal_backup_bad_snapshot_#{System.unique_integer([:positive])}")

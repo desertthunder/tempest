@@ -121,9 +121,9 @@ External personal backups become an admin-only account-management feature.
       blobs, preferences JSON when present, and verification report.
 - [x] T18-38: Add offline snapshot verification that can run without contacting
       the source PDS.
-- [ ] T18-39: Add tests proving a snapshot can be understood from its manifest
+- [x] T18-39: Add tests proving a snapshot can be understood from its manifest
       and files without relying on Tempest database rows.
-- [ ] T18-40: Add Mix tasks for backup, verify, list snapshots, export bundle,
+- [x] T18-40: Add Mix tasks for backup, verify, list snapshots, export bundle,
       prune, and show account backup status.
 - [ ] T18-41: Add admin-only LiveView routes for external backup account list,
       detail, create, edit, delete, backup now, verify, prune, and export.
