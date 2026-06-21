@@ -1,7 +1,7 @@
 defmodule TempestWeb.AdminControllerTest do
   use TempestWeb.ConnCase
 
-  alias Tempest.{Accounts, AdminAuth}
+  alias Tempest.{Accounts, AdminAuth, PersonalBackups}
 
   setup context do
     Req.Test.set_req_test_from_context(context)
@@ -90,6 +90,8 @@ defmodule TempestWeb.AdminControllerTest do
           {~p"/admin/invites", "Invite Code Management"},
           {~p"/admin/repo", "Repo Verify, Export, and Import"},
           {~p"/admin/backups", "Backup Create and Restore Dry Run"},
+          {~p"/admin/personal-backups", "External Account Backups"},
+          {~p"/admin/personal-backups/new", "Register External Backup Account"},
           {~p"/admin/storage", "Storage Status"},
           {~p"/admin/compatibility", "Compatibility Status"}
         ] do
@@ -123,6 +125,66 @@ defmodule TempestWeb.AdminControllerTest do
     assert html =~ account["did"]
     assert html =~ account["handle"]
     assert html =~ "repo count"
+  end
+
+  test "admin external backup routes render account operations", %{conn: conn} do
+    admin_conn = admin_login_conn(conn, "admin-external-backups.test", "admin-external-backups@example.com")
+    did = "did:plc:bbbbbbbbbbbbbbbbbbbbbbbb"
+    handle = "external-backup.test"
+
+    Application.put_env(:tempest, Tempest.Identity,
+      plc_directory_url: "https://plc.test",
+      http_req_options: [plug: {Req.Test, __MODULE__}],
+      dns_lookup: &public_test_dns/1,
+      dns_txt_lookup: fn "_atproto." <> ^handle -> ["did=#{did}"] end
+    )
+
+    Req.Test.expect(__MODULE__, fn req_conn ->
+      assert req_conn.request_path == "/" <> URI.encode(did)
+
+      Req.Test.json(req_conn, %{
+        "@context" => ["https://www.w3.org/ns/did/v1"],
+        "id" => did,
+        "alsoKnownAs" => ["at://#{handle}"],
+        "service" => [
+          %{
+            "id" => "#atproto_pds",
+            "type" => "AtprotoPersonalDataServer",
+            "serviceEndpoint" => "https://external-pds.test"
+          }
+        ]
+      })
+    end)
+
+    assert {:ok, account} =
+             PersonalBackups.register_account(%{
+               did: did,
+               handle: handle,
+               label: "External backup"
+             })
+
+    for {path, expected, selector} <- [
+          {~p"/admin/personal-backups/#{account.id}", "Credential State", ~s(id="personal-backup-now-form")},
+          {~p"/admin/personal-backups/#{account.id}/edit", "Edit External Backup Account",
+           ~s(id="personal-backup-edit-form")},
+          {~p"/admin/personal-backups/#{account.id}/delete", "Delete External Backup Account",
+           ~s(id="personal-backup-delete-form")},
+          {~p"/admin/personal-backups/#{account.id}/backup", "Operations", ~s(id="personal-backup-now-form")},
+          {~p"/admin/personal-backups/#{account.id}/verify", "Snapshot History", ~s(id="personal-backup-verify-form")},
+          {~p"/admin/personal-backups/#{account.id}/prune", "Retention and Schedule",
+           ~s(id="personal-backup-prune-form")},
+          {~p"/admin/personal-backups/#{account.id}/export", "Storage Totals and Missing Blobs",
+           ~s(id="personal-backup-export-form")}
+        ] do
+      html =
+        admin_conn
+        |> recycle()
+        |> get(path)
+        |> html_response(200)
+
+      assert html =~ expected
+      assert html =~ selector
+    end
   end
 
   test "admin mutation forms include csrf tokens and confirmations", %{conn: conn} do

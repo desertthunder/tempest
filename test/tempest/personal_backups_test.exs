@@ -347,6 +347,84 @@ defmodule Tempest.PersonalBackupsTest do
     assert Enum.any?(report["warnings"], &String.starts_with?(&1, "preferences_auth_or_fetch_failed"))
   end
 
+  test "create_repo_snapshot rejects invalid blob CID listings before writing a snapshot" do
+    data_dir = Path.join(System.tmp_dir!(), "tempest_personal_backup_bad_cid_#{System.unique_integer([:positive])}")
+    config = snapshot_test_config(data_dir)
+    on_exit(fn -> File.rm_rf(data_dir) end)
+
+    {repo_car, _commit, _commit_cid, did_document} = fixture_car()
+
+    expect_did_document(did_document)
+    assert {:ok, account} = PersonalBackups.register_account(%{did: @did, handle: @handle})
+
+    Req.Test.expect(__MODULE__, 4, fn conn ->
+      case conn.request_path do
+        "/xrpc/com.atproto.sync.getRepo" ->
+          Plug.Conn.resp(conn, 200, repo_car)
+
+        "/xrpc/com.atproto.sync.listBlobs" ->
+          Req.Test.json(conn, %{"cids" => ["not-a-cid"]})
+
+        "/" <> encoded_did ->
+          assert URI.decode(encoded_did) == @did
+          Req.Test.json(conn, did_document)
+      end
+    end)
+
+    assert {:error, {:invalid_blob_cid, "not-a-cid", _reason}} =
+             PersonalBackups.create_repo_snapshot(account, config: config)
+
+    refute Repo.exists?(from snapshot in Snapshot, where: snapshot.account_id == ^account.id)
+  end
+
+  test "create_repo_snapshot rejects bad CAR bytes from the source fixture" do
+    data_dir = Path.join(System.tmp_dir!(), "tempest_personal_backup_bad_car_#{System.unique_integer([:positive])}")
+    config = snapshot_test_config(data_dir)
+    on_exit(fn -> File.rm_rf(data_dir) end)
+
+    {_repo_car, _commit, _commit_cid, did_document} = fixture_car()
+
+    expect_did_document(did_document)
+    assert {:ok, account} = PersonalBackups.register_account(%{did: @did, handle: @handle})
+
+    Req.Test.expect(__MODULE__, 3, fn conn ->
+      case conn.request_path do
+        "/xrpc/com.atproto.sync.getRepo" ->
+          Plug.Conn.resp(conn, 200, "bad car")
+
+        "/" <> encoded_did ->
+          assert URI.decode(encoded_did) == @did
+          Req.Test.json(conn, did_document)
+      end
+    end)
+
+    assert {:error, {:car_error, :truncated_header}} = PersonalBackups.create_repo_snapshot(account, config: config)
+    refute Repo.exists?(from snapshot in Snapshot, where: snapshot.account_id == ^account.id)
+  end
+
+  test "create_repo_snapshot fails closed when source identity no longer matches the pinned PDS" do
+    expect_did_document()
+
+    assert {:ok, account} =
+             PersonalBackups.register_account(%{
+               did: @did,
+               handle: @handle,
+               pinned_source_pds_url: @source_pds
+             })
+
+    expect_did_document(%{
+      "service" => [
+        %{
+          "id" => "#atproto_pds",
+          "type" => "AtprotoPersonalDataServer",
+          "serviceEndpoint" => "https://moved.example.com"
+        }
+      ]
+    })
+
+    assert {:error, :pinned_source_pds_mismatch} = PersonalBackups.create_repo_snapshot(account)
+  end
+
   test "create_repo_snapshot can upload a snapshot archive through S3-compatible storage" do
     data_dir = Path.join(System.tmp_dir!(), "tempest_personal_backup_s3_snapshot_#{System.unique_integer([:positive])}")
     config = snapshot_test_config(data_dir)
@@ -413,6 +491,64 @@ defmodule Tempest.PersonalBackupsTest do
     assert Repo.get(Snapshot, recent.id)
     refute File.exists?(Path.join(config.data_dir, old.storage_key))
     assert File.exists?(Path.join(config.data_dir, pinned.storage_key))
+  end
+
+  test "run_manual_backup refuses an active account lock" do
+    expect_did_document()
+    assert {:ok, account} = PersonalBackups.register_account(%{did: @did, handle: @handle})
+
+    account
+    |> Account.lock_changeset(%{
+      manual_lock_token: "active-lock",
+      manual_lock_taken_at: DateTime.utc_now(:second),
+      manual_lock_expires_at: DateTime.add(DateTime.utc_now(:second), 60, :second)
+    })
+    |> Repo.update!()
+
+    assert {:error, :backup_already_running} = PersonalBackups.run_manual_backup(account)
+  end
+
+  test "run_due_scheduled_backups runs one due account and advances schedule state" do
+    data_dir = Path.join(System.tmp_dir!(), "tempest_personal_backup_scheduled_#{System.unique_integer([:positive])}")
+    config = snapshot_test_config(data_dir)
+    on_exit(fn -> File.rm_rf(data_dir) end)
+
+    {repo_car, _commit, _commit_cid, did_document} = fixture_car()
+
+    expect_did_document(did_document)
+    assert {:ok, account} = PersonalBackups.register_account(%{did: @did, handle: @handle})
+
+    assert {:ok, account} =
+             PersonalBackups.update_backup_schedule(account, %{"enabled" => "true", "interval_hours" => "6"})
+
+    account
+    |> Account.schedule_changeset(%{
+      scheduled_backup_enabled: true,
+      scheduled_backup_interval_hours: 6,
+      next_scheduled_backup_at: ~U[2026-01-01 00:00:00Z]
+    })
+    |> Repo.update!()
+
+    Req.Test.expect(__MODULE__, 4, fn conn ->
+      case conn.request_path do
+        "/xrpc/com.atproto.sync.getRepo" ->
+          Plug.Conn.resp(conn, 200, repo_car)
+
+        "/xrpc/com.atproto.sync.listBlobs" ->
+          Req.Test.json(conn, %{"cids" => []})
+
+        "/" <> encoded_did ->
+          assert URI.decode(encoded_did) == @did
+          Req.Test.json(conn, did_document)
+      end
+    end)
+
+    assert {:ok, %{run: run, account: updated_account}} =
+             PersonalBackups.run_due_scheduled_backups(config: config, now: ~U[2026-01-01 01:00:00Z])
+
+    assert run.kind == "scheduled"
+    assert updated_account.last_scheduled_backup_at == ~U[2026-01-01 01:00:00Z]
+    assert updated_account.next_scheduled_backup_at == ~U[2026-01-01 07:00:00Z]
   end
 
   test "export_snapshot_bundle creates a portable zip with snapshot files" do

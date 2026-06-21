@@ -8,14 +8,13 @@ These docs describe current, verified behavior of Tempest.
 They explain the implementation at a high level and introduce the AT Protocol/PDS
 concepts needed to understand that implementation.
 
-Graduated reference docs:
-
 - [Architecture](./architecture.md)
 - [SQLite Storage](./storage-sqlite.md)
 - [XRPC HTTP Surface](./xrpc.md)
 - [Repository Core](./repo-core.md)
 - [Record APIs](./record-apis.md)
 - [Blobs](./blobs.md)
+- [Account Management Control Panel](./account-management.md)
 - [Account Migration](./account-migration.md)
 - [Migration and Account Lifecycle](./migration-lifecycle.md)
 - [Security, OAuth, and Delegated Access](./security-oauth.md)
@@ -30,9 +29,6 @@ Graduated reference docs:
 - [Identity and Handles](./identity-handles.md)
 - [Public Stats Dashboard](./public-stats-dashboard.md)
 - [Documentation Viewer](./doc-viewer.md)
-
----
-
 - [Budget](./budget.md)
 
 Additional reference notes:

@@ -45,7 +45,9 @@ defmodule TempestWeb.OperatorAccountControllerTest do
     assert login_page =~ ~s(id="account-login-form")
     assert login_page =~ ~s(id="account-login-close")
     assert login_page =~ ~s(href="/account/repo")
-    assert login_page =~ ~s(/images/icons/lock-key.svg)
+    assert login_page =~ ~s(id="account_identifier")
+    assert login_page =~ ~s(id="account_password")
+    refute login_page =~ ~s(/images/icons/lock-key.svg)
 
     login_conn =
       conn

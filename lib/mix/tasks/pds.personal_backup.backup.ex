@@ -19,7 +19,7 @@ defmodule Mix.Tasks.Pds.PersonalBackup.Backup do
 
     account = account_by_did!(did)
 
-    case Tempest.PersonalBackups.create_repo_snapshot(account) do
+    case Tempest.PersonalBackups.run_manual_backup(account) do
       {:ok, %{snapshot: snapshot, run: run}} ->
         Mix.shell().info(
           "snapshotId=#{snapshot.id} runId=#{run.id} did=#{snapshot.did} status=#{snapshot.status} verification=#{snapshot.verification_status} storageKey=#{snapshot.storage_key}"

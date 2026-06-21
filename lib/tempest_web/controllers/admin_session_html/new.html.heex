@@ -12,7 +12,7 @@
           Paste an AT Protocol OAuth access token for the configured admin DID.
         </p>
         <p :if={@auth_method != :oauth} class="account-login__prompt">
-          Type a user name and password to log on to Tempest Control Panel.
+          Type a username and password to log on to Tempest Control Panel.
         </p>
 
         <dl class="account-login__meta">
@@ -27,18 +27,16 @@
         <.form for={@form} action={~p"/admin/login"} method="post" id="admin-login-form" class="account-login__form">
           <.input type="hidden" name="return_to" value={@return_to} />
           <div :if={@auth_method != :oauth} class="account-login__field">
-            <img src={~p"/images/icons/lock-key.svg"} alt="" width="18" height="18" />
             <.input
               field={@form[:identifier]}
               type="text"
-              label="User name"
+              label="Username"
               autocomplete="username"
               required
               class="account-login__input"
             />
           </div>
           <div :if={@auth_method != :oauth} class="account-login__field">
-            <img src={~p"/images/icons/lock-key.svg"} alt="" width="18" height="18" />
             <.input
               field={@form[:password]}
               type="password"
@@ -49,7 +47,6 @@
             />
           </div>
           <div :if={@auth_method == :oauth} class="account-login__field">
-            <img src={~p"/images/icons/lock-key.svg"} alt="" width="18" height="18" />
             <.input
               field={@form[:access_token]}
               type="password"

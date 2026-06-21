@@ -124,7 +124,7 @@ defmodule TempestWeb.AdminSessionController do
   defp login_error(:oauth_metadata_not_found), do: "Admin OAuth metadata could not be discovered."
   defp login_error(:oauth_introspection_failed), do: "Admin OAuth token introspection failed."
   defp login_error(:rate_limited), do: "Too many attempts. Try again later."
-  defp login_error(_reason), do: "The user name or password is incorrect."
+  defp login_error(_reason), do: "The username or password is incorrect."
 
   defp renew_session(conn) do
     conn

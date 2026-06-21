@@ -20,6 +20,7 @@ defmodule Tempest.Docs do
 
   @documents [
     %{slug: "reference", path: "README.md", title: "Reference Documentation"},
+    %{slug: "account-management", path: "account-management.md", title: "Account Management Control Panel"},
     %{slug: "account-migration", path: "account-migration.md", title: "Account Migration"},
     %{slug: "admin-operations", path: "admin-operations.md", title: "Admin and Operator Operations"},
     %{slug: "architecture", path: "architecture.md", title: "Architecture"},

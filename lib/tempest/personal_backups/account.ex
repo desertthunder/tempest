@@ -25,6 +25,13 @@ defmodule Tempest.PersonalBackups.Account do
     field :last_snapshot_id, :integer
     field :status, :string, default: "pending"
     field :status_reason, :string
+    field :manual_lock_token, :string
+    field :manual_lock_taken_at, :utc_datetime
+    field :manual_lock_expires_at, :utc_datetime
+    field :scheduled_backup_enabled, :boolean, default: false
+    field :scheduled_backup_interval_hours, :integer, default: 24
+    field :next_scheduled_backup_at, :utc_datetime
+    field :last_scheduled_backup_at, :utc_datetime
 
     has_one :credential, Credential
     has_one :retention_setting, RetentionSetting
@@ -47,7 +54,14 @@ defmodule Tempest.PersonalBackups.Account do
       :last_success_at,
       :last_snapshot_id,
       :status,
-      :status_reason
+      :status_reason,
+      :manual_lock_token,
+      :manual_lock_taken_at,
+      :manual_lock_expires_at,
+      :scheduled_backup_enabled,
+      :scheduled_backup_interval_hours,
+      :next_scheduled_backup_at,
+      :last_scheduled_backup_at
     ])
     |> normalize_fields()
     |> validate_required([:label, :did, :handle, :source_pds_url, :credential_state, :status])
@@ -59,7 +73,34 @@ defmodule Tempest.PersonalBackups.Account do
     |> validate_pds_url(:pinned_source_pds_url)
     |> validate_inclusion(:credential_state, @credential_states)
     |> validate_inclusion(:status, @statuses)
+    |> validate_number(:scheduled_backup_interval_hours, greater_than_or_equal_to: 1)
     |> unique_constraint(:did)
+  end
+
+  def profile_changeset(account, attrs) do
+    account
+    |> cast(attrs, [:label, :pinned_source_pds_url])
+    |> normalize_fields()
+    |> validate_required([:label])
+    |> validate_length(:label, min: 1, max: 120)
+    |> validate_pds_url(:pinned_source_pds_url)
+  end
+
+  def schedule_changeset(account, attrs) do
+    account
+    |> cast(attrs, [
+      :scheduled_backup_enabled,
+      :scheduled_backup_interval_hours,
+      :next_scheduled_backup_at,
+      :last_scheduled_backup_at
+    ])
+    |> validate_required([:scheduled_backup_enabled, :scheduled_backup_interval_hours])
+    |> validate_number(:scheduled_backup_interval_hours, greater_than_or_equal_to: 1)
+  end
+
+  def lock_changeset(account, attrs) do
+    account
+    |> cast(attrs, [:manual_lock_token, :manual_lock_taken_at, :manual_lock_expires_at])
   end
 
   def verification_changeset(account, attrs) do

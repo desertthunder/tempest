@@ -93,6 +93,15 @@ defmodule TempestWeb.Router do
       live "/backups", AdminControlLive, :backups
       live "/storage", AdminControlLive, :storage
       live "/compatibility", AdminControlLive, :compatibility
+      live "/personal-backups", AdminControlLive, :backup_accounts
+      live "/personal-backups/new", AdminControlLive, :backup_new
+      live "/personal-backups/:id", AdminControlLive, :backup_detail
+      live "/personal-backups/:id/edit", AdminControlLive, :backup_edit
+      live "/personal-backups/:id/delete", AdminControlLive, :backup_delete
+      live "/personal-backups/:id/backup", AdminControlLive, :backup_now
+      live "/personal-backups/:id/verify", AdminControlLive, :backup_verify
+      live "/personal-backups/:id/prune", AdminControlLive, :backup_prune
+      live "/personal-backups/:id/export", AdminControlLive, :backup_export
     end
 
     post "/repo", AdminController, :repo_action

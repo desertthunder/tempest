@@ -10,7 +10,7 @@ defmodule Tempest.Lexicon.Bundled do
   @behaviour Tempest.Lexicon.Provider
 
   @manifest %{
-    "document_count" => 209,
+    "document_count" => 226,
     "document_ids" => [
       "app.bsky.actor.defs",
       "app.bsky.actor.getPreferences",
@@ -168,6 +168,22 @@ defmodule Tempest.Lexicon.Bundled do
       "app.bsky.video.getJobStatus",
       "app.bsky.video.getUploadLimits",
       "app.bsky.video.uploadVideo",
+      "com.atproto.admin.defs",
+      "com.atproto.admin.deleteAccount",
+      "com.atproto.admin.disableAccountInvites",
+      "com.atproto.admin.disableInviteCodes",
+      "com.atproto.admin.enableAccountInvites",
+      "com.atproto.admin.getAccountInfo",
+      "com.atproto.admin.getAccountInfos",
+      "com.atproto.admin.getInviteCodes",
+      "com.atproto.admin.getSubjectStatus",
+      "com.atproto.admin.searchAccounts",
+      "com.atproto.admin.sendEmail",
+      "com.atproto.admin.updateAccountEmail",
+      "com.atproto.admin.updateAccountHandle",
+      "com.atproto.admin.updateAccountPassword",
+      "com.atproto.admin.updateAccountSigningKey",
+      "com.atproto.admin.updateSubjectStatus",
       "com.atproto.identity.getRecommendedDidCredentials",
       "com.atproto.identity.requestPlcOperationSignature",
       "com.atproto.identity.resolveHandle",
@@ -196,6 +212,7 @@ defmodule Tempest.Lexicon.Bundled do
       "com.atproto.server.createAppPassword",
       "com.atproto.server.createSession",
       "com.atproto.server.deactivateAccount",
+      "com.atproto.server.defs",
       "com.atproto.server.deleteAccount",
       "com.atproto.server.deleteSession",
       "com.atproto.server.describeServer",
@@ -8829,6 +8846,534 @@ defmodule Tempest.Lexicon.Bundled do
     },
     %{
       "defs" => %{
+        "accountView" => %{
+          "properties" => %{
+            "deactivatedAt" => %{"format" => "datetime", "type" => "string"},
+            "did" => %{"format" => "did", "type" => "string"},
+            "email" => %{"type" => "string"},
+            "emailConfirmedAt" => %{"format" => "datetime", "type" => "string"},
+            "handle" => %{"format" => "handle", "type" => "string"},
+            "indexedAt" => %{"format" => "datetime", "type" => "string"},
+            "inviteNote" => %{"type" => "string"},
+            "invitedBy" => %{
+              "ref" => "com.atproto.server.defs#inviteCode",
+              "type" => "ref"
+            },
+            "invites" => %{
+              "items" => %{
+                "ref" => "com.atproto.server.defs#inviteCode",
+                "type" => "ref"
+              },
+              "type" => "array"
+            },
+            "invitesDisabled" => %{"type" => "boolean"},
+            "relatedRecords" => %{
+              "items" => %{"type" => "unknown"},
+              "type" => "array"
+            },
+            "threatSignatures" => %{
+              "items" => %{"ref" => "#threatSignature", "type" => "ref"},
+              "type" => "array"
+            }
+          },
+          "required" => ["did", "handle", "indexedAt"],
+          "type" => "object"
+        },
+        "repoBlobRef" => %{
+          "properties" => %{
+            "cid" => %{"format" => "cid", "type" => "string"},
+            "did" => %{"format" => "did", "type" => "string"},
+            "recordUri" => %{"format" => "at-uri", "type" => "string"}
+          },
+          "required" => ["did", "cid"],
+          "type" => "object"
+        },
+        "repoRef" => %{
+          "properties" => %{"did" => %{"format" => "did", "type" => "string"}},
+          "required" => ["did"],
+          "type" => "object"
+        },
+        "statusAttr" => %{
+          "properties" => %{
+            "applied" => %{"type" => "boolean"},
+            "ref" => %{"type" => "string"}
+          },
+          "required" => ["applied"],
+          "type" => "object"
+        },
+        "threatSignature" => %{
+          "properties" => %{
+            "property" => %{"type" => "string"},
+            "value" => %{"type" => "string"}
+          },
+          "required" => ["property", "value"],
+          "type" => "object"
+        }
+      },
+      "id" => "com.atproto.admin.defs",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Delete a user account as an administrator.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"did" => %{"format" => "did", "type" => "string"}},
+              "required" => ["did"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.deleteAccount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" =>
+            "Disable an account from receiving new invite codes, but does not invalidate existing codes.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "account" => %{"format" => "did", "type" => "string"},
+                "note" => %{
+                  "description" => "Optional reason for disabled invites.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["account"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.disableAccountInvites",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Disable some set of codes and/or all codes associated with a set of users.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "accounts" => %{
+                  "items" => %{"type" => "string"},
+                  "type" => "array"
+                },
+                "codes" => %{"items" => %{"type" => "string"}, "type" => "array"}
+              },
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.disableInviteCodes",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Re-enable an account's ability to receive invite codes.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "account" => %{"format" => "did", "type" => "string"},
+                "note" => %{
+                  "description" => "Optional reason for enabled invites.",
+                  "type" => "string"
+                }
+              },
+              "required" => ["account"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.enableAccountInvites",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get details about an account.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "ref" => "com.atproto.admin.defs#accountView",
+              "type" => "ref"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{"did" => %{"format" => "did", "type" => "string"}},
+            "required" => ["did"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.admin.getAccountInfo",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get details about some accounts.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "infos" => %{
+                  "items" => %{
+                    "ref" => "com.atproto.admin.defs#accountView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                }
+              },
+              "required" => ["infos"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "dids" => %{
+                "items" => %{"format" => "did", "type" => "string"},
+                "type" => "array"
+              }
+            },
+            "required" => ["dids"],
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.admin.getAccountInfos",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get an admin view of invite codes.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "codes" => %{
+                  "items" => %{
+                    "ref" => "com.atproto.server.defs#inviteCode",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"}
+              },
+              "required" => ["codes"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 100,
+                "maximum" => 500,
+                "minimum" => 1,
+                "type" => "integer"
+              },
+              "sort" => %{
+                "default" => "recent",
+                "knownValues" => ["recent", "usage"],
+                "type" => "string"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.admin.getInviteCodes",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get the service-specific admin status of a subject (account, record, or blob).",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "deactivated" => %{
+                  "ref" => "com.atproto.admin.defs#statusAttr",
+                  "type" => "ref"
+                },
+                "subject" => %{
+                  "refs" => [
+                    "com.atproto.admin.defs#repoRef",
+                    "com.atproto.repo.strongRef",
+                    "com.atproto.admin.defs#repoBlobRef"
+                  ],
+                  "type" => "union"
+                },
+                "takedown" => %{
+                  "ref" => "com.atproto.admin.defs#statusAttr",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["subject"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "blob" => %{"format" => "cid", "type" => "string"},
+              "did" => %{"format" => "did", "type" => "string"},
+              "uri" => %{"format" => "at-uri", "type" => "string"}
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.admin.getSubjectStatus",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Get list of accounts that matches your search query.",
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "accounts" => %{
+                  "items" => %{
+                    "ref" => "com.atproto.admin.defs#accountView",
+                    "type" => "ref"
+                  },
+                  "type" => "array"
+                },
+                "cursor" => %{"type" => "string"}
+              },
+              "required" => ["accounts"],
+              "type" => "object"
+            }
+          },
+          "parameters" => %{
+            "properties" => %{
+              "cursor" => %{"type" => "string"},
+              "email" => %{"type" => "string"},
+              "limit" => %{
+                "default" => 50,
+                "maximum" => 100,
+                "minimum" => 1,
+                "type" => "integer"
+              }
+            },
+            "type" => "params"
+          },
+          "type" => "query"
+        }
+      },
+      "id" => "com.atproto.admin.searchAccounts",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Send email to a user's account email address.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "comment" => %{
+                  "description" =>
+                    "Additional comment by the sender that won't be used in the email itself but helpful to provide more context for moderators/reviewers",
+                  "type" => "string"
+                },
+                "content" => %{"type" => "string"},
+                "recipientDid" => %{"format" => "did", "type" => "string"},
+                "senderDid" => %{"format" => "did", "type" => "string"},
+                "subject" => %{"type" => "string"}
+              },
+              "required" => ["recipientDid", "content", "senderDid"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{"sent" => %{"type" => "boolean"}},
+              "required" => ["sent"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.sendEmail",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Administrative action to update an account's email.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "account" => %{
+                  "description" => "The handle or DID of the repo.",
+                  "format" => "at-identifier",
+                  "type" => "string"
+                },
+                "email" => %{"type" => "string"}
+              },
+              "required" => ["account", "email"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.updateAccountEmail",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Administrative action to update an account's handle.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "handle" => %{"format" => "handle", "type" => "string"}
+              },
+              "required" => ["did", "handle"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.updateAccountHandle",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Update the password for a user account as an administrator.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "password" => %{"type" => "string"}
+              },
+              "required" => ["did", "password"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.updateAccountPassword",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Administrative action to update an account's signing key in their Did document.",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "did" => %{"format" => "did", "type" => "string"},
+                "signingKey" => %{
+                  "description" => "Did-key formatted public key",
+                  "format" => "did",
+                  "type" => "string"
+                }
+              },
+              "required" => ["did", "signingKey"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.updateAccountSigningKey",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "main" => %{
+          "description" => "Update the service-specific admin status of a subject (account, record, or blob).",
+          "input" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "deactivated" => %{
+                  "ref" => "com.atproto.admin.defs#statusAttr",
+                  "type" => "ref"
+                },
+                "subject" => %{
+                  "refs" => [
+                    "com.atproto.admin.defs#repoRef",
+                    "com.atproto.repo.strongRef",
+                    "com.atproto.admin.defs#repoBlobRef"
+                  ],
+                  "type" => "union"
+                },
+                "takedown" => %{
+                  "ref" => "com.atproto.admin.defs#statusAttr",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["subject"],
+              "type" => "object"
+            }
+          },
+          "output" => %{
+            "encoding" => "application/json",
+            "schema" => %{
+              "properties" => %{
+                "subject" => %{
+                  "refs" => [
+                    "com.atproto.admin.defs#repoRef",
+                    "com.atproto.repo.strongRef",
+                    "com.atproto.admin.defs#repoBlobRef"
+                  ],
+                  "type" => "union"
+                },
+                "takedown" => %{
+                  "ref" => "com.atproto.admin.defs#statusAttr",
+                  "type" => "ref"
+                }
+              },
+              "required" => ["subject"],
+              "type" => "object"
+            }
+          },
+          "type" => "procedure"
+        }
+      },
+      "id" => "com.atproto.admin.updateSubjectStatus",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
         "main" => %{
           "description" =>
             "Describe the credentials that should be included in the DID doc of an account that is migrating to this service.",
@@ -10146,6 +10691,36 @@ defmodule Tempest.Lexicon.Bundled do
         }
       },
       "id" => "com.atproto.server.deactivateAccount",
+      "lexicon" => 1
+    },
+    %{
+      "defs" => %{
+        "inviteCode" => %{
+          "properties" => %{
+            "available" => %{"type" => "integer"},
+            "code" => %{"type" => "string"},
+            "createdAt" => %{"format" => "datetime", "type" => "string"},
+            "createdBy" => %{"type" => "string"},
+            "disabled" => %{"type" => "boolean"},
+            "forAccount" => %{"type" => "string"},
+            "uses" => %{
+              "items" => %{"ref" => "#inviteCodeUse", "type" => "ref"},
+              "type" => "array"
+            }
+          },
+          "required" => ["code", "available", "disabled", "forAccount", "createdBy", "createdAt", "uses"],
+          "type" => "object"
+        },
+        "inviteCodeUse" => %{
+          "properties" => %{
+            "usedAt" => %{"format" => "datetime", "type" => "string"},
+            "usedBy" => %{"format" => "did", "type" => "string"}
+          },
+          "required" => ["usedBy", "usedAt"],
+          "type" => "object"
+        }
+      },
+      "id" => "com.atproto.server.defs",
       "lexicon" => 1
     },
     %{

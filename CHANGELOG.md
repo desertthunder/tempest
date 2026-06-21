@@ -2,6 +2,11 @@
 
 ## v0.1.0
 
+### 2026-06-21
+
+- Account Management Control Panel
+- Added admin-only external account backups
+
 ### 2026-06-15
 
 - Added OAuth client metadata validation for the public-client path

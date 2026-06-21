@@ -65,7 +65,7 @@ defmodule TempestWeb.AccountSessionController do
 
   defp login_error(:inactive_account), do: "This account is not active."
   defp login_error(:rate_limited), do: "Too many attempts. Try again later."
-  defp login_error(_reason), do: "The user name or password is incorrect."
+  defp login_error(_reason), do: "The username or password is incorrect."
 
   defp renew_session(conn) do
     conn

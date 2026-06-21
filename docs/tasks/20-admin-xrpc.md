@@ -11,8 +11,8 @@ Status: planned.
 
 ## Tasks
 
-- [ ] Vendor `com/atproto/admin/*.json` into `priv/lexicons/official`.
-- [ ] Regenerate `Tempest.Lexicon.Bundled` and confirm admin document IDs appear
+- [x] Vendor `com/atproto/admin/*.json` into `priv/lexicons/official`.
+- [x] Regenerate `Tempest.Lexicon.Bundled` and confirm admin document IDs appear
       in the manifest.
 - [ ] Add `auth: :admin` handling to the XRPC auth plug without changing bearer
       account-token behavior.
@@ -26,9 +26,11 @@ Status: planned.
 - [ ] Implement invite admin methods only if invite-code persistence is present
       and matches the official response shape.
 - [ ] Implement destructive account mutations last, with audit events and focused
-      tests for each method.
+      tests for each method\*.
 - [ ] Add a running-server Hurl smoke test once a stable read-only endpoint
       exists.
+
+* Requires [password resets/email](./19-password-resets-resend-email.md) to be completed first.
 
 ## Verification
 
@@ -41,7 +43,5 @@ mix precommit
 For running-server coverage:
 
 ```bash
-hurl --test --jobs 1 \
-  --variable base_url=http://localhost:4000 \
-  test/smoke/admin-xrpc.hurl
+hurl --test --jobs 1 --variable base_url=http://localhost:4000 test/smoke/admin-xrpc.hurl
 ```

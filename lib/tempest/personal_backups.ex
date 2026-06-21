@@ -35,6 +35,28 @@ defmodule Tempest.PersonalBackups do
   def get_account!(id), do: Repo.get!(Account, id)
   def get_account_by_did(did) when is_binary(did), do: Repo.get_by(Account, did: did)
 
+  def get_account_with_backup_state!(id) do
+    account = Repo.get!(Account, id)
+    preload_backup_state(account)
+  end
+
+  def preload_backup_state(%Account{} = account) do
+    snapshots_query = from(snapshot in Snapshot, order_by: [desc: snapshot.completed_at, desc: snapshot.inserted_at])
+    runs_query = from(run in Run, order_by: [desc: run.started_at, desc: run.inserted_at])
+
+    Repo.preload(account, [:credential, :retention_setting, snapshots: {snapshots_query, [:blobs]}, runs: runs_query],
+      force: true
+    )
+  end
+
+  def update_account_profile(%Account{} = account, attrs) when is_map(attrs) do
+    account
+    |> Account.profile_changeset(stringify_keys(attrs))
+    |> Repo.update()
+  end
+
+  def delete_account(%Account{} = account), do: Repo.delete(account)
+
   def list_snapshots(opts \\ []) do
     Snapshot
     |> maybe_filter_snapshots_by_account(Keyword.get(opts, :account))
@@ -173,6 +195,23 @@ defmodule Tempest.PersonalBackups do
     |> Repo.update()
   end
 
+  def update_backup_schedule(%Account{} = account, attrs) when is_map(attrs) do
+    attrs = stringify_keys(attrs)
+    enabled? = truthy?(attrs["scheduled_backup_enabled"] || attrs["enabled"])
+    interval_hours = parse_positive_integer(attrs["scheduled_backup_interval_hours"] || attrs["interval_hours"] || 24)
+    now = DateTime.utc_now(:second)
+
+    schedule_attrs = %{
+      "scheduled_backup_enabled" => enabled?,
+      "scheduled_backup_interval_hours" => interval_hours,
+      "next_scheduled_backup_at" => if(enabled?, do: DateTime.add(now, interval_hours, :hour), else: nil)
+    }
+
+    account
+    |> Account.schedule_changeset(schedule_attrs)
+    |> Repo.update()
+  end
+
   def pin_snapshot(%Snapshot{} = snapshot, pinned? \\ true) when is_boolean(pinned?) do
     snapshot
     |> Snapshot.pin_changeset(%{pinned: pinned?})
@@ -204,6 +243,44 @@ defmodule Tempest.PersonalBackups do
       Keyword.get(opts, :path) || Path.join([config.data_dir, "tmp", Path.basename(snapshot.storage_key) <> ".zip"])
 
     Storage.archive_snapshot(config, snapshot.storage_key, target_path)
+  end
+
+  def run_manual_backup(%Account{} = account, opts \\ []) do
+    with {:ok, locked_account, token} <- acquire_manual_backup_lock(account, opts),
+         result <- create_repo_snapshot(locked_account, opts),
+         :ok <- release_manual_backup_lock(locked_account, token) do
+      result
+    else
+      {:error, :backup_already_running} = error ->
+        error
+
+      {:error, _reason} = error ->
+        release_manual_backup_lock(account)
+        error
+    end
+  end
+
+  def run_due_scheduled_backups(opts \\ []) do
+    now = Keyword.get(opts, :now, DateTime.utc_now(:second))
+
+    due_account =
+      Account
+      |> where([account], account.scheduled_backup_enabled == true)
+      |> where([account], is_nil(account.next_scheduled_backup_at) or account.next_scheduled_backup_at <= ^now)
+      |> order_by([account], asc: account.next_scheduled_backup_at, asc: account.id)
+      |> limit(1)
+      |> Repo.one()
+
+    case due_account do
+      nil ->
+        {:ok, :none_due}
+
+      %Account{} = account ->
+        with {:ok, result} <- run_manual_backup(account, Keyword.put(opts, :kind, "scheduled")),
+             {:ok, updated_account} <- mark_schedule_ran(account, now) do
+          {:ok, Map.put(result, :account, updated_account)}
+        end
+    end
   end
 
   def verify_snapshot_offline(snapshot_or_dir, opts \\ [])
@@ -242,7 +319,7 @@ defmodule Tempest.PersonalBackups do
     Repo.transaction(fn ->
       with {:ok, verified_account} <- verify_account_source(account),
            {:ok, did_document} <- Identity.external_did_document_for_did(verified_account.did),
-           {:ok, run} <- create_run(verified_account),
+           {:ok, run} <- create_run(verified_account, Keyword.get(opts, :kind, "manual")),
            {:ok, repo_car} <- SourceClient.get_repo(verified_account.source_pds_url, verified_account.did, opts),
            {:ok, verified} <- Verifier.verify_repo_car(repo_car, did_document, verified_account.did),
            {:ok, workspace} <-
@@ -257,6 +334,73 @@ defmodule Tempest.PersonalBackups do
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  defp acquire_manual_backup_lock(%Account{} = account, opts) do
+    now = DateTime.utc_now(:second)
+    ttl_seconds = Keyword.get(opts, :lock_ttl_seconds, 60 * 60)
+    token = Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
+
+    Repo.transaction(fn ->
+      locked_account = Repo.get!(Account, account.id)
+
+      if active_manual_lock?(locked_account, now) do
+        Repo.rollback(:backup_already_running)
+      else
+        locked_account
+        |> Account.lock_changeset(%{
+          manual_lock_token: token,
+          manual_lock_taken_at: now,
+          manual_lock_expires_at: DateTime.add(now, ttl_seconds, :second)
+        })
+        |> Repo.update()
+        |> case do
+          {:ok, account} -> {account, token}
+          {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback(changeset)
+        end
+      end
+    end)
+    |> case do
+      {:ok, {account, token}} -> {:ok, account, token}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp active_manual_lock?(%Account{manual_lock_token: token, manual_lock_expires_at: expires_at}, now)
+       when is_binary(token) do
+    match?(%DateTime{}, expires_at) and DateTime.compare(expires_at, now) == :gt
+  end
+
+  defp active_manual_lock?(_account, _now), do: false
+
+  defp release_manual_backup_lock(%Account{} = account, token \\ nil) do
+    case Repo.get(Account, account.id) do
+      %Account{manual_lock_token: current_token} = account when is_nil(token) or current_token == token ->
+        account
+        |> Account.lock_changeset(%{manual_lock_token: nil, manual_lock_taken_at: nil, manual_lock_expires_at: nil})
+        |> Repo.update()
+        |> case do
+          {:ok, _account} -> :ok
+          {:error, %Ecto.Changeset{} = changeset} -> {:error, changeset}
+        end
+
+      _account ->
+        :ok
+    end
+  end
+
+  defp mark_schedule_ran(%Account{} = account, now) do
+    account = Repo.get!(Account, account.id)
+    interval_hours = account.scheduled_backup_interval_hours || 24
+
+    account
+    |> Account.schedule_changeset(%{
+      scheduled_backup_enabled: account.scheduled_backup_enabled,
+      scheduled_backup_interval_hours: interval_hours,
+      last_scheduled_backup_at: now,
+      next_scheduled_backup_at: DateTime.add(now, interval_hours, :hour)
+    })
+    |> Repo.update()
   end
 
   defp verified_registration_attrs(attrs) do
@@ -374,12 +518,26 @@ defmodule Tempest.PersonalBackups do
     |> Repo.update()
   end
 
-  defp create_run(%Account{} = account) do
+  defp truthy?(value) when value in [true, "true", "1", "on", "yes"], do: true
+  defp truthy?(_value), do: false
+
+  defp parse_positive_integer(value) when is_integer(value) and value >= 1, do: value
+
+  defp parse_positive_integer(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} when int >= 1 -> int
+      _invalid -> 24
+    end
+  end
+
+  defp parse_positive_integer(_value), do: 24
+
+  defp create_run(%Account{} = account, kind) when kind in ["manual", "scheduled"] do
     %Run{}
     |> Run.changeset(%{
       account_id: account.id,
       status: "running",
-      kind: "manual",
+      kind: kind,
       started_at: DateTime.utc_now(:second),
       metadata: %{}
     })
@@ -685,7 +843,16 @@ defmodule Tempest.PersonalBackups do
   end
 
   defp validate_cid_list(cids) when is_list(cids) do
-    if Enum.all?(cids, &is_binary/1), do: :ok, else: {:error, :invalid_blob_list}
+    Enum.reduce_while(cids, :ok, fn
+      cid, :ok when is_binary(cid) ->
+        case Cid.parse(cid) do
+          {:ok, _cid} -> {:cont, :ok}
+          {:error, reason} -> {:halt, {:error, {:invalid_blob_cid, cid, reason}}}
+        end
+
+      _cid, :ok ->
+        {:halt, {:error, :invalid_blob_list}}
+    end)
   end
 
   defp validate_cid_list(_cids), do: {:error, :invalid_blob_list}
