@@ -49,37 +49,37 @@ External personal backups become an admin-only account-management feature.
 
 ## User Account Management
 
-- [ ] T18-12: Convert the existing `/account` dashboard into a LiveView Control
+- [x] T18-12: Convert the existing `/account` dashboard into a LiveView Control
       Panel page with identity, repository, blob, access, security, migration,
       sequencer, and firehose navigation.
-- [ ] T18-13: Convert `/account/repo` to LiveView using existing repo-storage
+- [x] T18-13: Convert `/account/repo` to LiveView using existing repo-storage
       context helpers for collections, recent records, latest commit, and CAR
       download links.
-- [ ] T18-14: Convert `/account/blobs` to LiveView using existing blob context
+- [x] T18-14: Convert `/account/blobs` to LiveView using existing blob context
       helpers for temp/public blob state and public download links.
-- [ ] T18-15: Convert `/account/access` and `/account/security` to LiveView
+- [x] T18-15: Convert `/account/access` and `/account/security` to LiveView
       inventory pages that never render token, app-password, OAuth, backup-code,
       or recovery secrets.
-- [ ] T18-16: Convert `/account/migration`, `/account/sequencer`, and
+- [x] T18-16: Convert `/account/migration`, `/account/sequencer`, and
       `/account/firehose` to LiveView pages with scoped account data.
-- [ ] T18-17: Add account-management ConnCase or LiveView tests for login,
+- [x] T18-17: Add account-management ConnCase or LiveView tests for login,
       logout, route auth, key element IDs, and redacted secret output.
 
 ## Admin Control Panel
 
-- [ ] T18-18: Convert the existing `/admin` dashboard into a LiveView Control
+- [x] T18-18: Convert the existing `/admin` dashboard into a LiveView Control
       Panel page for service status, hosted accounts, sequencer status, storage,
       and compatibility warnings.
-- [ ] T18-19: Add `/admin/accounts` and `/admin/accounts/:did` for hosted
+- [x] T18-19: Add `/admin/accounts` and `/admin/accounts/:did` for hosted
       account inspection, using admin auth only.
-- [ ] T18-20: Convert `/admin/storage`, `/admin/repo`, `/admin/backups`, and
+- [x] T18-20: Convert `/admin/storage`, `/admin/repo`, `/admin/backups`, and
       `/admin/compatibility` to LiveView or keep thin controller actions where
       file downloads/forms make that simpler.
-- [ ] T18-21: Keep admin operations backed by context modules rather than
+- [x] T18-21: Keep admin operations backed by context modules rather than
       calling Tempest's own XRPC HTTP endpoints internally.
-- [ ] T18-22: Add confirmations and CSRF-protected forms for admin mutations
+- [x] T18-22: Add confirmations and CSRF-protected forms for admin mutations
       such as repo import, backup create, restore dry-run, prune, and delete.
-- [ ] T18-23: Add admin tests for local-admin login, external-admin OAuth login
+- [x] T18-23: Add admin tests for local-admin login, external-admin OAuth login
       with a fixture auth server, bearer-token automation access, account-token
       rejection, route rendering, and mutation confirmation flows.
 

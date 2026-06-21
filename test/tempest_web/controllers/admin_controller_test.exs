@@ -3,9 +3,14 @@ defmodule TempestWeb.AdminControllerTest do
 
   alias Tempest.{Accounts, AdminAuth}
 
-  setup do
+  setup context do
+    Req.Test.set_req_test_from_context(context)
+    Req.Test.verify_on_exit!(context)
+
     old_hash = Application.get_env(:tempest, :admin_token_hash)
     old_config = Application.get_env(:tempest, Tempest.Config)
+    old_identity_config = Application.get_env(:tempest, Tempest.Identity)
+    old_admin_auth_config = Application.get_env(:tempest, AdminAuth)
 
     on_exit(fn ->
       if old_hash do
@@ -15,6 +20,18 @@ defmodule TempestWeb.AdminControllerTest do
       end
 
       Application.put_env(:tempest, Tempest.Config, old_config)
+
+      if old_identity_config do
+        Application.put_env(:tempest, Tempest.Identity, old_identity_config)
+      else
+        Application.delete_env(:tempest, Tempest.Identity)
+      end
+
+      if old_admin_auth_config do
+        Application.put_env(:tempest, AdminAuth, old_admin_auth_config)
+      else
+        Application.delete_env(:tempest, AdminAuth)
+      end
     end)
 
     :ok
@@ -69,6 +86,7 @@ defmodule TempestWeb.AdminControllerTest do
 
     for {path, expected} <- [
           {~p"/admin", "Admin Dashboard"},
+          {~p"/admin/accounts", "Hosted Accounts"},
           {~p"/admin/invites", "Invite Code Management"},
           {~p"/admin/repo", "Repo Verify, Export, and Import"},
           {~p"/admin/backups", "Backup Create and Restore Dry Run"},
@@ -83,6 +101,67 @@ defmodule TempestWeb.AdminControllerTest do
 
       assert html =~ expected
     end
+  end
+
+  test "admin account detail inspects hosted account state", %{conn: conn} do
+    admin_conn = admin_login_conn(conn, "admin-account-detail.test", "admin-account-detail@example.com")
+
+    {:ok, account} =
+      Accounts.create_account(%{
+        "handle" => "admin-inspected-account.test",
+        "email" => "admin-inspected-account@example.com",
+        "password" => "correct horse battery staple"
+      })
+
+    html =
+      admin_conn
+      |> recycle()
+      |> get(~p"/admin/accounts/#{account["did"]}")
+      |> html_response(200)
+
+    assert html =~ ~s(id="admin-account-detail")
+    assert html =~ account["did"]
+    assert html =~ account["handle"]
+    assert html =~ "repo count"
+  end
+
+  test "admin mutation forms include csrf tokens and confirmations", %{conn: conn} do
+    admin_conn = admin_login_conn(conn, "admin-confirmations.test", "admin-confirmations@example.com")
+
+    repo_html =
+      admin_conn
+      |> recycle()
+      |> get(~p"/admin/repo")
+      |> html_response(200)
+
+    assert repo_html =~ ~s(id="admin-repo-form")
+    assert repo_html =~ ~s(name="_csrf_token")
+    assert repo_html =~ ~s(data-confirm="Verify this repository)
+    assert repo_html =~ ~s(data-confirm="Export this repository CAR)
+    assert repo_html =~ ~s(data-confirm="Import this repository CAR)
+
+    backup_html =
+      admin_conn
+      |> recycle()
+      |> get(~p"/admin/backups")
+      |> html_response(200)
+
+    assert backup_html =~ ~s(id="admin-backup-create-form")
+    assert backup_html =~ ~s(id="admin-backup-restore-form")
+    assert backup_html =~ ~s(name="_csrf_token")
+    assert backup_html =~ ~s(data-confirm="Create a service backup now?)
+    assert backup_html =~ ~s(data-confirm="Run a restore dry-run)
+  end
+
+  test "admin operations are backed by context modules instead of internal xrpc calls" do
+    source = File.read!("lib/tempest_web/controllers/admin_controller.ex")
+
+    assert source =~ "Admin.RepoOps.verify"
+    assert source =~ "Admin.RepoOps.export"
+    assert source =~ "Admin.RepoOps.import"
+    assert source =~ "Admin.Backup.create"
+    refute source =~ "Req."
+    refute source =~ ~s("/xrpc)
   end
 
   test "admin status reports database sequencer and blob store status", %{conn: conn} do
@@ -154,6 +233,77 @@ defmodule TempestWeb.AdminControllerTest do
       |> html_response(200)
 
     assert html =~ "Storage Status"
+  end
+
+  test "external admin OAuth login stores only a server-side admin session reference", %{conn: conn} do
+    admin_did = "did:plc:abcdefghijklmnopqrstuvwxyz234567"
+    configure_admin_did(admin_did)
+
+    Application.put_env(:tempest, Tempest.Identity,
+      plc_directory_url: "https://plc.test",
+      dns_lookup: &public_test_dns/1,
+      http_req_options: [plug: {Req.Test, __MODULE__}]
+    )
+
+    Application.put_env(:tempest, AdminAuth, oauth_req_options: [plug: {Req.Test, __MODULE__}])
+
+    Req.Test.stub(__MODULE__, fn req_conn ->
+      case {req_conn.method, req_conn.request_path} do
+        {"GET", "/did:plc:abcdefghijklmnopqrstuvwxyz234567"} ->
+          Req.Test.json(req_conn, %{
+            "id" => admin_did,
+            "service" => [
+              %{
+                "id" => "#atproto_pds",
+                "type" => "AtprotoPersonalDataServer",
+                "serviceEndpoint" => "https://external-pds.test"
+              }
+            ]
+          })
+
+        {"GET", "/.well-known/oauth-protected-resource"} ->
+          Req.Test.json(req_conn, %{"authorization_servers" => ["https://auth.test"]})
+
+        {"GET", "/.well-known/oauth-authorization-server"} ->
+          Req.Test.json(req_conn, %{"introspection_endpoint" => "https://auth.test/oauth/introspect"})
+
+        {"POST", "/oauth/introspect"} ->
+          Req.Test.json(req_conn, %{"active" => true, "sub" => admin_did, "scope" => "atproto"})
+      end
+    end)
+
+    login_page =
+      conn
+      |> recycle()
+      |> get(~p"/admin/login?#{[return_to: "/admin/accounts"]}")
+      |> html_response(200)
+
+    assert login_page =~ "OAuth access token"
+    assert login_page =~ "oauth"
+
+    login_conn =
+      conn
+      |> recycle()
+      |> post(~p"/admin/login", %{
+        "return_to" => "/admin/accounts",
+        "admin" => %{"access_token" => "external-admin-oauth-token"}
+      })
+
+    assert redirected_to(login_conn) == ~p"/admin/accounts"
+    assert is_binary(Plug.Conn.get_session(login_conn, :admin_session_id))
+    assert is_binary(Plug.Conn.get_session(login_conn, :admin_session_family_id))
+    assert Plug.Conn.get_session(login_conn, :admin_did) == admin_did
+
+    browser_session = Plug.Conn.get_session(login_conn)
+    refute inspect(browser_session) =~ "external-admin-oauth-token"
+
+    html =
+      login_conn
+      |> recycle()
+      |> get(~p"/admin/accounts")
+      |> html_response(200)
+
+    assert html =~ "Hosted Accounts"
   end
 
   test "admin login rejects non-admin account sessions", %{conn: conn} do
@@ -258,4 +408,9 @@ defmodule TempestWeb.AdminControllerTest do
       "admin" => %{"identifier" => account["handle"], "password" => "correct horse battery staple"}
     })
   end
+
+  defp public_test_dns("plc.test"), do: {:ok, [{93, 184, 216, 34}]}
+  defp public_test_dns("external-pds.test"), do: {:ok, [{93, 184, 216, 34}]}
+  defp public_test_dns("auth.test"), do: {:ok, [{93, 184, 216, 34}]}
+  defp public_test_dns(_host), do: {:error, :nxdomain}
 end

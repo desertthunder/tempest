@@ -13,9 +13,7 @@ defmodule TempestWeb.AdminSessionController do
         create_local_session(conn, admin_params, params)
 
       {:ok, %{method: :oauth}} ->
-        conn
-        |> put_status(:not_implemented)
-        |> render_login(params, "This admin DID is hosted externally and requires AT Protocol OAuth.")
+        create_external_oauth_session(conn, admin_params, params)
 
       {:error, reason} ->
         conn
@@ -44,6 +42,26 @@ defmodule TempestWeb.AdminSessionController do
     return_to = return_to(params)
 
     case AdminAuth.create_local_browser_session(identifier, password) do
+      {:ok, admin_session} ->
+        conn
+        |> renew_session()
+        |> put_session(:admin_session_id, admin_session.session.id)
+        |> put_session(:admin_session_family_id, admin_session.family_id)
+        |> put_session(:admin_did, admin_session.did)
+        |> redirect(to: safe_return_to(return_to, ~p"/admin"))
+
+      {:error, reason} ->
+        conn
+        |> put_status(:unauthorized)
+        |> render_login(params, login_error(reason))
+    end
+  end
+
+  defp create_external_oauth_session(conn, admin_params, params) do
+    access_token = Map.get(admin_params, "access_token", "")
+    return_to = return_to(params)
+
+    case AdminAuth.create_external_oauth_browser_session(access_token) do
       {:ok, admin_session} ->
         conn
         |> renew_session()
@@ -100,6 +118,11 @@ defmodule TempestWeb.AdminSessionController do
   defp login_error(:admin_did_not_found), do: "The configured admin DID could not be resolved."
   defp login_error(:not_admin_account), do: "This account is not the configured admin DID."
   defp login_error(:inactive_account), do: "This account is not active."
+  defp login_error(:missing_oauth_token), do: "OAuth access token is required for this external admin DID."
+  defp login_error(:invalid_oauth_token), do: "OAuth access token is invalid for this admin DID."
+  defp login_error(:pds_not_found), do: "The configured admin DID does not advertise an AT Protocol PDS."
+  defp login_error(:oauth_metadata_not_found), do: "Admin OAuth metadata could not be discovered."
+  defp login_error(:oauth_introspection_failed), do: "Admin OAuth token introspection failed."
   defp login_error(:rate_limited), do: "Too many attempts. Try again later."
   defp login_error(_reason), do: "The user name or password is incorrect."
 

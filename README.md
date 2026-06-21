@@ -30,10 +30,23 @@ TEMPEST_DATA_DIR=/absolute/path/to/tempest/priv/tempest_dev
 TEMPEST_BLOB_MAX_BYTES=10000000
 TEMPEST_HOSTED_DID_METHOD=plc
 TEMPEST_CRAWLERS=https://bsky.network,https://vsky.network
+TEMPEST_ADMIN_DID=did:plc:...
+TEMPEST_ADMIN_TOKEN_HASH="$argon2id$v=19$..."
 ```
 
 Server boot creates `account.sqlite`, `sequencer.sqlite`, and local storage directories
 inside `TEMPEST_DATA_DIR`.
+
+## Admin Configuration
+
+Browser admin access is anchored to `TEMPEST_ADMIN_DID`.
+
+When that DID belongs to a local Tempest account, `/admin/login` accepts the
+account handle or DID plus the account password and stores only a server-side
+admin session reference in the browser session.
+
+`TEMPEST_ADMIN_TOKEN_HASH` is optional and is reserved for bootstrap and
+automation paths such as `/xrpc/_admin/status`. It should be stored as an Argon2 hash.
 
 ## Development Tools
 
@@ -50,16 +63,23 @@ Account operator UI:
 /account/firehose
 ```
 
-Admin UI and status, using `Authorization: Bearer $ADMIN_TOKEN`:
+Admin UI:
 
 ```text
+/admin/login
+/admin/logout
 /admin
+/admin/accounts
+/admin/accounts/:did
+/admin/invites
+/admin/repo
+/admin/backups
 /admin/storage
 /admin/compatibility
 /xrpc/_admin/status
 ```
 
-Generate a TOTP code for a base32 secret:
+To generate a TOTP code for a base32 secret:
 
 ```bash
 mix tempest.totp.code <base32-secret>

@@ -23,7 +23,7 @@ defmodule TempestWeb.OperatorAccountControllerTest do
 
     assert %{"cid" => _cid} = json_response(create_conn, 200)
 
-    assert_authed_html(conn, account, ~p"/account", "Operator Account")
+    assert_authed_html(conn, account, ~p"/account", "Account Control Panel")
     assert_authed_html(conn, account, ~p"/account/repo", "app.bsky.actor.profile/self")
     assert_authed_html(conn, account, ~p"/account/blobs", "Blob Browser")
     assert_authed_html(conn, account, ~p"/account/access", "Sessions and Delegated Access")

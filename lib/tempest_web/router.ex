@@ -86,6 +86,8 @@ defmodule TempestWeb.Router do
       on_mount: [{TempestWeb.ControlPanelAuth, :admin}],
       session: {TempestWeb.ControlPanelAuth, :admin_session, []} do
       live "/", AdminControlLive, :dashboard
+      live "/accounts", AdminControlLive, :accounts
+      live "/accounts/:did", AdminControlLive, :account_detail
       live "/invites", AdminControlLive, :invites
       live "/repo", AdminControlLive, :repo
       live "/backups", AdminControlLive, :backups
