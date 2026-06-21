@@ -16,10 +16,15 @@ defmodule Tempest.PersonalBackups do
     SecretStore,
     Snapshot,
     SourceClient,
+    Storage,
     Verifier
   }
 
   alias Tempest.Repo
+  alias Tempest.RepoCore.{Cid, Drisl}
+
+  @default_blob_concurrency 4
+  @transient_retries 2
 
   def list_accounts do
     Account
@@ -114,6 +119,65 @@ defmodule Tempest.PersonalBackups do
   def verify_account_source(account_id) when is_integer(account_id),
     do: account_id |> get_account!() |> verify_account_source()
 
+  def update_retention_setting(%Account{} = account, attrs) when is_map(attrs) do
+    setting = account |> Repo.preload(:retention_setting, force: true) |> Map.fetch!(:retention_setting)
+
+    setting
+    |> RetentionSetting.changeset(Map.put(stringify_keys(attrs), "account_id", account.id))
+    |> Repo.update()
+  end
+
+  def pin_snapshot(%Snapshot{} = snapshot, pinned? \\ true) when is_boolean(pinned?) do
+    snapshot
+    |> Snapshot.pin_changeset(%{pinned: pinned?})
+    |> Repo.update()
+  end
+
+  def prune_snapshots(%Account{} = account, opts \\ []) do
+    config = Keyword.get(opts, :config, Tempest.Config.load!())
+    account = Repo.preload(account, [:retention_setting, :snapshots], force: true)
+
+    account.retention_setting
+    |> snapshots_to_prune(account.snapshots, Keyword.get(opts, :now, DateTime.utc_now(:second)))
+    |> Enum.reduce_while({:ok, []}, fn snapshot, {:ok, pruned} ->
+      case delete_snapshot(snapshot, config) do
+        :ok -> {:cont, {:ok, [snapshot | pruned]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+    |> case do
+      {:ok, pruned} -> {:ok, Enum.reverse(pruned)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def export_snapshot_bundle(%Snapshot{} = snapshot, opts \\ []) do
+    config = Keyword.get(opts, :config, Tempest.Config.load!())
+
+    target_path =
+      Keyword.get(opts, :path) || Path.join([config.data_dir, "tmp", Path.basename(snapshot.storage_key) <> ".zip"])
+
+    Storage.archive_snapshot(config, snapshot.storage_key, target_path)
+  end
+
+  def verify_snapshot_offline(snapshot_or_dir, opts \\ [])
+
+  def verify_snapshot_offline(%Snapshot{} = snapshot, opts) do
+    config = Keyword.get(opts, :config, Tempest.Config.load!())
+    verify_snapshot_offline(Path.join(config.data_dir, snapshot.storage_key), opts)
+  end
+
+  def verify_snapshot_offline(snapshot_dir, _opts) when is_binary(snapshot_dir) do
+    with {:ok, manifest} <- read_json_file(Path.join(snapshot_dir, "manifest.json")),
+         {:ok, report} <- read_json_file(Path.join(snapshot_dir, "verification.json")),
+         :ok <- verify_report_shape(report),
+         :ok <- verify_repo_file(snapshot_dir, manifest),
+         :ok <- verify_blob_files(snapshot_dir, manifest),
+         :ok <- verify_preferences_file(snapshot_dir, manifest) do
+      {:ok, %{status: "ok", manifest: manifest, report: report}}
+    end
+  end
+
   def create_repo_snapshot(%Account{} = account, opts \\ []) do
     config = Keyword.get(opts, :config, Tempest.Config.load!())
 
@@ -123,11 +187,14 @@ defmodule Tempest.PersonalBackups do
            {:ok, run} <- create_run(verified_account),
            {:ok, repo_car} <- SourceClient.get_repo(verified_account.source_pds_url, verified_account.did, opts),
            {:ok, verified} <- Verifier.verify_repo_car(repo_car, did_document, verified_account.did),
-           {:ok, snapshot_attrs} <- write_repo_snapshot(config, verified_account, verified, repo_car),
+           {:ok, workspace} <-
+             prepare_snapshot_workspace(config, verified_account, did_document, verified, repo_car, opts),
+           {:ok, snapshot_attrs} <- Storage.finalize_snapshot(config, workspace),
            {:ok, snapshot} <- insert_snapshot(verified_account, run, snapshot_attrs),
+           {:ok, blobs} <- insert_blob_records(snapshot, workspace.blobs),
            {:ok, run} <- finish_run(run, snapshot),
            {:ok, account} <- mark_snapshot_success(verified_account, snapshot) do
-        %{account: account, run: run, snapshot: snapshot, verification: verified}
+        %{account: account, run: run, snapshot: %{snapshot | blobs: blobs}, verification: verified}
       else
         {:error, reason} -> Repo.rollback(reason)
       end
@@ -292,24 +359,197 @@ defmodule Tempest.PersonalBackups do
     |> Repo.update()
   end
 
-  defp write_repo_snapshot(config, %Account{} = account, verified, repo_car) do
-    storage_key = snapshot_storage_key(account.did, verified.rev)
-    snapshot_dir = Path.join(config.data_dir, storage_key)
-    repo_car_path = Path.join(snapshot_dir, "repo.car")
+  defp snapshots_to_prune(%RetentionSetting{policy: "keep_all"}, _snapshots, _now), do: []
 
-    with :ok <- File.mkdir_p(snapshot_dir),
-         :ok <- File.write(repo_car_path, repo_car) do
+  defp snapshots_to_prune(%RetentionSetting{policy: "keep_last_n", keep_last: keep_last}, snapshots, _now) do
+    snapshots
+    |> Enum.reject(& &1.pinned)
+    |> Enum.sort_by(&snapshot_sort_key/1, :desc)
+    |> Enum.drop(keep_last)
+  end
+
+  defp snapshots_to_prune(%RetentionSetting{policy: "keep_for_days", keep_days: keep_days}, snapshots, now)
+       when is_integer(keep_days) do
+    cutoff = DateTime.add(now, -keep_days, :day)
+
+    snapshots
+    |> Enum.reject(& &1.pinned)
+    |> Enum.filter(fn snapshot ->
+      case snapshot.completed_at || snapshot.inserted_at do
+        %DateTime{} = completed_at -> DateTime.compare(completed_at, cutoff) == :lt
+        _missing -> false
+      end
+    end)
+  end
+
+  defp snapshots_to_prune(_setting, _snapshots, _now), do: []
+
+  defp snapshot_sort_key(snapshot), do: snapshot.completed_at || snapshot.inserted_at || ~U[1970-01-01 00:00:00Z]
+
+  defp delete_snapshot(%Snapshot{} = snapshot, config) do
+    Repo.transaction(fn ->
+      with {:ok, _snapshot} <- Repo.delete(snapshot),
+           :ok <- Storage.delete_snapshot(config, snapshot.storage_key),
+           :ok <- maybe_clear_last_snapshot(snapshot) do
+        :ok
+      else
+        {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback(changeset)
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, :ok} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp maybe_clear_last_snapshot(%Snapshot{} = snapshot) do
+    case Repo.get(Account, snapshot.account_id) do
+      %Account{last_snapshot_id: id} = account when id == snapshot.id ->
+        account
+        |> Account.registration_changeset(%{
+          label: account.label,
+          did: account.did,
+          handle: account.handle,
+          source_pds_url: account.source_pds_url,
+          pinned_source_pds_url: account.pinned_source_pds_url,
+          credential_state: account.credential_state,
+          last_checked_at: account.last_checked_at,
+          last_success_at: account.last_success_at,
+          last_snapshot_id: nil,
+          status: account.status,
+          status_reason: account.status_reason
+        })
+        |> Repo.update()
+        |> case do
+          {:ok, _account} -> :ok
+          {:error, %Ecto.Changeset{} = changeset} -> {:error, changeset}
+        end
+
+      _account ->
+        :ok
+    end
+  end
+
+  defp read_json_file(path) do
+    with {:ok, bytes} <- File.read(path),
+         {:ok, json} <- Jason.decode(bytes) do
+      {:ok, json}
+    else
+      {:error, reason} -> {:error, {:invalid_json_file, path, reason}}
+    end
+  end
+
+  defp verify_report_shape(%{"status" => status, "checked_at" => checked_at})
+       when status in ["ok", "warning"] and is_binary(checked_at),
+       do: :ok
+
+  defp verify_report_shape(%{"status" => status, "checkedAt" => checked_at})
+       when status in ["ok", "warning"] and is_binary(checked_at),
+       do: :ok
+
+  defp verify_report_shape(_report), do: {:error, :invalid_verification_report}
+
+  defp verify_repo_file(snapshot_dir, manifest) do
+    with %{"account" => %{"did" => did}, "repo" => repo, "identity" => %{"didDocument" => did_document}} <- manifest,
+         repo_path = Path.join(snapshot_dir, Map.fetch!(repo, "carPath")),
+         {:ok, bytes} <- File.read(repo_path),
+         :ok <- verify_file_hash(bytes, Map.fetch!(repo, "sha256")),
+         true <- byte_size(bytes) == Map.fetch!(repo, "byteSize"),
+         {:ok, verified} <- Verifier.verify_repo_car(bytes, did_document, did),
+         true <- verified.commit_cid_string == Map.fetch!(repo, "commit"),
+         true <- verified.rev == Map.fetch!(repo, "rev") do
+      :ok
+    else
+      false -> {:error, :repo_manifest_mismatch}
+      {:error, reason} -> {:error, reason}
+      _match -> {:error, :invalid_manifest_repo}
+    end
+  end
+
+  defp verify_blob_files(snapshot_dir, %{"blobFiles" => blob_files}) when is_list(blob_files) do
+    Enum.reduce_while(blob_files, :ok, fn blob, :ok ->
+      case verify_blob_file(snapshot_dir, blob) do
+        :ok -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp verify_blob_files(_snapshot_dir, _manifest), do: {:error, :invalid_manifest_blobs}
+
+  defp verify_blob_file(_snapshot_dir, %{"status" => status}) when status in ["missing", "failed"], do: :ok
+
+  defp verify_blob_file(snapshot_dir, %{
+         "cid" => cid,
+         "path" => path,
+         "byteSize" => byte_size,
+         "sha256" => hash,
+         "status" => "stored"
+       }) do
+    with {:ok, bytes} <- File.read(Path.join(snapshot_dir, path)),
+         :ok <- verify_file_hash(bytes, hash),
+         true <- byte_size(bytes) == byte_size,
+         {:ok, expected_cid} <- Cid.parse(cid),
+         true <- Cid.for_raw(bytes) == expected_cid do
+      :ok
+    else
+      false -> {:error, {:blob_manifest_mismatch, cid}}
+      {:error, reason} -> {:error, {:blob_verify_failed, cid, reason}}
+    end
+  end
+
+  defp verify_blob_file(_snapshot_dir, _blob), do: {:error, :invalid_manifest_blob}
+
+  defp verify_preferences_file(_snapshot_dir, %{"preferences" => %{"included" => false}}), do: :ok
+
+  defp verify_preferences_file(snapshot_dir, %{"preferences" => %{"included" => true, "path" => path}}) do
+    with {:ok, _preferences} <- read_json_file(Path.join(snapshot_dir, path)), do: :ok
+  end
+
+  defp verify_preferences_file(_snapshot_dir, _manifest), do: {:error, :invalid_manifest_preferences}
+
+  defp verify_file_hash(bytes, expected_hash) when is_binary(expected_hash) do
+    if sha256(bytes) == expected_hash, do: :ok, else: {:error, :sha256_mismatch}
+  end
+
+  defp verify_file_hash(_bytes, _hash), do: {:error, :missing_sha256}
+
+  defp prepare_snapshot_workspace(config, %Account{} = account, did_document, verified, repo_car, opts) do
+    storage_key = snapshot_storage_key(account.did, verified.rev)
+    temp_dir = snapshot_temp_dir(config)
+    final_dir = Path.join(config.data_dir, storage_key)
+    repo_car_path = Path.join(temp_dir, "repo.car")
+
+    with :ok <- File.mkdir_p(temp_dir),
+         :ok <- File.write(repo_car_path, repo_car),
+         {:ok, blob_cids} <- snapshot_blob_cids(account, verified, opts),
+         {:ok, blob_results} <- download_snapshot_blobs(account, temp_dir, blob_cids, opts),
+         {:ok, preferences} <- maybe_write_preferences(account, temp_dir, opts),
+         report = verification_report(account, verified, blob_results, preferences),
+         manifest = snapshot_manifest(account, did_document, verified, repo_car, blob_results, preferences, report),
+         :ok <- File.write(Path.join(temp_dir, "verification.json"), Jason.encode!(report, pretty: true)),
+         :ok <- File.write(Path.join(temp_dir, "manifest.json"), Jason.encode!(manifest, pretty: true)) do
       {:ok,
        %{
+         account: account,
          storage_key: storage_key,
+         temp_dir: temp_dir,
+         final_dir: final_dir,
          repo_car_path: Path.join(storage_key, "repo.car"),
+         manifest_path: Path.join(storage_key, "manifest.json"),
+         verification_report_path: Path.join(storage_key, "verification.json"),
          commit_cid: verified.commit_cid_string,
          rev: verified.rev,
          source_pds_url: account.source_pds_url,
          handle: account.handle,
          did: account.did,
          byte_size: byte_size(repo_car),
-         sha256: sha256(repo_car)
+         sha256: sha256(repo_car),
+         status: snapshot_status(blob_results),
+         verification_status: snapshot_verification_status(blob_results, preferences),
+         blobs: blob_results,
+         preferences: preferences
        }}
     end
   end
@@ -320,20 +560,310 @@ defmodule Tempest.PersonalBackups do
       Map.merge(attrs, %{
         account_id: account.id,
         run_id: run.id,
-        status: "complete",
+        status: attrs.status,
         completed_at: DateTime.utc_now(:second),
-        verification_status: "ok"
+        manifest_path: attrs.manifest_path,
+        verification_status: attrs.verification_status,
+        verification_report_path: attrs.verification_report_path
       })
     )
     |> Repo.insert()
+  end
+
+  defp insert_blob_records(%Snapshot{} = snapshot, blobs) do
+    Enum.reduce_while(blobs, {:ok, []}, fn blob, {:ok, inserted} ->
+      attrs =
+        blob
+        |> Map.take([:cid, :path, :byte_size, :sha256, :status, :error_reason])
+        |> Map.put(:snapshot_id, snapshot.id)
+
+      case %Tempest.PersonalBackups.Blob{} |> Tempest.PersonalBackups.Blob.changeset(attrs) |> Repo.insert() do
+        {:ok, row} -> {:cont, {:ok, [row | inserted]}}
+        {:error, %Ecto.Changeset{} = changeset} -> {:halt, {:error, changeset}}
+      end
+    end)
+    |> case do
+      {:ok, rows} -> {:ok, Enum.reverse(rows)}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp snapshot_storage_key(did, rev) do
     stamp = DateTime.utc_now(:second) |> DateTime.to_iso8601(:basic) |> String.replace(~r/[^0-9A-Za-z]/, "")
     safe_did = String.replace(did, ~r/[^A-Za-z0-9._-]/, "_")
     safe_rev = String.replace(rev, ~r/[^A-Za-z0-9._-]/, "_")
-    Path.join(["personal-backups", safe_did, "snapshots", stamp <> "-" <> safe_rev])
+    suffix = System.unique_integer([:positive])
+    Path.join(["personal-backups", safe_did, "snapshots", stamp <> "-" <> safe_rev <> "-" <> Integer.to_string(suffix)])
   end
+
+  defp snapshot_temp_dir(config) do
+    Path.join([config.data_dir, "tmp", "personal-backups", Integer.to_string(System.unique_integer([:positive]))])
+  end
+
+  defp snapshot_blob_cids(account, verified, opts) do
+    with {:ok, listed_cids} <- list_all_source_blob_cids(account, opts),
+         referenced_cids = referenced_blob_cids(verified) do
+      {:ok, Enum.sort(Enum.uniq(referenced_cids ++ listed_cids))}
+    end
+  end
+
+  defp list_all_source_blob_cids(account, opts, cursor \\ nil, cids \\ []) do
+    request_opts =
+      opts
+      |> Keyword.put(:limit, Keyword.get(opts, :blob_page_limit, 500))
+      |> maybe_put_keyword(:cursor, cursor)
+
+    with {:ok, response} <- SourceClient.list_blobs(account.source_pds_url, account.did, request_opts),
+         page_cids <- Map.get(response, "cids", Map.get(response, "blobs", [])),
+         :ok <- validate_cid_list(page_cids) do
+      case Map.get(response, "cursor") do
+        next_cursor when is_binary(next_cursor) and next_cursor != "" ->
+          list_all_source_blob_cids(account, opts, next_cursor, cids ++ page_cids)
+
+        _cursor ->
+          {:ok, cids ++ page_cids}
+      end
+    end
+  end
+
+  defp validate_cid_list(cids) when is_list(cids) do
+    if Enum.all?(cids, &is_binary/1), do: :ok, else: {:error, :invalid_blob_list}
+  end
+
+  defp validate_cid_list(_cids), do: {:error, :invalid_blob_list}
+
+  defp referenced_blob_cids(verified) do
+    blocks = Map.new(verified.car.blocks, fn %{cid: cid, data: data} -> {Cid.to_string(cid), data} end)
+
+    verified.entries
+    |> Map.values()
+    |> Enum.flat_map(fn cid ->
+      cid
+      |> Cid.to_string()
+      |> then(&Map.get(blocks, &1))
+      |> decode_record_block()
+      |> extract_blob_cids()
+    end)
+    |> Enum.uniq()
+  end
+
+  defp decode_record_block(nil), do: nil
+
+  defp decode_record_block(bytes) do
+    case Drisl.decode(bytes) do
+      {:ok, value} -> value
+      {:error, _reason} -> Jason.decode(bytes) |> elem_or_nil()
+    end
+  end
+
+  defp elem_or_nil({:ok, value}), do: value
+  defp elem_or_nil({:error, _reason}), do: nil
+
+  defp extract_blob_cids(%{"$type" => "blob", "ref" => %{"$link" => cid}}) when is_binary(cid), do: [cid]
+  defp extract_blob_cids(%{"$type" => "blob", "cid" => cid}) when is_binary(cid), do: [cid]
+
+  defp extract_blob_cids(map) when is_map(map) do
+    map
+    |> Map.values()
+    |> Enum.flat_map(&extract_blob_cids/1)
+  end
+
+  defp extract_blob_cids(list) when is_list(list), do: Enum.flat_map(list, &extract_blob_cids/1)
+  defp extract_blob_cids(_value), do: []
+
+  defp download_snapshot_blobs(account, temp_dir, cids, opts) do
+    blob_dir = Path.join(temp_dir, "blobs")
+
+    with :ok <- File.mkdir_p(blob_dir) do
+      cids
+      |> Task.async_stream(
+        fn cid -> download_snapshot_blob(account, blob_dir, cid, opts) end,
+        max_concurrency: Keyword.get(opts, :blob_concurrency, @default_blob_concurrency),
+        timeout: :infinity
+      )
+      |> Enum.reduce_while({:ok, []}, fn
+        {:ok, blob}, {:ok, blobs} -> {:cont, {:ok, [blob | blobs]}}
+        {:exit, reason}, {:ok, _blobs} -> {:halt, {:error, {:blob_task_exit, reason}}}
+      end)
+      |> case do
+        {:ok, blobs} -> {:ok, Enum.reverse(blobs)}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp download_snapshot_blob(account, blob_dir, cid, opts) do
+    case fetch_blob_with_retry(account, cid, opts, @transient_retries) do
+      {:ok, bytes} ->
+        verify_and_write_blob(blob_dir, cid, bytes)
+
+      {:error, {:source_pds_http_error, status}} when status in [404, 410] ->
+        %{cid: cid, path: nil, byte_size: 0, sha256: nil, status: "missing", error_reason: "source returned #{status}"}
+
+      {:error, reason} ->
+        %{cid: cid, path: nil, byte_size: 0, sha256: nil, status: "failed", error_reason: inspect(reason)}
+    end
+  end
+
+  defp fetch_blob_with_retry(account, cid, opts, retries_left) do
+    case SourceClient.get_blob(account.source_pds_url, account.did, cid, opts) do
+      {:error, reason} ->
+        if retries_left > 0 and transient_blob_error?(reason) do
+          fetch_blob_with_retry(account, cid, opts, retries_left - 1)
+        else
+          {:error, reason}
+        end
+
+      result ->
+        result
+    end
+  end
+
+  defp transient_blob_error?({:source_pds_http_error, status}) when status in 500..599, do: true
+  defp transient_blob_error?({:source_pds_request_failed, _reason}), do: true
+  defp transient_blob_error?(_reason), do: false
+
+  defp verify_and_write_blob(blob_dir, cid, bytes) do
+    with {:ok, expected_cid} <- Cid.parse(cid),
+         actual_cid = Cid.for_raw(bytes),
+         true <- actual_cid == expected_cid,
+         path = Path.join(blob_dir, cid),
+         :ok <- File.write(path, bytes) do
+      %{
+        cid: cid,
+        path: Path.join(["blobs", cid]),
+        byte_size: byte_size(bytes),
+        sha256: sha256(bytes),
+        status: "stored",
+        error_reason: nil
+      }
+    else
+      false ->
+        %{cid: cid, path: nil, byte_size: 0, sha256: nil, status: "failed", error_reason: "cid_mismatch"}
+
+      {:error, reason} ->
+        %{cid: cid, path: nil, byte_size: 0, sha256: nil, status: "failed", error_reason: inspect(reason)}
+    end
+  end
+
+  defp maybe_write_preferences(account, temp_dir, opts) do
+    with {:ok, credential} <- preferences_credential(account),
+         {:ok, secret} <- SecretStore.decrypt(credential.secret_ciphertext),
+         {:ok, preferences} <- SourceClient.get_preferences(account.source_pds_url, secret, opts),
+         :ok <- File.write(Path.join(temp_dir, "preferences.json"), Jason.encode!(preferences, pretty: true)) do
+      {:ok, %{included: true, path: "preferences.json", warning: nil}}
+    else
+      {:skip, reason} when reason in [:no_credentials, :credential_deleted] ->
+        {:ok, %{included: false, path: nil, warning: nil}}
+
+      {:skip, reason} ->
+        {:ok, %{included: false, path: nil, warning: Atom.to_string(reason)}}
+
+      {:error, reason} ->
+        {:ok, %{included: false, path: nil, warning: "preferences_auth_or_fetch_failed: #{inspect(reason)}"}}
+    end
+  end
+
+  defp preferences_credential(account) do
+    credential = account |> Repo.preload(:credential, force: true) |> Map.fetch!(:credential)
+
+    case credential do
+      %Credential{mode: "none"} -> {:skip, :no_credentials}
+      %Credential{deleted_at: %DateTime{}} -> {:skip, :credential_deleted}
+      %Credential{secret_ciphertext: secret} when is_binary(secret) and secret != "" -> {:ok, credential}
+      %Credential{} -> {:skip, :credential_missing_secret}
+    end
+  end
+
+  defp snapshot_manifest(account, did_document, verified, repo_car, blobs, preferences, report) do
+    missing = blobs |> Enum.filter(&(&1.status == "missing")) |> Enum.map(& &1.cid)
+
+    %{
+      "version" => 1,
+      "account" => %{
+        "did" => account.did,
+        "handle" => account.handle,
+        "sourcePds" => account.source_pds_url
+      },
+      "identity" => %{
+        "didDocument" => did_document
+      },
+      "repo" => %{
+        "carPath" => "repo.car",
+        "commit" => verified.commit_cid_string,
+        "rev" => verified.rev,
+        "byteSize" => byte_size(repo_car),
+        "sha256" => sha256(repo_car)
+      },
+      "blobs" => %{
+        "count" => Enum.count(blobs, &(&1.status == "stored")),
+        "expected" => length(blobs),
+        "complete" => Enum.all?(blobs, &(&1.status == "stored")),
+        "missing" => missing
+      },
+      "blobFiles" => Enum.map(blobs, &blob_manifest_entry/1),
+      "preferences" => Map.take(preferences, [:included, :path]) |> stringify_map_keys(),
+      "verification" => %{
+        "status" => report.status,
+        "checkedAt" => report.checked_at,
+        "path" => "verification.json"
+      }
+    }
+  end
+
+  defp blob_manifest_entry(blob) do
+    %{
+      "cid" => blob.cid,
+      "path" => blob.path,
+      "byteSize" => blob.byte_size,
+      "sha256" => blob.sha256,
+      "status" => blob.status,
+      "errorReason" => blob.error_reason
+    }
+  end
+
+  defp verification_report(account, verified, blobs, preferences) do
+    warnings =
+      []
+      |> add_warning(preferences.warning)
+      |> add_warning_if(Enum.any?(blobs, &(&1.status == "missing")), "missing_blobs")
+      |> add_warning_if(Enum.any?(blobs, &(&1.status == "failed")), "failed_blobs")
+
+    %{
+      status: if(warnings == [], do: "ok", else: "warning"),
+      checked_at: DateTime.utc_now(:second) |> DateTime.to_iso8601(),
+      did: account.did,
+      handle: account.handle,
+      source_pds_url: account.source_pds_url,
+      commit_cid: verified.commit_cid_string,
+      rev: verified.rev,
+      record_count: verified.record_count,
+      blob_count: length(blobs),
+      stored_blob_count: Enum.count(blobs, &(&1.status == "stored")),
+      warnings: Enum.reverse(warnings)
+    }
+  end
+
+  defp snapshot_status(blobs) do
+    if Enum.all?(blobs, &(&1.status == "stored")), do: "complete", else: "incomplete"
+  end
+
+  defp snapshot_verification_status(blobs, preferences) do
+    if snapshot_status(blobs) == "complete" and is_nil(preferences.warning), do: "ok", else: "warning"
+  end
+
+  defp add_warning(warnings, nil), do: warnings
+  defp add_warning(warnings, warning), do: [warning | warnings]
+
+  defp add_warning_if(warnings, true, warning), do: [warning | warnings]
+  defp add_warning_if(warnings, false, _warning), do: warnings
+
+  defp stringify_map_keys(map) do
+    Map.new(map, fn {key, value} -> {Atom.to_string(key), value} end)
+  end
+
+  defp maybe_put_keyword(keyword, _key, nil), do: keyword
+  defp maybe_put_keyword(keyword, key, value), do: Keyword.put(keyword, key, value)
 
   defp sha256(bytes), do: :sha256 |> :crypto.hash(bytes) |> Base.encode16(case: :lower)
 

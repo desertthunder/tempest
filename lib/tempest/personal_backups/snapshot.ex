@@ -63,4 +63,10 @@ defmodule Tempest.PersonalBackups.Snapshot do
     |> validate_inclusion(:verification_status, @verification_statuses)
     |> unique_constraint(:storage_key)
   end
+
+  def pin_changeset(snapshot, attrs) do
+    snapshot
+    |> cast(attrs, [:pinned])
+    |> validate_required([:pinned])
+  end
 end

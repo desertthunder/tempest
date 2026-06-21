@@ -104,22 +104,22 @@ External personal backups become an admin-only account-management feature.
       byte size, hash, source PDS, handle, and DID.
 - [x] T18-30: Reuse repo-core verification to validate commit DID, commit
       signature, MST completeness, record paths, record CIDs, and CAR integrity.
-- [ ] T18-31: Extract blob references from repo records and merge them with
+- [x] T18-31: Extract blob references from repo records and merge them with
       paginated `listBlobs` output.
-- [ ] T18-32: Add bounded concurrent blob download with CID verification,
+- [x] T18-32: Add bounded concurrent blob download with CID verification,
       missing-blob recording, and retry handling for transient source failures.
-- [ ] T18-33: Add credentialed private preference backup through
+- [x] T18-33: Add credentialed private preference backup through
       `app.bsky.actor.getPreferences`, with auth failures reported separately
       from public repo/blob backup status.
-- [ ] T18-34: Write immutable snapshot manifests and verification reports, first
+- [x] T18-34: Write immutable snapshot manifests and verification reports, first
       to a temporary workspace and then atomically mark snapshots complete.
-- [ ] T18-35: Store personal backup snapshots through the existing local and
+- [x] T18-35: Store personal backup snapshots through the existing local and
       S3/R2 backup storage shape.
-- [ ] T18-36: Add retention policies: keep all, keep last N, keep for days, and
+- [x] T18-36: Add retention policies: keep all, keep last N, keep for days, and
       pinned snapshots.
-- [ ] T18-37: Add portable export bundle creation containing manifest, repo CAR,
+- [x] T18-37: Add portable export bundle creation containing manifest, repo CAR,
       blobs, preferences JSON when present, and verification report.
-- [ ] T18-38: Add offline snapshot verification that can run without contacting
+- [x] T18-38: Add offline snapshot verification that can run without contacting
       the source PDS.
 - [ ] T18-39: Add tests proving a snapshot can be understood from its manifest
       and files without relying on Tempest database rows.
