@@ -121,20 +121,19 @@ if System.get_env("TEMPEST_BACKUP_STORE") == "s3" do
     s3: backup_s3_config
 end
 
-if System.get_env("TEMPEST_SMTP_ENABLED") in ["1", "true", "TRUE"] do
-  config :tempest, Tempest.Mailer,
-    adapter: Swoosh.Adapters.SMTP,
-    relay: System.fetch_env!("TEMPEST_SMTP_HOST"),
-    port: System.get_env("TEMPEST_SMTP_PORT", "587") |> String.to_integer(),
-    username: System.get_env("TEMPEST_SMTP_USERNAME"),
-    password: System.get_env("TEMPEST_SMTP_PASSWORD"),
-    ssl: System.get_env("TEMPEST_SMTP_SSL") in ["1", "true", "TRUE"],
-    tls: String.to_existing_atom(System.get_env("TEMPEST_SMTP_TLS", "if_available")),
-    auth: String.to_existing_atom(System.get_env("TEMPEST_SMTP_AUTH", "if_available"))
+# Email provider selection. The default stays `local` (set in config/dev.exs
+# and config/test.exs) unless an operator opts into `smtp` or `resend`.
+#
+# `resolve/2` only reconfigures the mailer when a real provider is selected, so
+# the Swoosh.Adapters.Test / Swoosh.Adapters.Local defaults set by the
+# environment config files are preserved when `TEMPEST_EMAIL_PROVIDER` is unset
+# and the legacy `TEMPEST_SMTP_ENABLED` flag is not set.
+email_provider_config =
+  Tempest.Security.EmailConfig.resolve(System.get_env(), env: config_env())
 
-  config :tempest, Tempest.Security.Email,
-    from_name: System.get_env("TEMPEST_SMTP_FROM_NAME", "Tempest"),
-    from_address: System.fetch_env!("TEMPEST_SMTP_FROM_ADDRESS")
+if email_provider_config.provider != :local do
+  config :tempest, Tempest.Mailer, email_provider_config.mailer_config
+  config :tempest, Tempest.Security.Email, email_provider_config.email_config
 end
 
 if admin_token_hash = System.get_env("TEMPEST_ADMIN_TOKEN_HASH") do

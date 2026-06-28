@@ -40,9 +40,6 @@ tests, and reset commands, see [DEVELOPMENT.md](./DEVELOPMENT.md).
 
 ## Running It
 
-Local development uses Phoenix directly and stores data under `priv/tempest_dev`
-by default.
-
 Release and reverse-proxy examples live in [`conf/`](./conf/):
 
 - [`conf/Dockerfile`](./conf/Dockerfile) builds a Phoenix release image.
@@ -50,32 +47,31 @@ Release and reverse-proxy examples live in [`conf/`](./conf/):
 - [`conf/Caddyfile`](./conf/Caddyfile) fronts Tempest with Caddy for HTTPS.
 - [`conf/.env.example`](./conf/.env.example) is the production env template.
 
-Real federation checks need a public HTTPS hostname with DNS pointing at the
-host. Localhost is enough for most development and Hurl smoke tests, but relays,
-handle resolution from outside the host, and real client OAuth flows need a
-reachable origin.
+Production-like federation checks need a public HTTPS hostname with DNS pointing
+at the host.
+
+Deployment details live in [Deployment Guide](./docs/reference/deployment.md).
 
 ## Configuration
 
 The main runtime settings are:
 
-| Variable                    | Purpose                                                 |
-| --------------------------- | ------------------------------------------------------- |
-| `TEMPEST_HOSTNAME`          | Bare hostname served by this PDS.                       |
-| `TEMPEST_PUBLIC_URL`        | Public origin, including scheme.                        |
-| `TEMPEST_DATA_DIR`          | Durable SQLite, blob, temp, and backup directory.       |
-| `TEMPEST_HOSTED_DID_METHOD` | Hosted DID method, currently `plc` or `web`.            |
-| `TEMPEST_CRAWLERS`          | Comma-separated relay crawler URLs.                     |
-| `TEMPEST_APPVIEW_URL`       | Optional upstream AppView proxy target.                 |
-| `TEMPEST_ADMIN_DID`         | DID allowed to use the browser admin UI.                |
-| `TEMPEST_ADMIN_TOKEN_HASH`  | Optional Argon2 hash for admin bearer-token automation. |
-| `TEMPEST_BLOB_STORE`        | `local` by default, or `s3` with S3 env vars.           |
-| `TEMPEST_BACKUP_STORE`      | `local` by default, or `s3` with S3 env vars.           |
-| `TEMPEST_SMTP_ENABLED`      | Enables SMTP email delivery when true.                  |
-
-See [`conf/.env.example`](./conf/.env.example) for the full production template
-and [deployment documentation](./docs/reference/deployment.md) for operational
-guidance.
+| Variable                     | Purpose                                                 |
+| ---------------------------- | ------------------------------------------------------- |
+| `TEMPEST_HOSTNAME`           | Bare hostname served by this PDS.                       |
+| `TEMPEST_PUBLIC_URL`         | Public origin, including scheme.                        |
+| `TEMPEST_DATA_DIR`           | Durable SQLite, blob, temp, and backup directory.       |
+| `TEMPEST_HOSTED_DID_METHOD`  | Hosted DID method, currently `plc` or `web`.            |
+| `TEMPEST_CRAWLERS`           | Comma-separated relay crawler URLs.                     |
+| `TEMPEST_APPVIEW_URL`        | Optional upstream AppView proxy target.                 |
+| `TEMPEST_ADMIN_DID`          | DID allowed to use the browser admin UI.                |
+| `TEMPEST_ADMIN_TOKEN_HASH`   | Optional Argon2 hash for admin bearer-token automation. |
+| `TEMPEST_BLOB_STORE`         | `local` by default, or `s3` with S3 env vars.           |
+| `TEMPEST_BACKUP_STORE`       | `local` by default, or `s3` with S3 env vars.           |
+| `TEMPEST_EMAIL_PROVIDER`     | `local` by default, or `smtp`, or `resend`.             |
+| `TEMPEST_RESEND_API_KEY`     | Resend API key (required when provider is `resend`).    |
+| `TEMPEST_EMAIL_FROM_NAME`    | Sender display name for security email.                 |
+| `TEMPEST_EMAIL_FROM_ADDRESS` | Verified sender address for security email.             |
 
 ## Storage and Backups
 
@@ -91,10 +87,7 @@ The admin UI exposes storage and backup status under `/admin/storage` and
 
 Account operator & admin routes are at `/account` & `/admin` respectively.
 
-Browser admin access is anchored to `TEMPEST_ADMIN_DID`.
-
-Admin bearer tokens are optional and intended for automation; only the Argon2
-hash belongs in configuration.
+Browser admin access is anchored to `TEMPEST_ADMIN_DID`
 
 ## Endpoint Checklist
 
@@ -191,30 +184,7 @@ The smoke suite exercises the same HTTP and WebSocket surface that clients, rela
 and operators use, namely account creation, auth, repo writes, CAR reads, blob lifecycle,
 firehose events, metadata, proxy fallback, and admin protection.
 
-Common local checks:
-
-```bash
-mix test
-mix precommit
-test/smoke/local-pds-compat.sh http://localhost:4000
-```
-
-The smoke profile expects a running server. Deployed-only smoke checks cover
-public HTTPS, admin-token status, and relay crawler behavior. See
-[`test/smoke/README.md`](./test/smoke/README.md) and
-[`interop-testing`](./docs/reference/interop-testing.md) for
-full Hurl usage.
-
 ## Documentation
-
-Browser admin access is anchored to `TEMPEST_ADMIN_DID`.
-
-When that DID belongs to a local Tempest account, `/admin/login` accepts the
-account handle or DID plus the account password and stores only a server-side
-admin session reference in the browser session.
-
-`TEMPEST_ADMIN_TOKEN_HASH` is optional and is reserved for bootstrap and
-automation paths such as `/xrpc/_admin/status`. It should be stored as an Argon2 hash.
 
 - [Development](./DEVELOPMENT.md)
 - [Deployment](./docs/reference/deployment.md)
@@ -234,31 +204,6 @@ The changelog is available in [CHANGELOG.md](./CHANGELOG.md) and at
 <https://tempest.desertthunder.dev/changelog>.
 
 ![Tempest changelog viewer](docs/images/changelog.png)
-
-Admin UI:
-
-```text
-/admin/login
-/admin/logout
-/admin
-/admin/accounts
-/admin/accounts/:did
-/admin/invites
-/admin/repo
-/admin/backups
-/admin/personal-backups
-/admin/personal-backups/new
-/admin/personal-backups/:id
-/admin/storage
-/admin/compatibility
-/xrpc/_admin/status
-```
-
-To generate a TOTP code for a base32 secret:
-
-```bash
-mix tempest.totp.code <base32-secret>
-```
 
 ## References
 

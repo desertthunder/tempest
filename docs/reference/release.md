@@ -116,7 +116,7 @@ Recommended for the first deployment:
 ```text
 TEMPEST_BLOB_STORE=s3
 TEMPEST_BACKUP_STORE=s3
-TEMPEST_SMTP_ENABLED=false
+TEMPEST_EMAIL_PROVIDER=local
 ```
 
 Add the matching R2 endpoint, bucket, region, access key, and secret variables

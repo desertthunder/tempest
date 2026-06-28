@@ -157,14 +157,16 @@ SECRET_KEY_BASE=...
 TEMPEST_ADMIN_TOKEN_HASH=...
 TEMPEST_BLOB_STORE=local
 TEMPEST_BLOB_MAX_BYTES=10000000
-TEMPEST_SMTP_ENABLED=false
+TEMPEST_EMAIL_PROVIDER=local
 TEMPEST_BACKUP_STORE=local
 TEMPEST_CRAWLERS=https://bsky.network,https://vsky.network
 ```
 
-Optional adapters add SMTP, S3/R2 blob storage, and S3/R2 backup uploads. Those
-profiles also need endpoint, bucket, region, and credential variables for the
-chosen object store.
+Optional adapters add email delivery (Resend/SMTP), S3/R2 blob storage, and
+S3/R2 backup uploads. Email delivery uses `TEMPEST_EMAIL_PROVIDER`; see
+[Deployment Guide](./deployment.md) for provider configuration. S3/R2 profiles
+also need endpoint, bucket, region, and credential variables for the chosen
+object store.
 
 ## Durable paths
 

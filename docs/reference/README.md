@@ -17,6 +17,7 @@ concepts needed to understand that implementation.
 - [Account Management Control Panel](./account-management.md)
 - [Account Migration](./account-migration.md)
 - [Migration and Account Lifecycle](./migration-lifecycle.md)
+- [Email Delivery](./email-delivery.md)
 - [Security, OAuth, and Delegated Access](./security-oauth.md)
 - [OAuth private_key_jwt Concepts](./oauth-private-key-jwt.md)
 - [Admin and Operator Operations](./admin-operations.md)

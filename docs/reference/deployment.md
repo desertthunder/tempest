@@ -151,14 +151,113 @@ TEMPEST_BACKUP_S3_ACCESS_KEY_ID=...
 TEMPEST_BACKUP_S3_SECRET_ACCESS_KEY=...
 ```
 
-Optional SMTP:
+Optional email delivery:
 
 ```text
-TEMPEST_SMTP_ENABLED=false
+TEMPEST_EMAIL_PROVIDER=local
 ```
 
-Leave SMTP disabled for the first deployment unless password reset and email
+Leave email on `local` for the first deployment unless password reset and email
 confirmation delivery have been configured and tested.
+
+### Provider selection
+
+`TEMPEST_EMAIL_PROVIDER` selects the Swoosh adapter. `local` (default) stores
+email in memory for dev/test. Production uses `resend` (recommended) or `smtp`.
+Production with no provider set keeps `local` rather than failing; an operator
+who wants real delivery must opt in.
+
+Resend (recommended for production):
+
+```text
+TEMPEST_EMAIL_PROVIDER=resend
+TEMPEST_RESEND_API_KEY=...
+TEMPEST_EMAIL_FROM_NAME=Tempest
+TEMPEST_EMAIL_FROM_ADDRESS=no-reply@<verified-domain>
+```
+
+`config/prod.exs` already configures `Swoosh.ApiClient.Req`, which satisfies the
+Resend adapter's API-client requirement.
+
+SMTP fallback (for environments that cannot use the Resend API; the Resend SMTP
+relay accepts the API key as the password):
+
+```text
+TEMPEST_EMAIL_PROVIDER=smtp
+TEMPEST_SMTP_HOST=smtp.resend.com
+TEMPEST_SMTP_PORT=587
+TEMPEST_SMTP_USERNAME=resend
+TEMPEST_SMTP_PASSWORD=<resend_api_key>
+TEMPEST_SMTP_SSL=false
+TEMPEST_SMTP_TLS=always
+TEMPEST_SMTP_AUTH=always
+TEMPEST_EMAIL_FROM_NAME=Tempest
+TEMPEST_EMAIL_FROM_ADDRESS=no-reply@example.com
+```
+
+The API adapter is preferred over SMTP for Resend because it supports provider
+tags and idempotency keys.
+
+### Backwards compatibility
+
+`TEMPEST_SMTP_ENABLED=true` still selects `smtp` when
+`TEMPEST_EMAIL_PROVIDER` is unset, so existing deployments keep working. The
+legacy `TEMPEST_SMTP_FROM_NAME` and `TEMPEST_SMTP_FROM_ADDRESS` variables are
+honored as aliases for the shared `TEMPEST_EMAIL_FROM_*` names; prefer the
+shared names for new deployments.
+
+### Fail-closed behavior
+
+In production, selecting `resend` without `TEMPEST_RESEND_API_KEY` or
+`TEMPEST_EMAIL_FROM_ADDRESS` raises at boot with a clear message. The same
+applies to `smtp` without `TEMPEST_SMTP_HOST` or a from address. Non-production
+environments fall back to `local` when credentials are missing so tests and dev
+never block on email config.
+
+### DNS: SPF, DKIM, and DMARC
+
+The Resend sending domain must be verified before production testing. Configure
+the DNS records Resend provides:
+
+- **SPF** (`TXT` on the root domain): authorize Resend's mail servers. Resend
+  provides the include value during domain verification.
+- **DKIM** (`CNAME` or `TXT` records): Resend provides the selector and public
+  key material. DKIM signs outgoing messages so recipients can verify they were
+  not modified in transit.
+- **DMARC** (`TXT` record at `_dmarc.<domain>`): publish a policy
+  (`p=quarantine` or `p=reject`) with an aggregate report address. Start with
+  `p=none` to monitor, then tighten once SPF/DKIM alignment is confirmed.
+
+Verify DNS propagation with `dig` or `nslookup` before sending production email.
+
+### Email verification
+
+Local verification:
+
+```bash
+mix test test/tempest/security_test.exs test/tempest_web/xrpc/email_flows_test.exs
+```
+
+Production-style local verification with Resend config (no network calls):
+
+```bash
+TEMPEST_EMAIL_PROVIDER=resend \
+TEMPEST_RESEND_API_KEY="$TEMPEST_RESEND_API_KEY" \
+TEMPEST_EMAIL_FROM_ADDRESS="$TEMPEST_EMAIL_FROM_ADDRESS" \
+mix test test/tempest/security/email_delivery_config_test.exs
+```
+
+Deployed smoke verification:
+
+```bash
+hurl --test --jobs 1 \
+  --variable base_url=https://tempest.example.com \
+  --variable account_email=reset-target@example.com \
+  test/smoke/email-security.hurl
+```
+
+See [Email Delivery](./email-delivery.md) for the security model behind these
+flows and why token state lives in the database rather than R2.
 
 ## First Boot
 

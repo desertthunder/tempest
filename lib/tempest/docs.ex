@@ -30,6 +30,7 @@ defmodule Tempest.Docs do
     %{slug: "deployment", path: "deployment.md", title: "Deployment Guide"},
     %{slug: "deployment-observability", path: "deployment-observability.md", title: "Deployment and Observability"},
     %{slug: "doc-viewer", path: "doc-viewer.md", title: "Documentation Viewer"},
+    %{slug: "email-delivery", path: "email-delivery.md", title: "Email Delivery"},
     %{slug: "endpoints", path: "endpoints.md", title: "Endpoints"},
     %{slug: "identity-handles", path: "identity-handles.md", title: "Identity and Handles"},
     %{slug: "identity-troubleshooting", path: "identity-troubleshooting.md", title: "Identity Troubleshooting"},
