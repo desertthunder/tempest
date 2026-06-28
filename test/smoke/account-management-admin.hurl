@@ -1,3 +1,14 @@
+# Admin control panel browser UI: login, dashboard, accounts, personal backups.
+#
+# Verifies: unauthenticated redirect, admin login form with DID display,
+# authenticated dashboard, accounts list, personal backups pages, and logout.
+#
+# Uses browser session cookies.
+#
+# Required variables: base_url, admin_did, admin_identifier, admin_password
+#
+# Scope: local + deployed (requires admin account configured)
+
 GET {{base_url}}/admin
 HTTP 302
 [Asserts]

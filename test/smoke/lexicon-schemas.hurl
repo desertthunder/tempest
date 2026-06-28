@@ -1,10 +1,13 @@
+# Lexicon schema validation: known, unknown, and invalid record types.
+#
+# Verifies: createRecord with a known lexicon passes validation, unknown
+# collection passes with "unknown" status, and invalid type is rejected.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "lexicon-{{newUuid}}.test",
-  "email": "lexicon-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

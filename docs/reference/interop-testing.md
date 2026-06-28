@@ -46,6 +46,7 @@ Tempest uses these layers together:
 - `test/smoke/xrpc.hurl`: XRPC dispatch and protocol-shaped errors
 - `test/smoke/accounts.hurl`: account/session lifecycle
 - `test/smoke/identity.hurl`: local handle/DID behavior
+- `test/smoke/identity-correctness.hurl`: .well-known/atproto-did, resolveHandle, and session agreement
 - `test/smoke/records.hurl`: repo record writes and reads
 - `test/smoke/car-sync.hurl`: CAR/block sync reads
 - `test/smoke/firehose.hurl`: subscribe, write, receive event
@@ -54,6 +55,9 @@ Tempest uses these layers together:
 - `test/smoke/migration-lifecycle.hurl`: migration import and lifecycle checks
 - `test/smoke/oauth-security.hurl`: OAuth metadata and error-path checks
 - `test/smoke/operator-account-ux.hurl`: account operator UI checks
+- `test/smoke/account-management.hurl`: account control panel browser UI (login, dashboard, sub-pages)
+- `test/smoke/account-management-admin.hurl`: admin control panel browser UI (requires admin auth)
+- `test/smoke/email-security.hurl`: password reset request and token consumption (requires operator-supplied token)
 - `test/smoke/tempest_basic.hurl`: end-to-end baseline PDS flow
 - `test/smoke/tempest_compat.hurl`: compatibility hardening checks
 - `test/smoke/deployment.hurl`: non-destructive deployed HTTPS smoke checks

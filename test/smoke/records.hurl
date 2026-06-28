@@ -1,10 +1,13 @@
+# Repo record CRUD: create, get, list, describe, put, delete with swap guards.
+#
+# Verifies: profile record creation, getRecord, listRecords, describeRepo,
+# putRecord with optimistic concurrency swaps, deleteRecord, and 404 handling.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "records-{{newUuid}}.test",
-  "email": "records-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

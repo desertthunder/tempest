@@ -1,3 +1,12 @@
+# Documentation viewer: page rendering, navigation, and path safety.
+#
+# Verifies: docs index, a known doc page, unknown slug rejection, and
+# path-traversal protection.
+#
+# Required variables: base_url
+#
+# Scope: local + deployed
+
 GET {{base_url}}/docs
 HTTP 200
 [Asserts]

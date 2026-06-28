@@ -1,10 +1,15 @@
+# Identity correctness: .well-known/atproto-did, resolveHandle, and getSession.
+#
+# Verifies that the DID document, handle resolution, and session all agree on
+# the account's DID and handle after creation.
+#
+# Required variables: base_url, handle, access, did
+#
+# Note: account must be pre-created and variables captured before running.
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "identity-correct-{{newUuid}}.test",
-  "email": "identity-correct-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 did: jsonpath "$.did"

@@ -1,10 +1,13 @@
+# Compatibility hardening: preferences, applyWrites, getBlocks, AppView fallback.
+#
+# Verifies: getPreferences, putPreferences, applyWrites (create + delete),
+# getBlocks, and unknown AppView method fallback through the proxy.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed (AppView fallback requires TEMPEST_APPVIEW_URL)
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "compat-{{newUuid}}.test",
-  "email": "compat-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 did: jsonpath "$.did"

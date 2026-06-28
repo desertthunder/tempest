@@ -1,3 +1,11 @@
+# Health check: service status and storage writability.
+#
+# Verifies: /xrpc/_health returns 200 with status, version, and storage paths.
+#
+# Required variables: base_url
+#
+# Scope: local + deployed
+
 GET {{base_url}}/xrpc/_health
 HTTP 200
 [Asserts]

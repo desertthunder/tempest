@@ -1,10 +1,14 @@
+# Migration lifecycle: import, activate, deactivate, and account deletion.
+#
+# Verifies: checkAccountStatus, getServiceAuth, importRepo, listMissingBlobs,
+# deactivateAccount, activateAccount, requestAccountDelete, deleteAccount, and
+# repo status transitions.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "migration-{{newUuid}}.test",
-  "email": "migration-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 did: jsonpath "$.did"

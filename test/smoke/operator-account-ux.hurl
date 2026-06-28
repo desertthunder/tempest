@@ -1,10 +1,14 @@
+# Operator account UI: browser control panel pages behind bearer-token auth.
+#
+# Verifies: account dashboard, repo browser, blob browser, sequencer viewer, and
+# firehose viewer pages render with expected content when accessed with an
+# XRPC bearer token. Also verifies unauthenticated access redirects to login.
+#
+# Required variables: base_url, suffix
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "operator-{{suffix}}.test",
-  "email": "operator-{{suffix}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 did: jsonpath "$.did"
@@ -25,16 +29,16 @@ Content-Type: application/json
 HTTP 200
 
 GET {{base_url}}/account
-HTTP 401
+HTTP 302
 [Asserts]
-jsonpath "$.error" == "AuthenticationRequired"
+header "location" contains "/account/login"
 
 GET {{base_url}}/account
 Authorization: Bearer {{access_token}}
 HTTP 200
 [Asserts]
 header "content-type" contains "text/html"
-body contains "Operator Account"
+body contains "Account Dashboard"
 body contains "{{did}}"
 
 GET {{base_url}}/account/repo

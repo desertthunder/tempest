@@ -1,3 +1,12 @@
+# XRPC dispatch and protocol-shaped errors.
+#
+# Verifies: health endpoint, describeServer metadata, unknown method rejection,
+# and invalid POST handling.
+#
+# Required variables: base_url
+#
+# Scope: local + deployed
+
 GET {{base_url}}/xrpc/_health
 HTTP 200
 [Asserts]

@@ -1,14 +1,13 @@
-# Deployed HTTPS smoke coverage.
+# Deployed HTTPS smoke: health, metadata, OAuth, admin status, storage, unknown method.
 #
-# Run against a publicly reachable HTTPS deployment with the final hostname:
+# Non-destructive checks against a publicly reachable HTTPS deployment.
 #
-#   hurl --test --jobs 1 \
-#     --variable base_url=https://tempest.example.com \
-#     --variable admin_token="$ADMIN_TOKEN" \
-#     test/smoke/deployment.hurl
+# Account writes, blob writes, relay crawl, and real-client checks are covered by the
+# broader deployment runbook.
 #
-# This file is intentionally non-destructive. Account writes, blob writes, relay
-# crawl, and real-client checks are covered by the broader deployment runbook.
+# Required variables: base_url, admin_token
+#
+# Scope: deployed-only
 
 GET {{base_url}}/xrpc/_health
 HTTP 200

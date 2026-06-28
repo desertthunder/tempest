@@ -83,6 +83,20 @@ forced restore. The admin UI exposes a dry run only: it checks manifest presence
 and whether the target contains live database files, then reports what would
 happen without copying data.
 
+## Account email tokens
+
+Password reset, email confirmation, and email update tokens live in the
+account SQLite database (`email_tokens` table).
+
+Operators checking `/admin/storage` will not see email token state there.
+Token lifecycle, namely issue, expiry, single-use consumption, and audit events, is
+managed entirely through database transactions alongside the account records
+they protect. This means a backup restore rehydrates token state consistently
+with account state.
+
+See [Email Delivery](./email-delivery.md) for the security model behind email
+token flows.
+
 ## Verification
 
 ```bash

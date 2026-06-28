@@ -1,10 +1,16 @@
+# Baseline end-to-end PDS flow: health, metadata, records, sync, blobs.
+#
+# Verifies: createAccount, profile write, getLatestCommit, getRepo, getRecord,
+# getBlocks, getRepoStatus, listRepos, uploadBlob, createRecord with blob
+# reference, and listBlobs.
+#
+# A condensed integration of car-sync + blobs.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "sync-{{newUuid}}.test",
-  "email": "sync-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

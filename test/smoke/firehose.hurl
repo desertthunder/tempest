@@ -1,17 +1,18 @@
-# Firehose smoke coverage for HTTP-visible behavior.
+# Firehose: repo commit event observation over WebSocket.
 #
 # Hurl 8.0.0 in this environment does not provide a WebSocket client, so the
-# binary subscribe/write/receive stream is covered by ExUnit. This smoke test
-# verifies the public setup path, durable commit creation, and the subscribeRepos
-# HTTP upgrade boundary. Crawler fan-out is covered by crawlers.hurl.
+# binary subscribe/write/receive stream is covered by ExUnit.
+#
+# This smoke test verifies the public setup path, durable commit creation,
+# and the subscribeRepos HTTP upgrade boundary.
+#
+# Crawler fan-out is covered by crawlers.hurl.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed
 
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "firehose-{{newUuid}}.test",
-  "email": "firehose-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

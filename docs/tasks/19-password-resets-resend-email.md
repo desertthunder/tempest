@@ -71,13 +71,13 @@ limited to blobs and backups.
 
 ## Deployment Verification
 
-- [ ] T19-22: Add `test/smoke/email-security.hurl` for deployed password-reset
+- [x] T19-22: Add `test/smoke/email-security.hurl` for deployed password-reset
       request and token consumption using an operator-supplied token.
-- [ ] T19-23: Add a Railway deployment checklist covering Resend env vars,
+- [x] T19-23: Add a Railway deployment checklist covering Resend env vars,
       verified sending domain, DNS records, and test inbox verification.
-- [ ] T19-24: Add an admin/operator note explaining that R2 is not used for
+- [x] T19-24: Add an admin/operator note explaining that R2 is not used for
       account email tokens.
-- [ ] T19-25: Run `mix precommit` after implementation and fix all pending
+- [x] T19-25: Run `mix precommit` after implementation and fix all pending
       issues.
 
 ## Integration Tests

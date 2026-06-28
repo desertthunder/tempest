@@ -259,6 +259,48 @@ hurl --test --jobs 1 \
 See [Email Delivery](./email-delivery.md) for the security model behind these
 flows and why token state lives in the database rather than R2.
 
+### Resend deployment checklist
+
+Complete these steps before relying on production email delivery. Each item
+must pass before moving to the next.
+
+1. **Resend account and API key**
+   - Create a Resend account and generate an API key (`re_...`).
+   - Set `TEMPEST_EMAIL_PROVIDER=resend` in Railway.
+
+2. **Verified sending domain**
+   - Add the sending domain (e.g. `tempest.example.com`) in the Resend dashboard.
+   - Wait for domain verification to reach "Verified" status.
+
+3. **DNS records**
+   - **SPF**: publish the SPF `TXT` record Resend provides on the root domain.
+   - **DKIM**: publish the DKIM `CNAME` or `TXT` records Resend provides.
+   - **DMARC**: publish a `TXT` record at `_dmarc.<domain>`. Start with
+     `p=none` and an aggregate report address; tighten to `p=quarantine` or
+     `p=reject` once SPF/DKIM alignment is confirmed.
+   - Verify propagation with `dig` or `nslookup` for each record.
+
+4. **From address**
+   - Set `TEMPEST_EMAIL_FROM_ADDRESS=no-reply@<verified-domain>` in Railway.
+   - Set `TEMPEST_EMAIL_FROM_NAME=Tempest` (or the desired sender display name).
+   - Confirm the from address uses the verified domain, not a personal address.
+
+5. **Railway env vars**
+   - Confirm all four are set in Railway:
+     `TEMPEST_EMAIL_PROVIDER`, `TEMPEST_RESEND_API_KEY`,
+     `TEMPEST_EMAIL_FROM_NAME`, `TEMPEST_EMAIL_FROM_ADDRESS`.
+   - Redeploy so `config/runtime.exs` picks up the provider switch.
+   - Check Railway logs for startup errors — production boot fails closed if
+     the API key or from address is missing.
+
+6. **Test inbox verification**
+   - Create a test account on the deployed instance.
+   - Request a password reset for the test account's email.
+   - Confirm the email arrives in the test inbox (check spam/junk if missing).
+   - Verify the sender address, subject, and token are correct.
+   - Consume the token via the browser page (`/account/password/reset?token=...`)
+     or the XRPC endpoint and confirm the password is reset.
+
 ## First Boot
 
 Deploy the service. The Docker entrypoint prepares the mounted storage layout,

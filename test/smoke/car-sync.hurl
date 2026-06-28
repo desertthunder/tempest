@@ -1,10 +1,13 @@
+# CAR and block sync: commit reads, repo export, block fetches, and repo status.
+#
+# Verifies: getLatestCommit, getRepo (CAR), getRecord, getBlocks, getRepoStatus,
+# listRepos, and uploadBlob + listBlobs within the sync surface.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "sync-{{newUuid}}.test",
-  "email": "sync-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

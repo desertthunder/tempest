@@ -1,10 +1,13 @@
+# Local identity: handle resolution, DID lookup, and handle update.
+#
+# Verifies: .well-known/atproto-did, resolveHandle, updateHandle, and rejection
+# of invalid handles.
+#
+# Required variables: base_url, account_handle, account_email, account_password
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "{{account_handle}}",
-  "email": "{{account_email}}",
-  "password": "{{account_password}}"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

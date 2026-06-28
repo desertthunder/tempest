@@ -1,10 +1,14 @@
+# Account and session lifecycle: create, authenticate, refresh, delete.
+#
+# Verifies: createAccount, createSession, getSession, refreshSession token
+# rotation, and deleteSession. Asserts DID/handle fields and token invalidation
+# after deletion.
+#
+# Required variables: base_url, account_handle, account_email, account_password
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "{{account_handle}}",
-  "email": "{{account_email}}",
-  "password": "{{account_password}}"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

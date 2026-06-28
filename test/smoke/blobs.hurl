@@ -1,10 +1,13 @@
+# Blob lifecycle: upload, reference, list, serve, and delete.
+#
+# Verifies: uploadBlob, createRecord with blob reference, listBlobs, getBlob,
+# deleteRecord cleanup, and 404 after deletion.
+#
+# Required variables: base_url, newUuid (hurl built-in)
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "blobs-{{newUuid}}.test",
-  "email": "blobs-{{newUuid}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 created_did: jsonpath "$.did"

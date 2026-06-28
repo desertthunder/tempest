@@ -1,3 +1,11 @@
+# Public stats dashboard and changelog.
+#
+# Verifies: /xrpc/_stats, /stats, /changelog, and admin status error path.
+#
+# Required variables: base_url
+#
+# Scope: local + deployed
+
 GET {{base_url}}/xrpc/_stats
 HTTP 200
 [Asserts]

@@ -1,10 +1,15 @@
+# Account management browser UI: login, dashboard, repo, blobs, access, security, logout.
+#
+# Verifies: unauthenticated redirect, login form CSRF, authenticated dashboard,
+# sub-pages, and logout redirect.
+#
+# Uses browser session cookies (not XRPC bearer).
+#
+# Required variables: base_url, suffix
+#
+# Scope: local + deployed
+
 POST {{base_url}}/xrpc/com.atproto.server.createAccount
-Content-Type: application/json
-{
-  "handle": "account-panel-{{suffix}}.test",
-  "email": "account-panel-{{suffix}}@example.com",
-  "password": "correct horse battery staple"
-}
 HTTP 200
 [Captures]
 account_did: jsonpath "$.did"

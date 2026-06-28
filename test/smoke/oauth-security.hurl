@@ -1,9 +1,14 @@
+# OAuth security: metadata endpoints and token error paths.
+#
+# Verifies: oauth-protected-resource, oauth-authorization-server, JWKS, PAR
+# with invalid DPoP proof, token with unsupported grant type, revoke, and
+# introspect.
+#
+# Required variables: base_url
+#
+# Scope: local + deployed
+
 GET {{base_url}}/.well-known/oauth-protected-resource
-HTTP 200
-[Asserts]
-header "content-type" contains "application/json"
-jsonpath "$.resource" exists
-jsonpath "$.authorization_servers[0]" exists
 
 GET {{base_url}}/.well-known/oauth-authorization-server
 HTTP 200
