@@ -46,18 +46,18 @@ limited to blobs and backups.
 
 ## XRPC Shape
 
-- [ ] T19-13: Keep `requestPasswordReset` enumeration-safe for unknown email,
+- [x] T19-13: Keep `requestPasswordReset` enumeration-safe for unknown email,
       handle, or DID values.
-- [ ] T19-14: Verify `resetPassword` consumes one token, rejects reuse, validates
+- [x] T19-14: Verify `resetPassword` consumes one token, rejects reuse, validates
       password strength, revokes sessions, and allows login with the new
       password.
-- [ ] T19-15: Update `requestEmailUpdate` to return
+- [x] T19-15: Update `requestEmailUpdate` to return
       `{"tokenRequired": true}` when a token is required.
-- [ ] T19-16: Update `updateEmail` to accept `{email, token}` and verify the
+- [x] T19-16: Update `updateEmail` to accept `{email, token}` and verify the
       token target email matches the requested email.
-- [ ] T19-17: Update `confirmEmail` to accept both token-only calls and
+- [x] T19-17: Update `confirmEmail` to accept both token-only calls and
       ATProto-shaped `{email, token}` calls.
-- [ ] T19-18: Add explicit tests for invalid, expired, reused, wrong-purpose,
+- [x] T19-18: Add explicit tests for invalid, expired, reused, wrong-purpose,
       and wrong-target-email tokens.
 
 ## Browser Follow-through

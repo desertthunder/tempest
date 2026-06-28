@@ -163,7 +163,7 @@ defmodule Tempest.Xrpc.Server do
   end
 
   def confirm_email(_conn, params, _method) do
-    case Security.confirm_email(Map.get(params, "token")) do
+    case Security.confirm_email(Map.get(params, "token"), Map.get(params, "email")) do
       {:ok, _account} -> {:ok, %{}}
       {:error, :invalid_token} -> {:error, 400, "InvalidRequest", "token is invalid or expired"}
       {:error, reason} -> email_error(reason)
@@ -172,13 +172,13 @@ defmodule Tempest.Xrpc.Server do
 
   def request_email_update(conn, params, _method) do
     case Security.request_email_update(conn.assigns.auth_context.account, Map.get(params, "email")) do
-      {:ok, _result} -> {:ok, %{}}
+      {:ok, _result} -> {:ok, %{"tokenRequired" => true}}
       {:error, reason} -> email_error(reason)
     end
   end
 
   def update_email(_conn, params, _method) do
-    case Security.update_email(Map.get(params, "token")) do
+    case Security.update_email(Map.get(params, "token"), Map.get(params, "email")) do
       {:ok, _account} -> {:ok, %{}}
       {:error, :invalid_token} -> {:error, 400, "InvalidRequest", "token is invalid or expired"}
       {:error, reason} -> email_error(reason)

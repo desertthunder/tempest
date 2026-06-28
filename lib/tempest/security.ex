@@ -65,8 +65,17 @@ defmodule Tempest.Security do
   Some purposes have side effects: `update_email` updates the account email and
   `reset_password` revokes existing sessions before the caller stores the new
   password hash.
+
+  When `expected_email` is given, the token's stored email must match it before
+  consumption.
+
+  This supports the ATProto-shaped `{email, token}` calls used by `confirmEmail`
+  and `updateEmail` so a token issued for one address cannot be replayed against
+  a different one.
   """
-  def consume_email_token(raw, purpose) when is_binary(raw) do
+  def consume_email_token(raw, purpose, expected_email \\ nil)
+
+  def consume_email_token(raw, purpose, expected_email) when is_binary(raw) do
     now = now()
 
     Repo.transaction(fn ->
@@ -82,26 +91,30 @@ defmodule Tempest.Security do
           Repo.rollback(:invalid_token)
 
         %EmailToken{} = token ->
-          token |> Ecto.Changeset.change(%{used_at: now}) |> Repo.update!()
+          if email_matches?(token, expected_email) do
+            token |> Ecto.Changeset.change(%{used_at: now}) |> Repo.update!()
 
-          case purpose do
-            "update_email" ->
-              token.account |> Ecto.Changeset.change(%{email: token.email}) |> Repo.update!()
+            case purpose do
+              "update_email" ->
+                token.account |> Ecto.Changeset.change(%{email: token.email}) |> Repo.update!()
 
-            "reset_password" ->
-              revoke_sessions!(token.account)
+              "reset_password" ->
+                revoke_sessions!(token.account)
 
-            _other ->
-              :ok
+              _other ->
+                :ok
+            end
+
+            log_event(token.account, "email_token.consumed", %{purpose: purpose})
+            token.account
+          else
+            Repo.rollback(:invalid_token)
           end
-
-          log_event(token.account, "email_token.consumed", %{purpose: purpose})
-          token.account
       end
     end)
   end
 
-  def consume_email_token(_raw, _purpose), do: {:error, :invalid_token}
+  def consume_email_token(_raw, _purpose, _expected_email), do: {:error, :invalid_token}
 
   @doc """
   Starts TOTP enrollment and returns the plaintext secret plus an otpauth URI.
@@ -403,8 +416,12 @@ defmodule Tempest.Security do
 
   @doc """
   Confirms the account email associated with an email-confirmation token.
+
+  Accepts both token-only calls and ATProto-shaped `{email, token}` calls. When
+  `email` is given, it must match the account email associated with the token.
   """
-  def confirm_email(raw_token), do: consume_email_token(raw_token, "confirm_email")
+  def confirm_email(raw_token, email \\ nil),
+    do: consume_email_token(raw_token, "confirm_email", email)
 
   @doc """
   Sends an email-update token to a new email address.
@@ -415,8 +432,12 @@ defmodule Tempest.Security do
 
   @doc """
   Applies a pending email update token.
+
+  Accepts `{email, token}`: the token must be an `update_email` token whose
+  stored target email matches the requested email.
   """
-  def update_email(raw_token), do: consume_email_token(raw_token, "update_email")
+  def update_email(raw_token, email \\ nil),
+    do: consume_email_token(raw_token, "update_email", email)
 
   @doc """
   Resets an account password through a valid reset token.
@@ -465,4 +486,14 @@ defmodule Tempest.Security do
   defp random_token(bytes), do: bytes |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
   defp hash(value), do: :crypto.hash(:sha256, value) |> Base.encode16(case: :lower)
   defp now, do: DateTime.utc_now() |> DateTime.truncate(:second)
+
+  # When expected_email is nil, no email match is required (token-only calls).
+  # When given, compare case-insensitively against the token's stored email so
+  # ATProto-shaped {email, token} calls reject tokens issued for a different
+  # target address.
+  defp email_matches?(_token, nil), do: true
+
+  defp email_matches?(%EmailToken{email: token_email}, expected_email) do
+    String.downcase(token_email) == String.downcase(expected_email)
+  end
 end
