@@ -62,11 +62,11 @@ limited to blobs and backups.
 
 ## Browser Follow-through
 
-- [ ] T19-19: Add minimal browser pages for entering reset, confirmation, and
+- [x] T19-19: Add minimal browser pages for entering reset, confirmation, and
       update tokens if the account Control Panel work has not provided them yet.
-- [ ] T19-20: Generate action URLs in email bodies when `PHX_HOST` is configured;
+- [x] T19-20: Generate action URLs in email bodies when `PHX_HOST` is configured;
       otherwise fall back to plain token copy.
-- [ ] T19-21: Add route and form tests using stable element IDs for the browser
+- [x] T19-21: Add route and form tests using stable element IDs for the browser
       token-entry pages.
 
 ## Deployment Verification

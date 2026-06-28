@@ -57,6 +57,9 @@ defmodule TempestWeb.Router do
     get "/account/login", AccountSessionController, :new
     post "/account/login", AccountSessionController, :create
     get "/account/logout", AccountSessionController, :delete
+    live "/account/password/reset", EmailTokenLive, :password_reset
+    live "/account/email/confirm", EmailTokenLive, :confirm_email
+    live "/account/email/update", EmailTokenLive, :update_email
     get "/admin/login", AdminSessionController, :new
     post "/admin/login", AdminSessionController, :create
     get "/admin/logout", AdminSessionController, :delete

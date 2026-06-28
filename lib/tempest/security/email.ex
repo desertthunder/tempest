@@ -10,7 +10,7 @@ defmodule Tempest.Security.Email do
 
   import Swoosh.Email
 
-  alias Tempest.{Mailer, Security}
+  alias Tempest.{Config, Mailer, Security}
   alias Tempest.Accounts.Account
   alias Tempest.Security.EmailToken
 
@@ -54,6 +54,8 @@ defmodule Tempest.Security.Email do
 
       #{token}
 
+    #{action_line("confirm_email", token)}
+
     This token expires at #{format_expiry(expires_at)}.
 
     If you did not request this email, you can safely ignore it.
@@ -77,6 +79,8 @@ defmodule Tempest.Security.Email do
 
       #{token}
 
+    #{action_line("update_email", token)}
+
     This token expires at #{format_expiry(expires_at)}.
 
     If you did not request this email, you can safely ignore it.
@@ -99,6 +103,8 @@ defmodule Tempest.Security.Email do
     Use this token to reset your password:
 
       #{token}
+
+    #{action_line("reset_password", token)}
 
     This token expires at #{format_expiry(expires_at)}.
 
@@ -172,6 +178,39 @@ defmodule Tempest.Security.Email do
   defp instance_name do
     config = Application.get_env(:tempest, __MODULE__, [])
     Keyword.get(config, :from_name, "Tempest")
+  end
+
+  # Builds an action URL line for the email body when a public URL is configured.
+  # Falls back to an empty string (plain token copy above suffices) when no
+  # public URL is available, e.g. during tests or local dev without a host.
+  defp action_line(purpose, token) do
+    case action_url(purpose, token) do
+      nil -> ""
+      url -> "Or follow this link:\n\n  #{url}"
+    end
+  end
+
+  defp action_url(purpose, token) do
+    case public_base_url() do
+      nil ->
+        nil
+
+      base ->
+        path =
+          case purpose do
+            "confirm_email" -> "/account/email/confirm"
+            "update_email" -> "/account/email/update"
+            "reset_password" -> "/account/password/reset"
+          end
+
+        "#{base}#{path}?token=#{token}"
+    end
+  end
+
+  defp public_base_url do
+    Config.load!().public_url
+  rescue
+    _ -> nil
   end
 
   defp format_expiry(%DateTime{} = expires_at) do
