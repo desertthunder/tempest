@@ -35,7 +35,7 @@ defmodule TempestWeb.Xrpc.EmailFlowsTest do
     |> post(~p"/xrpc/com.atproto.server.requestPasswordReset", %{"email" => account.email})
     |> json_response(200)
 
-    token = assert_email_token_sent(to: {nil, account.email}, subject: "Reset your Tempest password")
+    token = assert_email_token_sent(to: {nil, account.email}, subject: "Reset your Tempest Test password")
 
     conn
     |> recycle()
@@ -60,7 +60,7 @@ defmodule TempestWeb.Xrpc.EmailFlowsTest do
     |> post(~p"/xrpc/com.atproto.server.requestEmailConfirmation", %{})
     |> json_response(200)
 
-    confirm_token = assert_email_token_sent(to: {nil, account.email}, subject: "Confirm your Tempest email")
+    confirm_token = assert_email_token_sent(to: {nil, account.email}, subject: "Confirm your Tempest Test email")
 
     conn
     |> recycle()
@@ -76,7 +76,7 @@ defmodule TempestWeb.Xrpc.EmailFlowsTest do
     |> json_response(200)
 
     update_token =
-      assert_email_token_sent(to: {nil, "new-email@example.com"}, subject: "Confirm your Tempest email change")
+      assert_email_token_sent(to: {nil, "new-email@example.com"}, subject: "Confirm your Tempest Test email change")
 
     conn
     |> recycle()

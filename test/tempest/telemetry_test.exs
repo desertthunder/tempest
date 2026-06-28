@@ -47,7 +47,10 @@ defmodule Tempest.TelemetryTest do
     assert_receive {^ref, [:tempest, :blob, :upload], %{bytes: 14}, %{mime_type: "text/plain"}}
     assert_receive {^ref, [:tempest, :repo, :write], %{count: 1}, %{action: "create"}}
     assert_receive {^ref, [:tempest, :repo, :commit], %{count: 1}, %{did: _did}}
-    assert_receive {^ref, [:tempest, :email, :deliver], %{count: 1}, %{purpose: "reset_password", status: :ok}}
+
+    assert_receive {^ref, [:tempest, :email, :deliver], %{count: 1},
+                    %{purpose: "reset_password", provider: :local, status: :ok}}
+
     assert_received {^ref, [:tempest, :xrpc, :request], %{count: 1, duration: _duration}, %{nsid: _, status: _}}
   end
 

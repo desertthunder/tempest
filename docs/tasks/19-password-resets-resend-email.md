@@ -16,33 +16,33 @@ limited to blobs and backups.
 
 ## Configuration
 
-- [ ] T19-01: Add `TEMPEST_EMAIL_PROVIDER` runtime config with `local`, `smtp`,
+- [x] T19-01: Add `TEMPEST_EMAIL_PROVIDER` runtime config with `local`, `smtp`,
       and `resend` values.
-- [ ] T19-02: Add Resend runtime config for `TEMPEST_RESEND_API_KEY`,
+- [x] T19-02: Add Resend runtime config for `TEMPEST_RESEND_API_KEY`,
       `TEMPEST_EMAIL_FROM_NAME`, and `TEMPEST_EMAIL_FROM_ADDRESS`.
-- [ ] T19-03: Configure `Swoosh.Adapters.Resend` when
+- [x] T19-03: Configure `Swoosh.Adapters.Resend` when
       `TEMPEST_EMAIL_PROVIDER=resend`.
-- [ ] T19-04: Keep SMTP support as a fallback provider and map existing
+- [x] T19-04: Keep SMTP support as a fallback provider and map existing
       `TEMPEST_SMTP_*` variables to the new shared `TEMPEST_EMAIL_FROM_*`
       values where possible.
-- [ ] T19-05: Fail closed during production boot when `resend` or `smtp` is
+- [x] T19-05: Fail closed during production boot when `resend` or `smtp` is
       selected without the required credentials or from address.
-- [ ] T19-06: Add documentation for Railway env vars, Resend domain
+- [x] T19-06: Add documentation for Railway env vars, Resend domain
       verification, SPF, DKIM, and DMARC expectations.
 
 ## Email Delivery
 
-- [ ] T19-07: Update `Tempest.Security.Email` so provider metadata is attached
+- [x] T19-07: Update `Tempest.Security.Email` so provider metadata is attached
       to `[:tempest, :email, :deliver]` telemetry.
-- [ ] T19-08: Add text email builders for password reset, email confirmation,
+- [x] T19-08: Add text email builders for password reset, email confirmation,
       and email update with handle, purpose, expiry, and ignore-this-email copy.
-- [ ] T19-09: Add provider options for Resend tags and idempotency keys when the
+- [x] T19-09: Add provider options for Resend tags and idempotency keys when the
       Resend adapter is active.
-- [ ] T19-10: Ensure production logs do not include raw tokens, Resend API keys,
+- [x] T19-10: Ensure production logs do not include raw tokens, Resend API keys,
       auth headers, or full provider error bodies.
-- [ ] T19-11: Add tests for successful Resend adapter config without making a
+- [x] T19-11: Add tests for successful Resend adapter config without making a
       network call.
-- [ ] T19-12: Add tests for missing Resend API key/from address config.
+- [x] T19-12: Add tests for missing Resend API key/from address config.
 
 ## XRPC Shape
 

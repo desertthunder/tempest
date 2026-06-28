@@ -27,8 +27,6 @@ defmodule Tempest.Security.EmailConfig do
   @default_from_name "Tempest"
   @default_from_address "noreply@localhost"
 
-  @providers ~w(local smtp resend)a
-
   @typedoc """
   Resolved email provider configuration.
 
@@ -83,23 +81,24 @@ defmodule Tempest.Security.EmailConfig do
     }
   end
 
+  @provider_strings ~w(local smtp resend)
+
   defp resolve_provider(env) do
     case env["TEMPEST_EMAIL_PROVIDER"] do
       nil ->
         if smtp_enabled?(env), do: :smtp, else: @default_provider
 
       value ->
-        atom = String.to_existing_atom(value)
-        validate_provider!(atom)
-        atom
+        validate_provider_string!(value)
+        String.to_existing_atom(value)
     end
   end
 
-  defp validate_provider!(provider) when provider in @providers, do: :ok
+  defp validate_provider_string!(value) when value in @provider_strings, do: :ok
 
-  defp validate_provider!(provider) do
+  defp validate_provider_string!(value) do
     raise ArgumentError,
-          "invalid TEMPEST_EMAIL_PROVIDER #{inspect(provider)}; expected one of local, smtp, resend"
+          "invalid TEMPEST_EMAIL_PROVIDER #{inspect(value)}; expected one of local, smtp, resend"
   end
 
   defp smtp_enabled?(env) do

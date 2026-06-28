@@ -192,7 +192,9 @@ defmodule Tempest.Xrpc.Server do
     do: {:error, 400, "InvalidRequest", format_changeset_errors(changeset)}
 
   defp email_error({:validation, %Ecto.Changeset{} = changeset}), do: email_error(changeset)
-  defp email_error(reason), do: {:error, 500, "InternalServerError", "email flow failed: #{inspect(reason)}"}
+  defp email_error(:delivery_failed), do: {:error, 503, "ServiceUnavailable", "email delivery failed"}
+  defp email_error(reason) when is_atom(reason), do: {:error, 500, "InternalServerError", "email flow failed"}
+  defp email_error(_reason), do: {:error, 500, "InternalServerError", "email flow failed"}
 
   defp lifecycle_error(:pds_service_mismatch),
     do: {:error, 400, "InvalidRequest", "DID document does not point at this PDS"}
